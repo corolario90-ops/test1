@@ -373,6 +373,43 @@
   .modal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
   .modal textarea.data-io { font-family: var(--font-mono); font-size: 0.72rem; height: 200px; resize: vertical; }
   .modal p.desc { font-size: 0.82rem; color: var(--ink-secondary); margin: -6px 0 0 0; }
+  .modal.wide { width: 620px; }
+
+  .drop-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-m);
+    padding: 30px 18px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--ink-secondary);
+  }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: var(--accent-soft); }
+  .drop-zone .dz-title { font-weight: 600; color: var(--ink); font-size: 0.92rem; }
+  .drop-zone .dz-hint { font-size: 0.76rem; color: var(--ink-muted); }
+  .drop-zone input[type="file"] { display: none; }
+
+  .step-track { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--ink-muted); }
+  .step-track .step { display: flex; align-items: center; gap: 6px; }
+  .step-track .step .num {
+    width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border-strong);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; font-family: var(--font-mono);
+  }
+  .step-track .step.on { color: var(--accent); font-weight: 600; }
+  .step-track .step.on .num { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .step-track .step.done .num { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .step-track .sep { width: 14px; height: 1px; background: var(--border-strong); }
+
+  .import-summary { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.8rem; color: var(--ink-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 10px 12px; }
+  .import-summary b { font-family: var(--font-mono); color: var(--ink); }
+  .import-table-wrap { max-height: 320px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-s); }
+  .import-table-wrap table { font-size: 0.8rem; }
+  .import-table-wrap thead th { position: sticky; top: 0; background: var(--surface); }
+  .import-table-wrap select { padding: 5px 6px; font-size: 0.78rem; }
+  .badge-dupe { font-size: 0.68rem; color: var(--status-warning); border: 1px solid currentColor; border-radius: 4px; padding: 1px 5px; margin-left: 6px; white-space: nowrap; }
 
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -887,6 +924,12 @@
 
   /* ============ transactions tab ============ */
   function renderTransactions() {
+    var importBtn = document.createElement("button");
+    importBtn.className = "btn";
+    importBtn.textContent = "카드내역 업로드";
+    importBtn.addEventListener("click", function () { openImportModal(); });
+    topbarActions.appendChild(importBtn);
+
     var addBtn = document.createElement("button");
     addBtn.className = "btn btn-primary";
     addBtn.textContent = "+ 거래 추가";
@@ -1042,6 +1085,364 @@
       render();
       showToast(isEdit ? "거래를 수정했습니다." : "거래를 추가했습니다.");
     });
+  }
+
+  /* ============ card statement import ============ */
+  var CSV_CATEGORY_RULES = [
+    { cat: "식비", kws: ["마트", "편의점", "gs25", "cu", "세븐일레븐", "이마트", "홈플러스", "롯데마트", "스타벅스", "커피", "카페", "식당", "분식", "치킨", "피자", "배달", "요기요", "배달의민족", "쿠팡이츠", "맥도날드", "버거", "김밥", "떡볶이", "국밥", "냉면", "베이커리", "파리바게뜨", "뚜레쥬르"] },
+    { cat: "주거", kws: ["월세", "관리비", "전기요금", "가스요금", "수도요금", "통신요금", "skt", "kt", "lgu", "아파트", "도시가스", "한국전력", "lh", "관리사무소"] },
+    { cat: "교통", kws: ["지하철", "버스", "택시", "카카오t", "대중교통", "주유", "주유소", "gs칼텍스", "에스오일", "철도", "코레일", "톨게이트", "하이패스", "티머니"] },
+    { cat: "문화/여가", kws: ["영화", "cgv", "메가박스", "롯데시네마", "넷플릭스", "멜론", "공연", "전시", "여행", "호텔", "항공", "골프", "헬스", "피트니스", "문화상품권", "유튜브", "플레이스토어", "게임"] },
+    { cat: "의료/교육", kws: ["병원", "약국", "의원", "치과", "한의원", "학원", "서점", "문고", "등록금", "교육"] }
+  ];
+  function guessCategory(memo) {
+    var s = (memo || "").toLowerCase();
+    for (var i = 0; i < CSV_CATEGORY_RULES.length; i++) {
+      var rule = CSV_CATEGORY_RULES[i];
+      for (var j = 0; j < rule.kws.length; j++) {
+        if (s.indexOf(rule.kws[j]) !== -1) return rule.cat;
+      }
+    }
+    return "기타";
+  }
+
+  function decodeFileText(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var offset = (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) ? 3 : 0;
+    var slice = buffer.slice(offset);
+    try {
+      return new TextDecoder("utf-8", { fatal: true }).decode(slice);
+    } catch (e) {
+      try { return new TextDecoder("euc-kr").decode(slice); }
+      catch (e2) { return new TextDecoder("utf-8").decode(slice); }
+    }
+  }
+
+  function parseCSV(text) {
+    var rows = [], row = [], field = "", inQuotes = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQuotes) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false; }
+        else field += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ",") { row.push(field); field = ""; }
+        else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+        else if (c === "\r") { /* skip; \n handles line end */ }
+        else field += c;
+      }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows.filter(function (r) { return r.length > 1 || (r.length === 1 && r[0].trim() !== ""); });
+  }
+
+  function parseFlexibleDate(raw) {
+    if (!raw) return null;
+    var s = String(raw).trim().split(/\s+/)[0];
+    var digits = s.replace(/[^0-9]/g, "");
+    var y, m, d;
+    if (digits.length === 8) { y = digits.slice(0, 4); m = digits.slice(4, 6); d = digits.slice(6, 8); }
+    else if (digits.length === 6) { y = "20" + digits.slice(0, 2); m = digits.slice(2, 4); d = digits.slice(4, 6); }
+    else {
+      var parts = s.split(/[.\-\/년월일\s]+/).filter(Boolean);
+      if (parts.length < 3) return null;
+      y = parts[0]; m = parts[1]; d = parts[2];
+      if (y.length === 2) y = "20" + y;
+      m = m.padStart(2, "0"); d = d.padStart(2, "0");
+    }
+    if (!/^\d{4}$/.test(y) || !/^\d{2}$/.test(m) || !/^\d{2}$/.test(d)) return null;
+    var iso = y + "-" + m + "-" + d;
+    var dt = new Date(iso);
+    if (isNaN(dt.getTime())) return null;
+    return iso;
+  }
+
+  function parseAmountValue(raw) {
+    if (raw == null) return NaN;
+    var s = String(raw).trim();
+    if (s === "") return NaN;
+    var neg = false;
+    if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+    if (s.indexOf("-") === 0) neg = true;
+    s = s.replace(/[^0-9.]/g, "");
+    if (s === "") return NaN;
+    var n = parseFloat(s);
+    if (isNaN(n)) return NaN;
+    return neg ? -Math.abs(n) : n;
+  }
+
+  var HEADER_HINTS = {
+    date: ["날짜", "일자", "이용일", "거래일", "승인일"],
+    memo: ["가맹점", "적요", "내용", "사용처", "상호", "거래내용", "memo", "name"],
+    amount: ["이용금액", "승인금액", "출금액", "거래금액", "결제금액", "금액", "amount"]
+  };
+  function guessColumn(headers, field) {
+    var hints = HEADER_HINTS[field];
+    for (var i = 0; i < headers.length; i++) {
+      var h = headers[i].toLowerCase();
+      for (var j = 0; j < hints.length; j++) {
+        if (h.indexOf(hints[j].toLowerCase()) !== -1) return i;
+      }
+    }
+    return -1;
+  }
+
+  function existingTxSignatures() {
+    var set = {};
+    data.transactions.forEach(function (t) {
+      set[t.date + "|" + t.amount + "|" + (t.memo || "").trim()] = true;
+    });
+    return set;
+  }
+
+  function openImportModal() {
+    var body = document.createElement("div");
+    var ctx = { step: 1, headers: [], rawRows: [], mapping: { date: -1, memo: -1, amount: -1 }, parsed: [] };
+    var modalEl = openModal(body);
+    modalEl.querySelector(".modal").classList.add("wide");
+    renderStep();
+
+    function stepTrackHtml() {
+      var labels = ["파일 업로드", "항목 확인", "가져오기"];
+      return '<div class="step-track">' + labels.map(function (l, i) {
+        var n = i + 1;
+        var cls = n === ctx.step ? "on" : (n < ctx.step ? "done" : "");
+        return (i > 0 ? '<span class="sep"></span>' : "") + '<span class="step ' + cls + '"><span class="num">' + n + '</span>' + l + '</span>';
+      }).join("") + "</div>";
+    }
+
+    function renderStep() {
+      body.innerHTML = "";
+      var head = document.createElement("div");
+      head.innerHTML = "<h2>카드내역 업로드</h2>" + stepTrackHtml();
+      head.querySelector("h2").style.marginBottom = "10px";
+      body.appendChild(head);
+      if (ctx.step === 1) renderStep1();
+      else if (ctx.step === 2) renderStep2();
+      else renderStep3();
+    }
+
+    function renderStep1() {
+      var p = document.createElement("p");
+      p.className = "desc";
+      p.textContent = "은행/카드사 앱이나 홈페이지에서 내려받은 거래내역 CSV 파일을 업로드하세요. 첫 번째 행은 제목(헤더) 행으로 인식합니다.";
+      body.appendChild(p);
+
+      var dz = document.createElement("label");
+      dz.className = "drop-zone";
+      dz.innerHTML = '<span class="dz-title">클릭하거나 파일을 끌어다 놓으세요</span><span class="dz-hint">.csv 파일 · EUC-KR / UTF-8 인코딩 모두 지원</span>' +
+        '<input type="file" accept=".csv,text/csv" id="import-file">';
+      body.appendChild(dz);
+
+      var errBox = document.createElement("p");
+      errBox.className = "desc";
+      errBox.style.color = "var(--status-critical)";
+      errBox.style.display = "none";
+      body.appendChild(errBox);
+
+      var foot = document.createElement("div");
+      foot.className = "modal-foot";
+      foot.innerHTML = '<button class="btn" id="imp-cancel">취소</button>';
+      body.appendChild(foot);
+      foot.querySelector("#imp-cancel").addEventListener("click", closeModal);
+
+      ["dragover", "dragenter"].forEach(function (ev) {
+        dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.add("drag"); });
+      });
+      ["dragleave", "drop"].forEach(function (ev) {
+        dz.addEventListener(ev, function (e) { dz.classList.remove("drag"); });
+      });
+      dz.addEventListener("drop", function (e) {
+        e.preventDefault();
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+      body.querySelector("#import-file").addEventListener("change", function (e) {
+        if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+      });
+
+      function handleFile(file) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var text = decodeFileText(reader.result);
+            var rows = parseCSV(text);
+            if (rows.length < 2) throw new Error("empty");
+            ctx.headers = rows[0].map(function (h) { return h.trim(); });
+            ctx.rawRows = rows.slice(1);
+            ctx.mapping.date = guessColumn(ctx.headers, "date");
+            ctx.mapping.memo = guessColumn(ctx.headers, "memo");
+            ctx.mapping.amount = guessColumn(ctx.headers, "amount");
+            ctx.step = 2;
+            renderStep();
+          } catch (err) {
+            errBox.textContent = "파일을 읽지 못했습니다. CSV 형식인지 확인해주세요.";
+            errBox.style.display = "block";
+          }
+        };
+        reader.onerror = function () {
+          errBox.textContent = "파일을 읽지 못했습니다.";
+          errBox.style.display = "block";
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function renderStep2() {
+      var p = document.createElement("p");
+      p.className = "desc";
+      p.textContent = "각 항목이 어느 열에 해당하는지 확인해주세요. 자동으로 추정된 값을 필요하면 변경할 수 있습니다.";
+      body.appendChild(p);
+
+      var wrap = document.createElement("div");
+      wrap.className = "field-row";
+      wrap.style.gridTemplateColumns = "1fr 1fr 1fr";
+      wrap.innerHTML =
+        mapField("date", "날짜 열") + mapField("memo", "가맹점/메모 열") + mapField("amount", "금액 열");
+      body.appendChild(wrap);
+
+      var previewWrap = document.createElement("div");
+      previewWrap.className = "import-table-wrap";
+      previewWrap.style.marginTop = "14px";
+      body.appendChild(previewWrap);
+      renderRawPreview();
+
+      var foot = document.createElement("div");
+      foot.className = "modal-foot";
+      foot.innerHTML = '<button class="btn" id="imp-back">이전</button><button class="btn btn-primary" id="imp-next">다음</button>';
+      body.appendChild(foot);
+      foot.querySelector("#imp-back").addEventListener("click", function () { ctx.step = 1; renderStep(); });
+      foot.querySelector("#imp-next").addEventListener("click", function () {
+        if (ctx.mapping.date < 0 || ctx.mapping.memo < 0 || ctx.mapping.amount < 0) { showToast("날짜, 메모, 금액 열을 모두 선택해주세요."); return; }
+        buildParsedRows();
+        ctx.step = 3;
+        renderStep();
+      });
+
+      wrap.querySelectorAll("select").forEach(function (sel) {
+        sel.addEventListener("change", function () { ctx.mapping[sel.dataset.field] = Number(sel.value); renderRawPreview(); });
+      });
+
+      function mapField(field, label) {
+        var opts = ctx.headers.map(function (h, i) {
+          return '<option value="' + i + '"' + (ctx.mapping[field] === i ? " selected" : "") + ">" + escapeHtml(h || "(열 " + (i + 1) + ")") + "</option>";
+        }).join("");
+        return '<div class="field"><label>' + label + '</label><select data-field="' + field + '"><option value="-1">선택 안함</option>' + opts + "</select></div>";
+      }
+      function renderRawPreview() {
+        var sampleRows = ctx.rawRows.slice(0, 5);
+        var table = '<table><thead><tr>' + ctx.headers.map(function (h, i) {
+          var tag = i === ctx.mapping.date ? " (날짜)" : i === ctx.mapping.memo ? " (메모)" : i === ctx.mapping.amount ? " (금액)" : "";
+          return "<th>" + escapeHtml(h || "열" + (i + 1)) + tag + "</th>";
+        }).join("") + "</tr></thead><tbody>" +
+          sampleRows.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + escapeHtml(c) + "</td>"; }).join("") + "</tr>"; }).join("") +
+          "</tbody></table>";
+        previewWrap.innerHTML = table;
+      }
+    }
+
+    function buildParsedRows() {
+      var seen = existingTxSignatures();
+      ctx.parsed = ctx.rawRows.map(function (r) {
+        var dateRaw = r[ctx.mapping.date];
+        var memoRaw = (r[ctx.mapping.memo] || "").trim();
+        var amtRaw = parseAmountValue(r[ctx.mapping.amount]);
+        var date = parseFlexibleDate(dateRaw);
+        var amount = isNaN(amtRaw) ? NaN : Math.abs(Math.round(amtRaw));
+        var valid = !!date && !isNaN(amount) && amount > 0;
+        var dupe = valid && !!seen[date + "|" + amount + "|" + memoRaw];
+        return {
+          date: date, memo: memoRaw, amount: amount, valid: valid, negative: amtRaw < 0,
+          category: guessCategory(memoRaw), dupe: dupe, include: valid && !dupe
+        };
+      });
+    }
+
+    function renderStep3() {
+      var validRows = ctx.parsed.filter(function (r) { return r.valid; });
+      var invalidCount = ctx.parsed.length - validRows.length;
+      var dupeCount = validRows.filter(function (r) { return r.dupe; }).length;
+
+      var summary = document.createElement("div");
+      summary.className = "import-summary";
+      summary.id = "imp-summary";
+      body.appendChild(summary);
+
+      var actionsRow = document.createElement("div");
+      actionsRow.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px 0;";
+      actionsRow.innerHTML = '<label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--ink-secondary);"><input type="checkbox" id="imp-toggle-all"> 전체 선택/해제</label>' +
+        '<span class="desc" style="margin:0;">' + (invalidCount > 0 ? invalidCount + "건은 날짜/금액을 인식하지 못해 제외했습니다." : "") + "</span>";
+      body.appendChild(actionsRow);
+
+      var tableWrap = document.createElement("div");
+      tableWrap.className = "import-table-wrap";
+      var table = document.createElement("table");
+      table.innerHTML = "<thead><tr><th></th><th>날짜</th><th>메모</th><th>카테고리</th><th class=\"num\">금액</th></tr></thead>";
+      var tbody = document.createElement("tbody");
+      validRows.forEach(function (row, idx) {
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td><input type="checkbox" data-idx="' + idx + '" ' + (row.include ? "checked" : "") + '></td>' +
+          '<td class="mono">' + fmtDate(row.date) + "</td>" +
+          '<td>' + escapeHtml(row.memo || "-") + (row.dupe ? '<span class="badge-dupe">중복 추정</span>' : "") + (row.negative ? '<span class="badge-dupe" style="color:var(--ink-muted)">환불 추정</span>' : "") + "</td>" +
+          '<td><select data-cat-idx="' + idx + '">' + EXPENSE_CATEGORIES.map(function (c) { return '<option value="' + c.key + '"' + (c.key === row.category ? " selected" : "") + ">" + c.key + "</option>"; }).join("") + "</select></td>" +
+          '<td class="num amount out">' + fmtWon(row.amount) + "</td>";
+        tbody.appendChild(tr);
+      });
+      if (validRows.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">가져올 수 있는 항목이 없습니다.</td></tr>';
+      }
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      body.appendChild(tableWrap);
+
+      var foot = document.createElement("div");
+      foot.className = "modal-foot";
+      foot.innerHTML = '<button class="btn" id="imp-back">이전</button><button class="btn btn-primary" id="imp-confirm">가져오기</button>';
+      body.appendChild(foot);
+
+      tableWrap.querySelectorAll("input[type=checkbox]").forEach(function (cb) {
+        cb.addEventListener("change", function () { validRows[Number(cb.dataset.idx)].include = cb.checked; updateSummary(); });
+      });
+      tableWrap.querySelectorAll("select[data-cat-idx]").forEach(function (sel) {
+        sel.addEventListener("change", function () { validRows[Number(sel.dataset.catIdx)].category = sel.value; });
+      });
+      var toggleAll = actionsRow.querySelector("#imp-toggle-all");
+      toggleAll.addEventListener("change", function () {
+        validRows.forEach(function (r) { r.include = toggleAll.checked; });
+        tableWrap.querySelectorAll("input[type=checkbox]").forEach(function (cb) { cb.checked = toggleAll.checked; });
+        updateSummary();
+      });
+
+      foot.querySelector("#imp-back").addEventListener("click", function () { ctx.step = 2; renderStep(); });
+      foot.querySelector("#imp-confirm").addEventListener("click", function () {
+        var picked = validRows.filter(function (r) { return r.include; });
+        if (picked.length === 0) { showToast("가져올 항목을 선택해주세요."); return; }
+        var monthTally = {};
+        picked.forEach(function (r) {
+          data.transactions.push({ id: uid(), type: "expense", date: r.date, category: r.category, amount: r.amount, memo: r.memo });
+          var mk = monthKeyOf(r.date);
+          monthTally[mk] = (monthTally[mk] || 0) + 1;
+        });
+        saveData();
+        var total = picked.reduce(function (s, r) { return s + r.amount; }, 0);
+        var topMonth = Object.keys(monthTally).sort(function (a, b) { return monthTally[b] - monthTally[a]; })[0];
+        closeModal();
+        state.dashMonth = topMonth;
+        setTab("dashboard");
+        showToast("카드 지출 " + picked.length + "건 · 합계 " + fmtWon(total) + "을(를) 가져왔습니다.");
+      });
+
+      updateSummary();
+      function updateSummary() {
+        var included = validRows.filter(function (r) { return r.include; });
+        var total = included.reduce(function (s, r) { return s + r.amount; }, 0);
+        summary.innerHTML =
+          "인식 <b>" + ctx.parsed.length + "건</b> · 유효 <b>" + validRows.length + "건</b>" +
+          (dupeCount > 0 ? " · 중복 추정 <b>" + dupeCount + "건</b>" : "") +
+          " · 선택 <b>" + included.length + "건</b> · 선택 합계 <b>" + fmtWon(total) + "</b>";
+      }
+    }
   }
 
   /* ============ assets tab ============ */
