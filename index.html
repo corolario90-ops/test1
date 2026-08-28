@@ -925,6 +925,21 @@
 
   /* ============ transactions tab ============ */
   function renderTransactions() {
+    var clearBtn = document.createElement("button");
+    clearBtn.className = "btn btn-danger";
+    clearBtn.textContent = "거래내역 초기화";
+    clearBtn.addEventListener("click", function () {
+      if (data.transactions.length === 0) { showToast("삭제할 거래 내역이 없습니다."); return; }
+      confirmModal("거래내역 초기화", "등록된 모든 거래 내역(수입·지출)을 삭제합니다. 자산 정보는 유지됩니다. 되돌릴 수 없습니다.", function () {
+        data.transactions = [];
+        saveData();
+        state.txFilter = { month: "all", type: "all", cat: "all", q: "" };
+        render();
+        showToast("거래내역을 모두 초기화했습니다.");
+      });
+    });
+    topbarActions.appendChild(clearBtn);
+
     var importBtn = document.createElement("button");
     importBtn.className = "btn";
     importBtn.textContent = "카드내역 업로드";
