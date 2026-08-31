@@ -33,9 +33,11 @@
 
     --cat-food: #eb6834;
     --cat-housing: #1baf7a;
-    --cat-transport: #eda100;
+    --cat-telecom: #008300;
+    --cat-transit: #eda100;
+    --cat-car: #e34948;
     --cat-leisure: #e87ba4;
-    --cat-health: #008300;
+    --cat-health: #2a78d6;
     --cat-etc: #4a3aa7;
 
     --asset-cash: #eb6834;
@@ -82,9 +84,11 @@
 
       --cat-food: #d95926;
       --cat-housing: #199e70;
-      --cat-transport: #c98500;
+      --cat-telecom: #2fa32f;
+      --cat-transit: #c98500;
+      --cat-car: #e66767;
       --cat-leisure: #d55181;
-      --cat-health: #2fa32f;
+      --cat-health: #3987e5;
       --cat-etc: #9085e9;
 
       --asset-cash: #d95926;
@@ -124,9 +128,11 @@
 
     --cat-food: #d95926;
     --cat-housing: #199e70;
-    --cat-transport: #c98500;
+    --cat-telecom: #2fa32f;
+    --cat-transit: #c98500;
+    --cat-car: #e66767;
     --cat-leisure: #d55181;
-    --cat-health: #2fa32f;
+    --cat-health: #3987e5;
     --cat-etc: #9085e9;
 
     --asset-cash: #d95926;
@@ -483,11 +489,14 @@
   var EXPENSE_CATEGORIES = [
     { key: "식비", var: "--cat-food" },
     { key: "주거", var: "--cat-housing" },
-    { key: "교통", var: "--cat-transport" },
+    { key: "통신", var: "--cat-telecom" },
+    { key: "대중교통", var: "--cat-transit" },
+    { key: "자차", var: "--cat-car" },
     { key: "문화/여가", var: "--cat-leisure" },
     { key: "의료/교육", var: "--cat-health" },
     { key: "기타", var: "--cat-etc" }
   ];
+  var LEGACY_CATEGORY_MAP = { "교통": "대중교통" };
   var ASSET_CATEGORIES = [
     { key: "cash", label: "현금", var: "--asset-cash" },
     { key: "deposit", label: "예금/적금", var: "--asset-deposit" },
@@ -508,6 +517,7 @@
   /* ============ state ============ */
   var state = { tab: "dashboard", dashMonth: null, txFilter: { month: "all", type: "all", cat: "all", q: "" } };
   var data = loadData();
+  saveData();
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
   function todayStr() { return new Date().toISOString().slice(0, 10); }
@@ -517,9 +527,17 @@
   function loadData() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) return migrateData(JSON.parse(raw));
     } catch (e) { /* ignore corrupt storage */ }
     return seedData();
+  }
+  function migrateData(d) {
+    if (d && Array.isArray(d.transactions)) {
+      d.transactions.forEach(function (t) {
+        if (LEGACY_CATEGORY_MAP[t.category]) t.category = LEGACY_CATEGORY_MAP[t.category];
+      });
+    }
+    return d;
   }
   function saveData() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ }
@@ -534,8 +552,10 @@
         { id: uid(), type: "income", date: m + "-01", category: "급여", amount: 3200000, memo: "8월 급여" },
         { id: uid(), type: "income", date: m + "-15", category: "부수입", amount: 150000, memo: "프리랜서 원고료" },
         { id: uid(), type: "expense", date: m + "-03", category: "주거", amount: 800000, memo: "월세" },
+        { id: uid(), type: "expense", date: m + "-04", category: "통신", amount: 65000, memo: "휴대폰 요금" },
         { id: uid(), type: "expense", date: m + "-05", category: "식비", amount: 62000, memo: "장보기" },
-        { id: uid(), type: "expense", date: m + "-08", category: "교통", amount: 45000, memo: "대중교통" },
+        { id: uid(), type: "expense", date: m + "-08", category: "대중교통", amount: 45000, memo: "지하철·버스" },
+        { id: uid(), type: "expense", date: m + "-09", category: "자차", amount: 70000, memo: "주유" },
         { id: uid(), type: "expense", date: m + "-12", category: "문화/여가", amount: 38000, memo: "영화" },
         { id: uid(), type: "expense", date: m + "-18", category: "의료/교육", amount: 90000, memo: "치과 진료" },
         { id: uid(), type: "expense", date: m + "-20", category: "식비", amount: 54000, memo: "외식" },
@@ -543,7 +563,7 @@
         { id: uid(), type: "income", date: pm + "-01", category: "급여", amount: 3200000, memo: "급여" },
         { id: uid(), type: "expense", date: pm + "-04", category: "주거", amount: 800000, memo: "월세" },
         { id: uid(), type: "expense", date: pm + "-10", category: "식비", amount: 210000, memo: "식비 합계" },
-        { id: uid(), type: "expense", date: pm + "-14", category: "교통", amount: 61000, memo: "교통비" },
+        { id: uid(), type: "expense", date: pm + "-14", category: "대중교통", amount: 61000, memo: "교통비" },
         { id: uid(), type: "expense", date: pm + "-19", category: "문화/여가", amount: 72000, memo: "여가" },
         { id: uid(), type: "income", date: ppm + "-01", category: "급여", amount: 3150000, memo: "급여" },
         { id: uid(), type: "expense", date: ppm + "-06", category: "식비", amount: 245000, memo: "식비 합계" },
@@ -1106,8 +1126,10 @@
   /* ============ card statement import ============ */
   var CSV_CATEGORY_RULES = [
     { cat: "식비", kws: ["마트", "편의점", "gs25", "cu", "세븐일레븐", "이마트", "홈플러스", "롯데마트", "스타벅스", "커피", "카페", "식당", "분식", "치킨", "피자", "배달", "요기요", "배달의민족", "쿠팡이츠", "맥도날드", "버거", "김밥", "떡볶이", "국밥", "냉면", "베이커리", "파리바게뜨", "뚜레쥬르"] },
-    { cat: "주거", kws: ["월세", "관리비", "전기요금", "가스요금", "수도요금", "통신요금", "skt", "kt", "lgu", "아파트", "도시가스", "한국전력", "lh", "관리사무소"] },
-    { cat: "교통", kws: ["지하철", "버스", "택시", "카카오t", "대중교통", "주유", "주유소", "gs칼텍스", "에스오일", "철도", "코레일", "톨게이트", "하이패스", "티머니"] },
+    { cat: "주거", kws: ["월세", "관리비", "전기요금", "가스요금", "수도요금", "아파트", "도시가스", "한국전력", "lh", "관리사무소"] },
+    { cat: "통신", kws: ["통신요금", "통신비", "skt", "kt", "lgu", "lg유플러스", "알뜰폰", "휴대폰", "핸드폰요금", "인터넷요금", "kt이엔지", "sk텔레콤"] },
+    { cat: "대중교통", kws: ["지하철", "버스", "택시", "카카오t", "대중교통", "철도", "코레일", "티머니", "간선버스", "마을버스"] },
+    { cat: "자차", kws: ["주유", "주유소", "gs칼텍스", "에스오일", "s-oil", "현대오일뱅크", "톨게이트", "하이패스", "주차", "정비", "카센터", "자동차보험", "세차", "타이어"] },
     { cat: "문화/여가", kws: ["영화", "cgv", "메가박스", "롯데시네마", "넷플릭스", "멜론", "공연", "전시", "여행", "호텔", "항공", "골프", "헬스", "피트니스", "문화상품권", "유튜브", "플레이스토어", "게임"] },
     { cat: "의료/교육", kws: ["병원", "약국", "의원", "치과", "한의원", "학원", "서점", "문고", "등록금", "교육"] }
   ];
@@ -1658,7 +1680,7 @@
       try {
         var parsed = JSON.parse(raw);
         if (!parsed || !Array.isArray(parsed.transactions) || !Array.isArray(parsed.assets)) throw new Error("shape");
-        data = parsed;
+        data = migrateData(parsed);
         saveData();
         closeModal();
         render();
