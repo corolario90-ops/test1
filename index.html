@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>포켓몬 한글 모험</title>
+<title>몬스터 한글 모험</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="포켓몬 한글">
+<meta name="apple-mobile-web-app-title" content="몬스터 한글">
+<meta name="robots" content="noindex, nofollow, noimageindex, noarchive">
 <meta name="theme-color" content="#CDEEFF">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -416,7 +417,7 @@ img.mon.photo { object-fit: contain; -webkit-user-drag: none; pointer-events: no
 <div id="app">
   <header class="bar">
     <button class="chip" id="homeBtn" aria-label="처음 화면으로"><span class="pball"></span>처음</button>
-    <h1 id="barTitle">포켓몬 한글 모험</h1>
+    <h1 id="barTitle">몬스터 한글 모험</h1>
     <button class="chip" id="dexBtn" aria-label="포켓몬 도감 보기">도감 <b id="dexCount">0</b></button>
   </header>
   <main id="stage"></main>
@@ -1359,7 +1360,7 @@ function showStarter() {
 function showHome() {
   if (!S.partner) return showStarter();
   current = 'home';
-  setTitle('포켓몬 한글 모험');
+  setTitle('몬스터 한글 모험');
   const p = S.partner, m = MON_BY[p.id];
   const nx = nextNode();
   const caughtN = Object.keys(S.caught).length;
@@ -2139,7 +2140,7 @@ function showParent() {
       useActive(); persist(); updateBar();
       go(showParent);
       $('#bkMsg').textContent = `불러왔어요! 모험 기록 ${Object.keys(STORE.slots).length}개를 합쳤어요.`;
-    } catch (e) { bkMsg('이 파일은 포켓몬 한글 모험 기록 파일이 아니에요.'); }
+    } catch (e) { bkMsg('이 파일은 몬스터 한글 모험 기록 파일이 아니에요.'); }
     bkFile.value = '';
   };
   const artSel = $('#artSel');
@@ -2182,7 +2183,7 @@ async function saveBackup(msg) {
     }
     const file = new File([data], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: '포켓몬 한글 모험 기록' });
+      await navigator.share({ files: [file], title: '몬스터 한글 모험 기록' });
       msg('공유 창에서 "파일에 저장"을 고르면 기록 파일이 남아요.');
       return;
     }
