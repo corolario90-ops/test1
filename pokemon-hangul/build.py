@@ -16,6 +16,9 @@ FONTS = [('Jua', 400, 'jua'), ('Noto Sans KR', 500, 'noto-500'), ('Noto Sans KR'
          ('Hi Melody', 400, 'hi-melody'), ('Gamja Flower', 400, 'gamja-flower'), ('Nanum Pen Script', 400, 'nanum-pen')]
 faces = '\n'.join(f'@font-face {{ font-family: "{f}"; font-weight: {w}; font-style: normal; font-display: swap; src: url("fonts/{n}.woff2") format("woff2"); }}' for f, w, n in FONTS)
 app = body.replace("/*BUILD*/'artifact'", "'app'")
+# 공개 사이트에서는 앱 이름에 상표 '포켓몬'을 쓰지 않음 (게임 안의 포켓몬 이름은 그대로)
+APP_NAME, APP_SHORT = '몬스터 한글 모험', '몬스터 한글'
+app = app.replace('포켓몬 한글 모험', APP_NAME)
 title = re.search(r'<title>.*?</title>', app).group(0)
 app = re.sub(r'<title>.*?</title>\n', '', app, count=1)
 app = re.sub(r'<meta name="claude:viewport-fit-sides"[^>]*>\n', '', app)
@@ -30,7 +33,8 @@ head = f'''<!doctype html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="포켓몬 한글">
+<meta name="apple-mobile-web-app-title" content="{APP_SHORT}">
+<meta name="robots" content="noindex, nofollow, noimageindex, noarchive">
 <meta name="theme-color" content="#CDEEFF">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -48,7 +52,7 @@ out = os.path.join(HERE, 'pwa')
 os.makedirs(out, exist_ok=True)
 open(os.path.join(out, 'index.html'), 'w', encoding='utf8').write(head + app + '\n</body>\n</html>\n')
 json.dump({
-    'name': '포켓몬 한글 모험', 'short_name': '포켓몬 한글', 'lang': 'ko',
+    'name': APP_NAME, 'short_name': APP_SHORT, 'lang': 'ko',
     'start_url': './', 'scope': './', 'display': 'standalone', 'orientation': 'any',
     'background_color': '#CDEEFF', 'theme_color': '#CDEEFF',
     'icons': [{'src': 'icons/icon-192.png', 'sizes': '192x192', 'type': 'image/png'},
