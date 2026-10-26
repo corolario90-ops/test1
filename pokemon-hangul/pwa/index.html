@@ -223,6 +223,17 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 4px s
 .wrong { animation: shake .45s ease; background: var(--berry) !important; }
 .reveal { outline: 5px dashed var(--good); outline-offset: 4px; }
 
+/* 이름 글자 칸 */
+.slots { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.slot {
+  display: grid; place-items: center; width: clamp(50px, 6.4vw, 72px); aspect-ratio: 1;
+  font-family: var(--letter); font-weight: 700; font-size: clamp(30px, 4.2vw, 46px);
+  border: 3px dashed var(--ink-soft); border-radius: 16px; background: var(--white);
+}
+.slot.done { border-style: solid; border-color: var(--ink); background: var(--volt); animation: pop .35s ease; }
+.slot.done.miss { background: #FFE1E8; }
+.slot.cur { border-color: var(--ball); border-style: solid; }
+
 /* 글자 만들기 */
 .target { font-family: var(--letter); font-weight: 700; font-size: clamp(76px, 12vw, 130px); line-height: 1; color: var(--ball); }
 .equation { display: flex; align-items: center; gap: 8px; font-size: 40px; color: var(--ink-soft); flex-wrap: wrap; justify-content: center; }
@@ -317,6 +328,15 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 4px s
 .parent h2 { margin: 0 0 10px; font-family: var(--display); font-weight: 400; font-size: 26px; }
 .parent p, .parent li { font-size: 16px; line-height: 1.6; color: var(--ink); }
 .parent .muted { color: var(--ink-soft); }
+.advlist { display: grid; gap: 10px; margin: 10px 0; }
+.advrow { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border: 2px solid var(--line); border-radius: 16px; background: var(--white); }
+.advrow.on { border-color: var(--good); }
+.advpic { width: 56px; height: 56px; display: grid; place-items: center; }
+.advinfo { min-width: 0; font-size: 16px; }
+.advinfo b { font-family: var(--display); font-weight: 400; font-size: 20px; }
+.advinfo small { display: block; color: var(--ink-soft); font-size: 14px; }
+.advnow { font-family: var(--display); font-size: 16px; color: var(--good); }
+.warnbox { padding: 10px 12px; border-radius: 12px; background: #FFF1D6; border: 2px solid #F2C94C; }
 .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .kpis div { padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--white); }
 .kpis b { display: block; font-family: var(--display); font-weight: 400; font-size: 28px; font-variant-numeric: tabular-nums; }
@@ -380,6 +400,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 4px s
   .arena { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
   .starters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .advrow { grid-template-columns: 48px minmax(0, 1fr); }
+  .advrow > :last-child { grid-column: 1 / -1; justify-self: start; }
 }
 @media (max-width: 520px) {
   .menu { grid-template-columns: minmax(0, 1fr); }
@@ -692,18 +714,6 @@ const KIND = {
   league:  { t: '포켓몬 리그', ic: '리그', n: 6 }
 };
 const NODES = UNITS.flatMap((u, i) => KINDS.map(k => `${i + 1}-${k}`));
-
-/* ================= 낱말 (그림과 함께 읽기) ================= */
-const WORDS = [
-  ['아이','👶'],['오이','🥒'],['아기','👶'],['고기','🍖'],['구두','👞'],['누나','👧'],['도구','🔨'],['이','🦷'],['귀','👂'],
-  ['다리','🦵'],['오리','🦆'],['나무','🌳'],['머리','💇'],['바나나','🍌'],['버스','🚌'],['소','🐄'],['비','🌧️'],['거미','🕷️'],['고구마','🍠'],['라디오','📻'],['사다리','🪜'],['무','🥕'],['미소','😊'],['모기','🦟'],['드럼','🥁'],
-  ['모자','🧢'],['사자','🦁'],['하마','🦛'],['새','🐦'],['배','🍐'],['게','🦀'],['개','🐕'],['지도','🗺️'],['바지','👖'],['해','☀️'],['노래','🎤'],['세모','🔺'],['네모','⬜'],['자','📏'],['호두','🌰'],['조개','🐚'],['재','🌋'],
-  ['기차','🚂'],['포도','🍇'],['토마토','🍅'],['피자','🍕'],['코','👃'],['치마','👗'],['고추','🌶️'],['커피','☕'],['카메라','📷'],['피아노','🎹'],['치즈','🧀'],['스키','⛷️'],['파','🧅'],['코코아','🍫'],['타조','🦤'],['케이크','🎂'],['코피','🩸'],
-  ['우유','🥛'],['여우','🦊'],['요요','🪀'],['야구','⚾'],['휴지','🧻'],['표','🎫'],['요리','🍳'],['유리','🪟'],['교회','⛪'],['여자','👩'],
-  ['토끼','🐰'],['아빠','👨'],['오빠','👦'],['꼬리','🐾'],['뿌리','🌱'],['씨','🌰'],['떡','🍡'],['꼬마','🧒'],['까치','🐦‍⬛'],['쓰레기','🗑️'],['찌개','🍲'],['뼈','🦴'],
-  ['사탕','🍬'],['공','⚽'],['곰','🐻'],['문','🚪'],['눈','⛄'],['강아지','🐶'],['고양이','🐱'],['바람','🌬️'],['사슴','🦌'],['엄마','👩'],['기린','🦒'],['비행기','✈️'],['수영','🏊'],['상자','📦'],['우산','☂️'],['손','✋'],['사과나무','🌳'],['라면','🍜'],['컴퓨터','💻'],['풍선','🎈'],['동그라미','⭕'],['자전거','🚲'],['병아리','🐤'],['반지','💍'],['선물','🎁'],
-  ['사과','🍎'],['수박','🍉'],['딸기','🍓'],['물','💧'],['별','⭐'],['달','🌙'],['밥','🍚'],['책','📚'],['꽃','🌸'],['연필','✏️'],['자동차','🚗'],['의자','🪑'],['시계','⏰'],['병원','🏥'],['학교','🏫'],['원숭이','🐒'],['돼지','🐷'],['귤','🍊'],['옷','👕'],['닭','🐔'],['돌고래','🐬'],['거북이','🐢'],['양말','🧦'],['국수','🍝'],['빵','🍞'],['발','🦶'],['얼굴','😀'],['물고기','🐟'],['왕관','👑']
-].map(([w, e]) => ({ w, e, u: wordUnit(w) }));
 
 /* ================= 포켓몬 =================
    번호|이름|몸 색|몸 모양|그림 옵션 (전국도감 번호 순서) */
@@ -1041,10 +1051,11 @@ function badgeSvg(i, on = true) {
 /* ================= 소리 ================= */
 let voices = [];
 const loadVoices = () => { try { voices = speechSynthesis.getVoices().filter(v => /^ko/i.test(v.lang)); } catch (e) { voices = []; } };
+const voiceTier = v => /premium|고급/i.test(v.name) ? '고급' : /enhanced|향상/i.test(v.name) ? '향상됨' : '기본';
 const voiceScore = v => (/premium|고급/i.test(v.name) ? 40 : 0) + (/enhanced|향상/i.test(v.name) ? 30 : 0) + (/yuna|유나/i.test(v.name) ? 10 : 0) + (v.localService ? 2 : 0);
 function pickVoice() {
   if (!voices.length) return null;
-  const chosen = S.settings.voice && voices.find(v => v.name === S.settings.voice);
+  const chosen = STORE.settings.voice && voices.find(v => v.name === STORE.settings.voice);
   return chosen || voices.slice().sort((p, q) => voiceScore(q) - voiceScore(p))[0];
 }
 if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
@@ -1058,7 +1069,7 @@ function say(text, slow = false) {
     const u = new SpeechSynthesisUtterance(t);
     u.lang = 'ko-KR';
     const v = pickVoice(); if (v) u.voice = v;
-    u.rate = Math.max(.5, (S.settings.rate || .9) * (slow ? .85 : 1));
+    u.rate = Math.max(.5, (STORE.settings.rate || .9) * (slow ? .85 : 1));
     u.pitch = 1;
     if (s.speaking || s.pending) { s.cancel(); setTimeout(() => s.speak(u), 80); } else s.speak(u);
   } catch (e) { /* 소리 없이 진행 */ }
@@ -1120,10 +1131,47 @@ try {
   if (o && o.caught) for (const [n, c] of Object.entries(o.caught)) if (MON_BY[n] && !S.caught[n]) S.caught[n] = { n: c, s: 0, t: Date.now() };
 } catch (e) { /* 예전 기록 없음 */ }
 
+/* 모험 기록(슬롯) 여러 개를 한 번에 보관. 새 모험을 시작해도 예전 기록은 남아 있어서 언제든 이어 할 수 있음 */
+const LS_STORE = 'pokemon-hangul.v3';
+const blankStore = () => ({ v: 3, active: 'main', slots: {}, settings: { rate: .9, voice: '' }, updated: 0 });
+let STORE = blankStore();
+function mergeStore(a, b) {
+  const r = clone(a);
+  if (!b || typeof b !== 'object') return r;
+  for (const [id, sl] of Object.entries(b.slots || {})) {
+    if (!sl || !sl.state) continue;
+    const x = r.slots[id];
+    r.slots[id] = x ? { created: Math.min(x.created || Infinity, sl.created || Infinity), state: merge(x.state, sl.state) } : { created: sl.created || Date.now(), state: merge(blank(), sl.state) };
+  }
+  if ((b.updated || 0) > (a.updated || 0) && b.settings) r.settings = { ...r.settings, ...b.settings };
+  if (!r.slots[r.active]) r.active = b.active && r.slots[b.active] ? b.active : (Object.keys(r.slots)[0] || 'main');
+  r.updated = Math.max(a.updated || 0, b.updated || 0);
+  return r;
+}
+// 예전 버전(기록 한 개)은 '처음 모험'으로 옮김
+function importLegacy(state) {
+  if (!state || state.v !== 2) return;
+  const sl = STORE.slots.main;
+  STORE.slots.main = { created: sl ? sl.created : Date.now(), state: merge(sl ? sl.state : blank(), state) };
+  if (state.settings && !STORE.settings.voice && state.settings.voice) STORE.settings = { ...STORE.settings, ...state.settings };
+}
+function useActive() {
+  if (!STORE.slots[STORE.active]) STORE.slots[STORE.active] = { created: Date.now(), state: blank() };
+  S = STORE.slots[STORE.active].state = merge(blank(), STORE.slots[STORE.active].state);
+}
+try { const st = JSON.parse(localStorage.getItem(LS_STORE)); if (st && st.v === 3) STORE = mergeStore(blankStore(), st); } catch (e) { /* 처음 */ }
+try { importLegacy(JSON.parse(localStorage.getItem(LS_KEY))); } catch (e) { /* 예전 기록 없음 */ }
+useActive();
+try {
+  const o = JSON.parse(localStorage.getItem(LS_OLD));
+  if (o && o.caught && STORE.active === 'main') for (const [n, c] of Object.entries(o.caught)) if (MON_BY[n] && !S.caught[n]) S.caught[n] = { n: c, s: 0, t: Date.now() };
+} catch (e) { /* 예전 기록 없음 */ }
+
 let dbRef = null, saving = false, dirty = false, saveTimer = 0;
 function persist() {
-  S.updated = Date.now();
-  try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) { /* 계정 저장으로 */ }
+  S.updated = STORE.updated = Date.now();
+  STORE.slots[STORE.active].state = S;
+  try { localStorage.setItem(LS_STORE, JSON.stringify(STORE)); } catch (e) { /* 계정 저장으로 */ }
   dirty = true;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flush, 1200);
@@ -1131,10 +1179,21 @@ function persist() {
 async function flush() {
   if (!dbRef || saving || !dirty) return;
   saving = true; dirty = false;
-  try { await dbRef.set({ state: clone(S) }); }
+  try { await dbRef.set({ store: clone(STORE) }); }
   catch (e) { if (!e || e.code === 'unavailable' || e.code === 'resource_exhausted') { dirty = true; setTimeout(flush, 4000 + Math.random() * 3000); } }
   saving = false;
   if (dirty) flush();
+}
+function newAdventure() {
+  const id = 's' + Date.now().toString(36);
+  STORE.slots[id] = { created: Date.now(), state: blank() };
+  STORE.active = id;
+  useActive(); persist();
+}
+function switchAdventure(id) {
+  if (!STORE.slots[id]) return;
+  STORE.active = id;
+  useActive(); persist();
 }
 (async () => {
   try {
@@ -1145,10 +1204,13 @@ async function flush() {
     if (!id) return;
     dbRef = db.doc(`data/users/${id}/progress`);
     const snap = await dbRef.get();
-    if (snap.exists && snap.data() && snap.data().state) {
-      const before = JSON.stringify(S);
-      S = merge(S, snap.data().state);
-      if (JSON.stringify(S) !== before && ['home', 'map', 'dex', 'badges', 'parent', 'starter'].includes(current)) rerender();
+    const d = snap.exists && snap.data();
+    if (d) {
+      const before = JSON.stringify(STORE);
+      if (d.store) STORE = mergeStore(STORE, d.store);
+      else if (d.state) importLegacy(d.state);
+      useActive();
+      if (JSON.stringify(STORE) !== before && ['home', 'map', 'dex', 'badges', 'parent', 'starter'].includes(current)) rerender();
     }
     dirty = true; flush();
   } catch (e) { /* 계정 저장 없이 이 기기에만 */ }
@@ -1215,7 +1277,9 @@ function showStarter() {
     <div class="starter">
       <div class="bubble">함께 모험할 포켓몬을 골라 줘!</div>
       <div class="starters">${STARTERS.map(n => `<button data-n="${n}"><span class="pic">${art(MON_BY[n])}</span>${n}</button>`).join('')}</div>
+      ${Object.values(STORE.slots).some(sl => sl.state.partner) ? '<button class="linkish" id="toSlots">예전 모험 이어 하기</button>' : ''}
     </div>`;
+  const ts = $('#toSlots'); if (ts) ts.onclick = () => go(showParent);
   stage.querySelector('.starters').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     const n = b.dataset.n;
@@ -1300,33 +1364,6 @@ function showMap() {
 }
 
 /* ================= 문제 만들기 ================= */
-function unitSyllables(u) {
-  const U = UNITS[u - 1];
-  const C = [...allowed(u, 'C')].map(j => CHO.indexOf(j));
-  const V = [...allowed(u, 'V')].map(j => JUNG.indexOf(j)).filter(v => u >= 8 || ![9, 10, 14, 15, 19, 3, 7].includes(v));
-  const basicV = V.filter(v => [0, 4, 8, 13, 18, 20].includes(v));
-  const basicC = C.filter(c => ![1, 4, 8, 10, 13].includes(c));
-  const out = new Set();
-  const newC = [...U.C].map(j => CHO.indexOf(j)), newV = [...U.V].map(j => JUNG.indexOf(j)), newJ = [...U.J].map(j => JONG.indexOf(j));
-  for (const c of newC) for (const v of V) out.add(com(c, v));
-  for (const v of newV) for (const c of (u >= 8 ? basicC : C)) out.add(com(c, v));
-  for (const j of newJ) for (const c of basicC) for (const v of basicV) out.add(com(c, v, j));
-  // 실제 낱말·포켓몬 이름에 나오는 글자를 더 자주
-  const real = [...WORDS.map(w => w.w), ...MON.map(m => m.n)].flatMap(w => [...w]).filter(ch => sylUnit(ch) === u);
-  for (const ch of real) out.add(ch);
-  return [...out];
-}
-const realSyllables = u => [...new Set([...WORDS.map(w => w.w), ...MON.map(m => m.n)].flatMap(w => [...w]).filter(ch => sylUnit(ch) === u))];
-function pickSyllables(u, n) {
-  const pool = unitSyllables(u), real = realSyllables(u);
-  const out = [];
-  while (out.length < n) {
-    const src = real.length && Math.random() < .5 ? real : pool;
-    const s = rand(src);
-    if (!out.includes(s) || out.length >= pool.length) out.push(s);
-  }
-  return out;
-}
 function similar(ch, u, n) {
   const d = dec(ch), seen = new Set([ch]), out = [];
   const C = [...allowed(Math.max(u, 1), 'C')].map(j => CHO.indexOf(j));
@@ -1343,35 +1380,35 @@ function similar(ch, u, n) {
   }
   return out.slice(0, n);
 }
-function readItems(u) {
-  const words = WORDS.filter(w => w.u <= u).map(w => ({ w: w.w, pic: w.e, u: w.u }));
-  const mons = MON.filter(m => m.u <= u && !m.rare).map(m => ({ w: m.n, mon: m, u: m.u }));
-  return [...words, ...mons];
+// 이 마을까지 배운 글자로만 된 이름의 포켓몬
+const eligible = u => MON.filter(m => !m.rare && m.u <= u);
+function readQ(u, m, pool) {
+  return { kind: 'read', u, m, opts: shuffle([m, ...sample(pool.filter(x => x !== m), 2)]) };
 }
-function makeQuestions(u, kind) {
-  const n = KIND[kind].n;
-  if (kind === 'league') return Array.from({ length: n }, () => makeQuestions(rand([4, 5, 6, 7, 8]), rand(['listen', 'build', 'read', 'dictate', 'read']))[0]);
-  if (kind === 'gym') {
-    const types = shuffle(['listen', 'listen', 'build', 'build', 'read', 'read', 'read', 'listen']);
-    const seen = new Set();
+// 스테이지 문제 = 잡을 포켓몬 이름의 글자를 하나씩 (다 맞히면 이름이 완성)
+function makeQuestions(u, kind, reward) {
+  if (kind === 'gym' || kind === 'league') {
+    const pool = kind === 'league' ? MON.filter(m => !m.rare) : eligible(u);
+    const fresh = pool.filter(m => m.u === u);
+    const types = kind === 'league' ? shuffle(['listen', 'build', 'read', 'dictate', 'read', 'listen']) : shuffle(['listen', 'listen', 'build', 'build', 'read', 'read', 'read', 'listen']);
+    const qu = kind === 'league' ? 8 : u, seen = new Set();
     return types.map(t => {
       let q;
-      for (let k = 0; k < 6; k++) { q = makeQuestions(u, t)[0]; if (!seen.has(q.ch || q.item.w)) break; }
-      seen.add(q.ch || q.item.w);
+      for (let k = 0; k < 8; k++) {
+        const m = rand(fresh.length && Math.random() < .7 ? fresh : pool);
+        q = t === 'read' ? readQ(qu, m, pool) : { kind: t, u: qu, ch: rand([...m.n]), from: m };
+        if (!seen.has(q.ch || q.m.n)) break;
+      }
+      seen.add(q.ch || q.m.n);
       return q;
     });
   }
   if (kind === 'read') {
-    const items = readItems(u);
-    const near = items.filter(x => x.u >= u - 1);
-    const chosen = [];
-    while (chosen.length < n) { const src = near.length >= 3 && Math.random() < .75 ? near : items; const x = rand(src); if (!chosen.includes(x) || chosen.length >= items.length) chosen.push(x); }
-    return chosen.map(x => {
-      const same = items.filter(y => y !== x && (!!y.mon === !!x.mon) && y.w !== x.w);
-      return { kind, u, item: x, others: sample(same.length >= 2 ? same : items.filter(y => y !== x), 2) };
-    });
+    const pool = eligible(u), others = shuffle(pool.filter(m => m !== reward.m));
+    const src = others.length ? others : pool;
+    return Array.from({ length: 4 }, (_, i) => readQ(u, src[i % src.length], pool));
   }
-  return pickSyllables(u, n).map(ch => ({ kind, u, ch }));
+  return [...reward.m.n].map(ch => ({ kind, u, ch, from: reward.m }));
 }
 
 /* ================= 스테이지 진행 ================= */
@@ -1382,21 +1419,20 @@ function preloadFonts(text) {
   return Promise.all(TPL_FONTS.map(f => document.fonts.load(`${f.w} 40px ${f.f}`, text).catch(() => {}))).catch(() => {});
 }
 
-function pickReward(u, rare) {
+let lastReward = '';
+function pickReward(u, rare, league) {
   if (rare) {
     const r = MON.filter(m => m.rare && !S.caught[m.n]);
     if (r.length) return { m: r[0], shiny: false };
   }
-  const pool = MON.filter(m => !m.rare);
+  const pool = league ? MON.filter(m => !m.rare) : eligible(u);
   const unc = pool.filter(m => !S.caught[m.n]);
-  if (unc.length) {
-    const fit = unc.filter(m => m.u <= u + 1);
-    const src = fit.length ? fit : unc.slice().sort((a, b) => a.u - b.u).slice(0, 8);
-    const m = rand(src);
-    return { m, shiny: false };
-  }
-  const m = rand(rare ? MON : pool);
-  return { m, shiny: Math.random() < .2 };
+  const fresh = unc.filter(m => m.u === u);
+  const src = fresh.length ? fresh : unc.length ? unc : pool;
+  let m = rand(src);
+  for (let k = 0; k < 5 && src.length > 1 && m.n === lastReward; k++) m = rand(src);
+  lastReward = m.n;
+  return { m, shiny: !!S.caught[m.n] && Math.random() < .2 };
 }
 
 function startNode(id) {
@@ -1410,9 +1446,10 @@ function runStage(u, kind) {
   const id = kind === 'league' ? 'league' : `${u}-${kind}`;
   const title = kind === 'league' ? '포켓몬 리그' : `${UNITS[u - 1].town} · ${KIND[kind].t}`;
   setTitle(title);
-  const qs = makeQuestions(u, kind);
   const isGym = kind === 'gym';
-  const reward = pickReward(u, isGym);
+  const reward = pickReward(u, isGym, kind === 'league');
+  const qs = makeQuestions(u, kind, reward);
+  const byName = !isGym && kind !== 'league' && kind !== 'read';
   const results = [];
   let qi = 0, exp = 0;
   const p = S.partner, me = MON_BY[p.id];
@@ -1428,13 +1465,18 @@ function runStage(u, kind) {
          <p class="hint" id="sideHint">맞히면 ${p.id}의 공격!</p>
        </section>`
     : `<section class="panel side">
-         <div class="who">${art(reward.m, { shadow: true })}</div>
-         <p class="hint">문제를 다 풀면 이 포켓몬을 잡을 수 있어!</p>
-         <div class="dots" id="dots"></div>
+         <div class="who">${art(reward.m, { shadow: true, shiny: reward.shiny })}</div>
+         <p class="hint">${byName ? '이름 글자를 다 모으면 누군지 알 수 있어!' : '문제를 다 풀면 이 포켓몬을 잡을 수 있어!'}</p>
+         <div id="dots"></div>
        </section>`;
   stage.innerHTML = `<div class="play">${sideHTML}<section class="panel task" id="task"></section></div>`;
   const task = $('#task');
-  const dots = () => { const d = $('#dots'); if (d) d.innerHTML = qs.map((_, i) => `<span class="pball${i >= results.length ? ' todo' : results[i] ? '' : ' miss'}"></span>`).join(''); };
+  const dots = () => {
+    const d = $('#dots'); if (!d) return;
+    d.innerHTML = byName
+      ? `<div class="slots">${qs.map((q, i) => `<span class="slot${i < results.length ? (results[i] ? ' done' : ' done miss') : ''}${i === results.length ? ' cur' : ''}">${i < results.length ? q.ch : ''}</span>`).join('')}</div>`
+      : `<div class="dots">${qs.map((_, i) => `<span class="pball${i >= results.length ? ' todo' : results[i] ? '' : ' miss'}"></span>`).join('')}</div>`;
+  };
   dots();
 
   const allText = qs.map(q => q.ch ? q.ch + Ink.confusables(q.ch).join('') : '').join('');
@@ -1445,12 +1487,13 @@ function runStage(u, kind) {
     task.onclick = null;
     Q[q.kind](q, task, { single: isGym || kind === 'league' }, ok => {
       results.push(ok);
-      record(q.kind, q.ch || q.item.w, ok);
+      record(q.kind, q.ch || q.m.n, ok);
       exp += ok ? 10 : 3;
       dots();
       if (isGym) return battle(ok);
       qi++;
-      later(() => qi < qs.length ? ask() : finish(), 900);
+      if (byName && qi >= qs.length) { const w = $('.who svg'); if (w) w.classList.remove('shadow'); later(() => say(`${reward.m.n}!`), 500); }
+      later(() => qi < qs.length ? ask() : finish(), byName && qi >= qs.length ? 1800 : 900);
     });
   }
   function battle(ok) {
@@ -1474,14 +1517,14 @@ function runStage(u, kind) {
       persist(); updateBar();
       return showGymLost(u, g);
     }
-    const stars = isGym ? (hpP === 3 ? 3 : hpP === 2 ? 2 : 1) : wrong === 0 ? 3 : wrong <= 2 ? 2 : 1;
+    const stars = isGym ? (hpP === 3 ? 3 : hpP === 2 ? 2 : 1) : wrong === 0 ? 3 : wrong <= Math.max(1, Math.floor(qs.length / 3)) ? 2 : 1;
     const prev = S.stages[id];
     if (kind !== 'league') S.stages[id] = { stars: Math.max(stars, prev ? prev.stars : 0), plays: (prev ? prev.plays : 0) + 1 };
     S.totals.stages++;
     markDay();
     let badge = null;
     if (isGym && !S.badges.includes(u)) { S.badges.push(u); S.badges.sort((a, b) => a - b); badge = u; }
-    exp += 20 + stars * 10 + (isGym ? 60 : 0);
+    exp += 30 + stars * 10 + (isGym ? 60 : 0);
     const g = gainExp(exp);
     persist(); updateBar();
     showResult({ id, u, kind, stars, exp, g, reward, badge, first: !prev });
@@ -1494,10 +1537,10 @@ function showGymLost(u, g) {
     <div class="stage">${art(MON_BY[S.partner.id])}</div>
     <h2>${S.partner.id}${josa(S.partner.id, '이', '가')} 지쳤어</h2>
     <p>포켓몬센터에서 쉬고 다시 도전하자! 맞힌 문제만큼 경험치는 받았어.</p>
-    <div class="actions"><button class="big" id="again">다시 도전</button><button class="big alt" id="toMap">지도</button></div></div>`;
+    <div class="actions"><button class="big" id="gymRetry">다시 도전</button><button class="big alt" id="toMap">지도</button></div></div>`;
   overlay.hidden = false;
   say('포켓몬센터에서 쉬고 다시 도전하자!');
-  $('#again').onclick = () => startNode(`${u}-gym`);
+  $("#gymRetry").onclick = () => startNode(`${u}-gym`);
   $('#toMap').onclick = () => go(showMap);
 }
 
@@ -1668,24 +1711,23 @@ Q.build = (q, el, o, done) => {
   };
 };
 
-// 읽고 고르기: 낱말을 읽고 맞는 그림 고르기
+// 읽고 고르기: 포켓몬 이름을 읽고 맞는 포켓몬 고르기
 Q.read = (q, el, o, done) => {
-  const it = q.item, opts = shuffle([it, ...q.others]);
+  const m = q.m, opts = q.opts;
   let tries = 0, over = false;
-  const pic = x => x.mon ? art(x.mon) : `<span aria-label="${esc(x.w)}">${x.pic}</span>`;
-  el.innerHTML = `<p class="ask">낱말을 읽고 맞는 그림을 골라 봐!</p>
-    <div class="tiles">${[...it.w].map(ch => `<button class="tile">${ch}</button>`).join('')}</div>
+  el.innerHTML = `<p class="ask">이름을 읽고 맞는 포켓몬을 골라 봐!</p>
+    <div class="tiles">${[...m.n].map(ch => `<button class="tile">${ch}</button>`).join('')}</div>
     <p class="hint">모르는 글자는 눌러서 들어 봐</p>
-    <div class="pics">${opts.map((x, i) => `<button class="pic" data-i="${i}" aria-label="그림 ${i + 1}">${pic(x)}</button>`).join('')}</div>`;
+    <div class="pics">${opts.map((x, i) => `<button class="pic" data-i="${i}" aria-label="포켓몬 ${i + 1}">${art(x)}</button>`).join('')}</div>`;
   el.querySelector('.tiles').onclick = e => { const b = e.target.closest('.tile'); if (!b) return; b.classList.add('heard'); say(b.textContent, true); };
   el.querySelector('.pics').onclick = e => {
     const b = e.target.closest('.pic'); if (!b || over) return;
     const x = opts[+b.dataset.i];
-    if (x === it) { over = true; b.classList.add('right'); sfx.good(); say(`${it.w}! ${rand(PRAISE)}`); done(tries === 0); }
+    if (x === m) { over = true; b.classList.add('right'); sfx.good(); say(`${m.n}! ${rand(PRAISE)}`); done(tries === 0); }
     else {
       tries++; sfx.bad(); b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
-      say(`이건 ${x.w}`);
-      if (o.single) { over = true; el.querySelectorAll('.pic')[opts.indexOf(it)].classList.add('reveal'); later(() => say(`정답은 ${it.w}`), 900); done(false); }
+      say(`이건 ${x.n}`);
+      if (o.single) { over = true; el.querySelectorAll('.pic')[opts.indexOf(m)].classList.add('reveal'); later(() => say(`정답은 ${m.n}`), 900); done(false); }
     }
   };
 };
@@ -1909,7 +1951,23 @@ function showParent() {
   const typeRows = ['listen', 'build', 'trace', 'read', 'dictate'].map(k => { const v = S.stats.type[k] || [0, 0]; return `<tr><td>${KIND[k].t}</td><td class="n">${v[0]}</td><td class="n">${v[0] ? Math.round((v[0] - v[1]) / v[0] * 100) + '%' : '–'}</td></tr>`; }).join('');
   const vs = voices.slice().sort((p, q) => voiceScore(q) - voiceScore(p));
   const curVoice = pickVoice();
+  const ids = Object.keys(STORE.slots).sort((a, b) => STORE.slots[a].created - STORE.slots[b].created);
+  const slotRow = (id, k) => {
+    const st = STORE.slots[id].state, on = id === STORE.active, pm = st.partner && MON_BY[st.partner.id];
+    const last = st.days.length ? st.days[st.days.length - 1] : '아직 안 함';
+    return `<div class="advrow${on ? ' on' : ''}">
+      <span class="advpic">${pm ? art(pm) : '<span class="pball"></span>'}</span>
+      <span class="advinfo"><b>모험 ${k + 1}</b>${pm ? ` · ${st.partner.id} Lv.${st.partner.lv}` : ' · 파트너를 아직 안 골랐어요'}<small>배지 ${st.badges.length}개 · 포켓몬 ${Object.keys(st.caught).length}마리 · 마지막으로 한 날 ${last}</small></span>
+      ${on ? '<span class="advnow">지금 하는 중</span>' : `<button class="smallbtn" data-slot="${id}">이 모험 이어 하기</button>`}
+    </div>`;
+  };
   stage.innerHTML = `<div class="scroll"><div class="parent">
+    <section class="panel">
+      <h2>모험 기록</h2>
+      <p>모험마다 파트너, 배지, 도감이 따로 저장돼요. 새 모험을 시작해도 지금까지의 기록은 지워지지 않고 여기 남아서, 언제든 다시 이어 할 수 있어요.</p>
+      <div class="advlist" id="advlist">${ids.map(slotRow).join('')}</div>
+      <div class="setrow" id="newAdvRow"><button class="smallbtn" id="newAdv">새 모험 시작하기 (파트너 다시 고르기)</button></div>
+    </section>
     <section class="panel">
       <h2>지금까지의 기록</h2>
       <div class="kpis">
@@ -1922,7 +1980,7 @@ function showParent() {
     </section>
     <section class="panel">
       <h2>기록 백업</h2>
-      <p>${BUILD === 'app' ? '기록을 파일로 저장해 두면 아이패드를 바꿔도 이어서 할 수 있어요. Claude 링크에서 하던 기록 파일도 여기서 불러올 수 있어요.' : '기록을 파일로 저장해서 아이패드 홈 화면 앱 버전으로 옮길 수 있어요.'} 불러올 때는 지금 기록과 합쳐서, 두 기록 중 더 많이 한 쪽을 남겨요.</p>
+      <p>${BUILD === 'app' ? '모든 모험 기록을 파일 하나로 저장해 두면 아이패드를 바꿔도 이어서 할 수 있어요. Claude 링크에서 하던 기록 파일도 여기서 불러올 수 있어요.' : '기록을 파일로 저장해서 아이패드 홈 화면 앱 버전으로 옮길 수 있어요.'} 불러올 때는 지금 기록과 합쳐서, 두 기록 중 더 많이 한 쪽을 남겨요.</p>
       <div class="setrow"><button class="smallbtn" id="bkSave">기록 파일로 저장</button><label class="smallbtn" for="bkFile">기록 파일 불러오기</label><input class="visually-hidden" type="file" id="bkFile" accept=".json,application/json"></div>
       <p class="muted" id="bkMsg" aria-live="polite"></p>
     </section>
@@ -1933,11 +1991,14 @@ function showParent() {
     </section>
     <section class="panel">
       <h2>읽어 주는 목소리</h2>
+      <p>지금 목소리: <b>${curVoice ? `${esc(curVoice.name)} (${voiceTier(curVoice)})` : '찾지 못했어요'}</b></p>
+      ${curVoice && voiceTier(curVoice) === '기본' ? '<p class="warnbox">지금은 가장 낮은 품질의 기본 목소리예요. 아래 방법으로 좋은 목소리를 받으면 발음이 훨씬 좋아져요.</p>' : ''}
       <div class="setrow"><label for="voiceSel">목소리</label>
-        <select id="voiceSel">${vs.length ? vs.map(v => `<option value="${esc(v.name)}" ${curVoice && v.name === curVoice.name ? 'selected' : ''}>${esc(v.name)}</option>`).join('') : '<option>한국어 목소리를 찾지 못했어요</option>'}</select>
+        <select id="voiceSel">${vs.length ? vs.map(v => `<option value="${esc(v.name)}" ${curVoice && v.name === curVoice.name ? 'selected' : ''}>${esc(v.name)} (${voiceTier(v)})</option>`).join('') : '<option>한국어 목소리를 찾지 못했어요</option>'}</select>
         <button class="smallbtn" id="voiceTest">들어 보기</button></div>
-      <div class="setrow"><label for="rate">빠르기</label><input type="range" id="rate" min="0.6" max="1.1" step="0.05" value="${S.settings.rate || .9}"><span id="rateV">${S.settings.rate || .9}</span></div>
-      <p>발음이 어색하면 더 좋은 한국어 목소리를 받아 주세요. 아이패드 <b>설정 → 손쉬운 사용 → 콘텐츠 말하기 → 음성 → 한국어</b>에서 ‘유나(향상됨)’ 또는 ‘고급’ 목소리를 내려받은 뒤 이 화면을 다시 열면 목록에 나타나요. 기본 목소리보다 글자 하나하나를 훨씬 또렷하게 읽어요.</p>
+      <div class="setrow"><label for="rate">빠르기</label><input type="range" id="rate" min="0.6" max="1.1" step="0.05" value="${STORE.settings.rate || .9}"><span id="rateV">${STORE.settings.rate || .9}</span></div>
+      <p><b>Siri 목소리는 쓸 수 없어요.</b> 애플이 Siri 목소리를 Siri와 아이패드 자체 기능에서만 쓰도록 막아 두어서, 사파리나 홈 화면 앱에는 목록에 나오지 않아요. 앱 스토어 앱들도 마찬가지예요.</p>
+      <p>대신 Siri와 가장 비슷한 고품질 목소리를 받을 수 있어요. 아이패드 <b>설정 → 손쉬운 사용 → 콘텐츠 말하기 → 음성 → 한국어</b>에서 이름 옆에 ‘향상됨’ 또는 ‘고급’이 붙은 목소리(예: 유나 향상됨)를 내려받은 뒤, 이 앱을 완전히 닫았다가 다시 열어 주세요. 받아 둔 목소리 중 가장 좋은 것을 자동으로 골라요.</p>
     </section>
     <section class="panel">
       <h2>채점은 이렇게 해요</h2>
@@ -1945,6 +2006,17 @@ function showParent() {
       <p><b>받아쓰기</b>: 쓴 글씨의 크기와 위치를 맞춘 뒤, 자음·모음·받침 하나만 다른 비슷한 글자 수십 개와 모양을 비교해서 정답이 가장 가까울 때만 맞다고 해요. 손글씨 글꼴로 시험했을 때 엉뚱한 글자를 맞다고 한 경우는 2% 이하였지만, 바르게 쓴 글씨를 틀렸다고 하는 경우는 15~25% 정도 있었어요. 그럴 때는 ‘부모님 확인’을 눌러 아이 글씨와 정답을 나란히 보고 직접 맞음 처리해 주세요.</p>
     </section>
   </div></div>`;
+  $('#advlist').onclick = e => {
+    const b = e.target.closest('[data-slot]'); if (!b) return;
+    switchAdventure(b.dataset.slot); updateBar(); go(showHome);
+  };
+  const newRow = $('#newAdvRow');
+  newRow.onclick = e => {
+    const id = e.target.id;
+    if (id === 'newAdv') newRow.innerHTML = `<span>지금 모험은 그대로 저장돼요. 처음부터 새 모험을 시작할까요?</span><button class="smallbtn" id="newYes">새 모험 시작</button><button class="smallbtn" id="newNo">취소</button>`;
+    if (id === 'newNo') newRow.innerHTML = '<button class="smallbtn" id="newAdv">새 모험 시작하기 (파트너 다시 고르기)</button>';
+    if (id === 'newYes') { newAdventure(); updateBar(); go(showStarter); }
+  };
   const bkMsg = t => { $('#bkMsg').textContent = t; };
   $('#bkSave').onclick = () => saveBackup(bkMsg);
   const bkFile = $('#bkFile');
@@ -1953,26 +2025,26 @@ function showParent() {
     if (!f) return;
     try {
       const j = JSON.parse(await f.text());
-      const st = j && j.state ? j.state : j;
-      if (!st || st.v !== 2) throw new Error('not a backup');
-      S = merge(S, st);
-      persist(); updateBar();
+      if (j && j.store && j.store.v === 3) STORE = mergeStore(STORE, j.store);
+      else if (j && j.state && j.state.v === 2) importLegacy(j.state);
+      else throw new Error('not a backup');
+      useActive(); persist(); updateBar();
       go(showParent);
-      $('#bkMsg').textContent = `불러왔어요! 포켓몬 ${Object.keys(S.caught).length}마리, 배지 ${S.badges.length}개예요.`;
+      $('#bkMsg').textContent = `불러왔어요! 모험 기록 ${Object.keys(STORE.slots).length}개를 합쳤어요.`;
     } catch (e) { bkMsg('이 파일은 포켓몬 한글 모험 기록 파일이 아니에요.'); }
     bkFile.value = '';
   };
   const sel = $('#voiceSel');
-  sel.onchange = () => { S.settings.voice = sel.value; persist(); say('피카츄! 가 나 다'); };
+  sel.onchange = () => { STORE.settings.voice = sel.value; persist(); say('피카츄! 가 나 다'); };
   $('#voiceTest').onclick = () => say('안녕! 피카츄랑 한글 놀이 하자. 가, 나, 다');
   const rate = $('#rate');
   rate.oninput = () => { $('#rateV').textContent = rate.value; };
-  rate.onchange = () => { S.settings.rate = +rate.value; persist(); say('가, 나, 다, 라'); };
+  rate.onchange = () => { STORE.settings.rate = +rate.value; persist(); say('가, 나, 다, 라'); };
 }
 
 async function saveBackup(msg) {
   const name = `포켓몬한글-기록-${today()}.json`;
-  const data = JSON.stringify({ app: 'pokemon-hangul', saved: today(), state: S });
+  const data = JSON.stringify({ app: 'pokemon-hangul', saved: today(), store: STORE });
   try {
     if (BUILD === 'artifact') {
       const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;

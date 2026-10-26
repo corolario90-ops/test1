@@ -1,5 +1,5 @@
 // 포켓몬 한글 모험: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 아이패드에 보관
-const CACHE = 'pokemon-hangul-eefdb83d1b';
+const CACHE = 'pokemon-hangul-6d5ac93751';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "fonts/jua.woff2", "fonts/noto-500.woff2", "fonts/noto-700.woff2", "fonts/gaegu.woff2", "fonts/hi-melody.woff2", "fonts/gamja-flower.woff2", "fonts/nanum-pen.woff2"];
 
 self.addEventListener('install', e => {
