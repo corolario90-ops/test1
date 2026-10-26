@@ -1051,28 +1051,75 @@ function badgeSvg(i, on = true) {
 /* ================= 소리 ================= */
 let voices = [];
 const loadVoices = () => { try { voices = speechSynthesis.getVoices().filter(v => /^ko/i.test(v.lang)); } catch (e) { voices = []; } };
-const voiceTier = v => /premium|고급/i.test(v.name) ? '고급' : /enhanced|향상/i.test(v.name) ? '향상됨' : '기본';
-const voiceScore = v => (/premium|고급/i.test(v.name) ? 40 : 0) + (/enhanced|향상/i.test(v.name) ? 30 : 0) + (/yuna|유나/i.test(v.name) ? 10 : 0) + (v.localService ? 2 : 0);
+// 아이패드는 같은 '유나'라도 기본/향상됨/프리미엄이 이름이 같고 voiceURI만 다를 때가 있어서 둘 다 봄
+const vText = v => `${v.name} ${v.voiceURI || ''}`;
+const voiceTier = v => /premium|프리미엄|고급/i.test(vText(v)) ? '프리미엄' : /enhanced|향상/i.test(vText(v)) ? '향상됨' : '기본';
+const voiceScore = v => ({ 프리미엄: 40, 향상됨: 30, 기본: 0 })[voiceTier(v)] + (/yuna|유나/i.test(vText(v)) ? 5 : 0) + (v.localService ? 1 : 0);
+const voiceKey = v => v.voiceURI || v.name;
 function pickVoice() {
+  if (!voices.length) loadVoices();
   if (!voices.length) return null;
-  const chosen = STORE.settings.voice && voices.find(v => v.name === STORE.settings.voice);
+  const want = STORE.settings.voice;
+  const chosen = want && (voices.find(v => voiceKey(v) === want) || null);
   return chosen || voices.slice().sort((p, q) => voiceScore(q) - voiceScore(p))[0];
 }
-if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+if ('speechSynthesis' in window) {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = () => { loadVoices(); if (current === 'parent') rerender(); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadVoices(); });
+}
 
-function say(text, slow = false) {
+/* 말하기 순서 관리.
+   아이패드 사파리는 말하는 도중에 끊고 바로 새 말을 시키면 앞말 조각이 섞여 나와서,
+   - say(): 아이가 누른 버튼처럼 '지금' 말해야 할 때. 앞말을 끊고, 완전히 멈춘 걸 확인한 뒤 말함
+   - sayNext(): 문제 내기처럼 앞말(칭찬 등)이 끝난 다음에 말해도 될 때. 순서대로 기다림 */
+let speechQ = [], speechBusy = false, speechToken = 0;
+function makeUtter(text, slow) {
+  // 글자 하나만 읽을 때는 끝에 마침표를 붙여야 또박또박 한 음절로 읽음
+  const t = [...text].length === 1 && dec(text) ? text + '.' : text;
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang = 'ko-KR';
+  const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; }
+  u.rate = Math.max(.5, (STORE.settings.rate || .9) * (slow ? .85 : 1));
+  u.pitch = 1;
+  return u;
+}
+function pumpSpeech() {
+  if (speechBusy || !speechQ.length || !window.speechSynthesis) return;
+  const item = speechQ.shift(), tok = ++speechToken;
+  speechBusy = true;
+  let over = false;
+  const fin = () => { if (over || tok !== speechToken) return; over = true; speechBusy = false; setTimeout(pumpSpeech, 200); };
   try {
-    const s = window.speechSynthesis;
-    if (!s || !text) return;
-    // 글자 하나만 읽을 때는 끝에 마침표를 붙여야 이름이나 영어처럼 읽지 않고 또박또박 소리 냄
-    const t = [...text].length === 1 && dec(text) ? text + '.' : text;
-    const u = new SpeechSynthesisUtterance(t);
-    u.lang = 'ko-KR';
-    const v = pickVoice(); if (v) u.voice = v;
-    u.rate = Math.max(.5, (STORE.settings.rate || .9) * (slow ? .85 : 1));
-    u.pitch = 1;
-    if (s.speaking || s.pending) { s.cancel(); setTimeout(() => s.speak(u), 80); } else s.speak(u);
-  } catch (e) { /* 소리 없이 진행 */ }
+    const u = makeUtter(item.text, item.slow);
+    u.onend = fin; u.onerror = fin;
+    // onend가 안 올 때를 대비한 예상 시간
+    setTimeout(fin, 1200 + [...item.text].length * 300 / u.rate);
+    speechSynthesis.speak(u);
+  } catch (e) { fin(); }
+}
+function stopSpeech() {
+  speechQ = []; speechToken++; speechBusy = false;
+  try { speechSynthesis.cancel(); } catch (e) { /* 무시 */ }
+}
+function say(text, slow = false) {
+  if (!text || !window.speechSynthesis) return;
+  const active = speechBusy || speechSynthesis.speaking || speechSynthesis.pending;
+  stopSpeech();
+  speechQ.push({ text, slow });
+  speechBusy = true;
+  const tok = speechToken, t0 = Date.now();
+  const start = () => {
+    if (tok !== speechToken) return;
+    if ((speechSynthesis.speaking || speechSynthesis.pending) && Date.now() - t0 < 600) { setTimeout(start, 40); return; }
+    speechBusy = false; pumpSpeech();
+  };
+  setTimeout(start, active ? 180 : 0);
+}
+function sayNext(text, slow = false) {
+  if (!text || !window.speechSynthesis) return;
+  speechQ.push({ text, slow });
+  pumpSpeech();
 }
 let ac = null;
 function tone(freqs, dur = .12, type = 'triangle', vol = .16) {
@@ -1259,7 +1306,7 @@ function updateBar() {
 function go(fn, ...args) {
   gen++;
   if (cleanup) { cleanup(); cleanup = null; }
-  try { speechSynthesis.cancel(); } catch (e) { /* 무시 */ }
+  stopSpeech();
   overlay.hidden = true; overlay.innerHTML = '';
   updateBar();
   rerender = () => go(fn, ...args);
@@ -1492,7 +1539,7 @@ function runStage(u, kind) {
       dots();
       if (isGym) return battle(ok);
       qi++;
-      if (byName && qi >= qs.length) { const w = $('.who svg'); if (w) w.classList.remove('shadow'); later(() => say(`${reward.m.n}!`), 500); }
+      if (byName && qi >= qs.length) { const w = $('.who svg'); if (w) w.classList.remove('shadow'); sayNext(`${reward.m.n}!`); }
       later(() => qi < qs.length ? ask() : finish(), byName && qi >= qs.length ? 1800 : 900);
     });
   }
@@ -1644,7 +1691,7 @@ Q.listen = (q, el, o, done) => {
   el.innerHTML = `<p class="ask">잘 듣고 같은 글자를 눌러 봐!</p>
     <button class="big alt speak" id="again">${SPEAKER}다시 듣기</button>
     <div class="opts">${shuffle([q.ch, ...similar(q.ch, q.u, 3)]).map(s => `<button class="opt">${s}</button>`).join('')}</div>`;
-  later(() => say(q.ch, true), 300);
+  sayNext(q.ch, true);
   el.querySelector('#again').onclick = () => say(q.ch, true);
   el.querySelector('.opts').onclick = e => {
     const b = e.target.closest('.opt'); if (!b || over) return;
@@ -1655,7 +1702,7 @@ Q.listen = (q, el, o, done) => {
       tries++; sfx.bad();
       b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
       say(`이건 ${b.textContent}`);
-      if (o.single) { over = true; [...el.querySelectorAll('.opt')].find(x => x.textContent === q.ch).classList.add('reveal'); later(() => say(`정답은 ${q.ch}`), 900); done(false); }
+      if (o.single) { over = true; [...el.querySelectorAll('.opt')].find(x => x.textContent === q.ch).classList.add('reveal'); sayNext(`정답은 ${q.ch}`); done(false); }
     }
   };
 };
@@ -1677,7 +1724,7 @@ Q.build = (q, el, o, done) => {
     <div class="jamorow"><span class="lab">자음</span>${cOpts.map(x => `<button class="jamo" data-c="${x}">${CHO[x]}</button>`).join('')}</div>
     <div class="jamorow"><span class="lab">모음</span>${vOpts.map(x => `<button class="jamo v" data-v="${x}">${JUNG[x]}</button>`).join('')}</div>
     ${withJ ? `<div class="jamorow"><span class="lab">받침</span>${jOpts.map(x => `<button class="jamo j${x ? '' : ' none'}" data-j="${x}">${x ? JONG[x] : '없음'}</button>`).join('')}</div>` : ''}`;
-  later(() => say(q.ch, true), 300);
+  sayNext(q.ch, true);
   const paint = () => {
     el.querySelectorAll('.jamo').forEach(b => {
       const on = ('c' in b.dataset && +b.dataset.c === pc) || ('v' in b.dataset && +b.dataset.v === pv) || ('j' in b.dataset && withJ && +b.dataset.j === pj);
@@ -1699,12 +1746,12 @@ Q.build = (q, el, o, done) => {
     br.textContent = made; busy = true;
     if (made === q.ch) {
       br.classList.add('result'); sfx.good();
-      later(() => say(`${made}! ${rand(PRAISE)}`), 400);
+      sayNext(`${made}! ${rand(PRAISE)}`);
       done(tries === 0);
     } else {
       tries++;
       br.classList.add('result', 'wrong'); sfx.bad();
-      later(() => say(`이건 ${made}. ${o.single ? `정답은 ${q.ch}` : '다시 해 볼까?'}`), 400);
+      sayNext(`이건 ${made}. ${o.single ? `정답은 ${q.ch}` : '다시 해 볼까?'}`);
       if (o.single) { done(false); return; }
       later(() => { busy = false; pc = pv = null; pj = withJ ? null : 0; paint(); }, 2200);
     }
@@ -1727,7 +1774,7 @@ Q.read = (q, el, o, done) => {
     else {
       tries++; sfx.bad(); b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
       say(`이건 ${x.n}`);
-      if (o.single) { over = true; el.querySelectorAll('.pic')[opts.indexOf(m)].classList.add('reveal'); later(() => say(`정답은 ${m.n}`), 900); done(false); }
+      if (o.single) { over = true; el.querySelectorAll('.pic')[opts.indexOf(m)].classList.add('reveal'); sayNext(`정답은 ${m.n}`); done(false); }
     }
   };
 };
@@ -1747,7 +1794,7 @@ function makePad(holder) {
     x.beginPath(); x.moveTo(SZ / 2, 0); x.lineTo(SZ / 2, SZ); x.moveTo(0, SZ / 2); x.lineTo(SZ, SZ / 2); x.stroke();
     x.setLineDash([]);
     if (guide) {
-      x.globalAlpha = faint ? .45 : 1;
+      x.globalAlpha = faint ? .65 : 1;
       Ink.drawGlyph(x, guide, SZ, GUIDE_FONT, css('--guide'));
       x.globalAlpha = 1;
       if (missing && missing.length) {
@@ -1767,6 +1814,8 @@ function makePad(holder) {
     paintGuide(); paintInk();
   };
   const ro = new ResizeObserver(layout); ro.observe(holder);
+  requestAnimationFrame(layout); setTimeout(layout, 250);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(paintGuide, () => {});
   const addPt = e => {
     const r = ic.getBoundingClientRect();
     cur.push({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, w: e.pointerType === 'pen' && e.pressure > 0 ? .65 + e.pressure * .7 : 1 });
@@ -1823,15 +1872,31 @@ function writeTask(q, el, o, done, mode) {
     <div class="writebox" id="wb"></div>
     <div class="tools">
       <button class="big alt speak" id="wListen">${SPEAKER}듣기</button>
+      ${mode === 'dictate' ? '<button class="big alt" id="wHint">힌트</button>' : ''}
       <button class="big alt" id="wErase">지우기</button>
       <button class="big go" id="wCheck">다 썼어!</button>
     </div>
     <div class="tools"><button class="linkish" id="wSkip" hidden>이 글자는 건너뛰기</button><button class="linkish" id="wParent" hidden>부모님 확인</button></div>`;
   const pad = makePad(el.querySelector('#wb'));
   cleanup = () => pad.destroy();
-  let fails = 0, practicing = mode === 'trace', busy = false;
-  pad.setGuide(mode === 'trace' ? q.ch : null);
-  later(() => say(q.ch, true), 300);
+  let fails = 0, practicing = mode === 'trace', busy = false, helped = false;
+  const help = STORE.settings.dictHelp || 'flash';
+  const wask = el.querySelector('#wask');
+  if (mode === 'trace') pad.setGuide(q.ch);
+  else if (help === 'always') { pad.setGuide(q.ch, true); wask.textContent = '잘 듣고 연한 글자 위에 써 봐!'; }
+  else if (help === 'flash') {
+    pad.setGuide(q.ch, true);
+    wask.textContent = '이 글자를 잘 보고 기억해!';
+    later(() => { if (!practicing) { pad.setGuide(null); wask.textContent = '이제 혼자 써 봐!'; } }, 3000);
+  } else pad.setGuide(null);
+  sayNext(q.ch, true);
+  const hint = el.querySelector('#wHint');
+  if (hint) hint.onclick = () => {
+    if (busy || practicing || help === 'always') return;
+    helped = true;
+    pad.setGuide(q.ch, true);
+    later(() => { if (!practicing) pad.setGuide(null); }, 1800);
+  };
   el.querySelector('#wListen').onclick = () => say(q.ch, true);
   el.querySelector('#wErase').onclick = () => { if (!busy) { pad.clear(); sfx.tap(); } };
   const resolve = (ok, msgHtml, speech) => {
@@ -1874,7 +1939,7 @@ function writeTask(q, el, o, done, mode) {
       return;
     }
     const r = Ink.scoreDictation(q.ch, strokes, TPL_FONTS);
-    if (r.pass) return resolve(fails === 0, `<div class="stars">${fails ? '★★☆' : '★★★'}</div><div>${rand(PRAISE)}</div>`, `${q.ch}! ${rand(PRAISE)}`);
+    if (r.pass) return resolve(fails === 0 && !helped, `<div class="stars">${fails || helped ? '★★☆' : '★★★'}</div><div>${rand(PRAISE)}</div>`, `${q.ch}! ${rand(PRAISE)}`);
     fails++; sfx.bad();
     el.querySelector('#wParent').hidden = false;
     if (o.single || fails >= 2) {
@@ -1882,7 +1947,7 @@ function writeTask(q, el, o, done, mode) {
       practicing = true;
       pad.show(`<div>정답은 <b style="font-family:var(--letter);font-size:1.6em">${q.ch}</b>야.<br>같이 따라 써 보자!</div>`);
       say(`정답은 ${q.ch}. 같이 따라 써 보자!`);
-      later(() => { pad.hide(); pad.clear(); pad.setGuide(q.ch); el.querySelector('#wask').textContent = '회색 글자를 따라 써 봐!'; }, 2200);
+      later(() => { pad.hide(); pad.clear(); pad.setGuide(q.ch); wask.textContent = '회색 글자를 따라 써 봐!'; }, 2200);
       if (o.single) { busy = true; later(() => { cleanup = null; pad.destroy(); done(false); }, 2300); }
       return;
     }
@@ -1994,11 +2059,23 @@ function showParent() {
       <p>지금 목소리: <b>${curVoice ? `${esc(curVoice.name)} (${voiceTier(curVoice)})` : '찾지 못했어요'}</b></p>
       ${curVoice && voiceTier(curVoice) === '기본' ? '<p class="warnbox">지금은 가장 낮은 품질의 기본 목소리예요. 아래 방법으로 좋은 목소리를 받으면 발음이 훨씬 좋아져요.</p>' : ''}
       <div class="setrow"><label for="voiceSel">목소리</label>
-        <select id="voiceSel">${vs.length ? vs.map(v => `<option value="${esc(v.name)}" ${curVoice && v.name === curVoice.name ? 'selected' : ''}>${esc(v.name)} (${voiceTier(v)})</option>`).join('') : '<option>한국어 목소리를 찾지 못했어요</option>'}</select>
+        <select id="voiceSel">${vs.length ? vs.map(v => `<option value="${esc(voiceKey(v))}" ${curVoice && voiceKey(v) === voiceKey(curVoice) ? 'selected' : ''}>${esc(v.name)} (${voiceTier(v)})</option>`).join('') : '<option>한국어 목소리를 찾지 못했어요</option>'}</select>
         <button class="smallbtn" id="voiceTest">들어 보기</button></div>
       <div class="setrow"><label for="rate">빠르기</label><input type="range" id="rate" min="0.6" max="1.1" step="0.05" value="${STORE.settings.rate || .9}"><span id="rateV">${STORE.settings.rate || .9}</span></div>
+      <p class="muted">이 기기에서 찾은 한국어 목소리 ${vs.length}개: ${vs.map(v => `${esc(v.name)}(${voiceTier(v)})`).join(', ') || '없음'} <button class="smallbtn" id="voiceReload">목록 새로고침</button></p>
       <p><b>Siri 목소리는 쓸 수 없어요.</b> 애플이 Siri 목소리를 Siri와 아이패드 자체 기능에서만 쓰도록 막아 두어서, 사파리나 홈 화면 앱에는 목록에 나오지 않아요. 앱 스토어 앱들도 마찬가지예요.</p>
       <p>대신 Siri와 가장 비슷한 고품질 목소리를 받을 수 있어요. 아이패드 <b>설정 → 손쉬운 사용 → 콘텐츠 말하기 → 음성 → 한국어</b>에서 이름 옆에 ‘향상됨’ 또는 ‘고급’이 붙은 목소리(예: 유나 향상됨)를 내려받은 뒤, 이 앱을 완전히 닫았다가 다시 열어 주세요. 받아 둔 목소리 중 가장 좋은 것을 자동으로 골라요.</p>
+    </section>
+    <section class="panel">
+      <h2>받아쓰기 도움</h2>
+      <p>받아쓰기는 소리를 듣고 혼자 쓰는 놀이라서 회색 글자를 기본으로 숨겨요. 아이에게 맞게 골라 주세요.</p>
+      <div class="setrow"><label for="dictHelp">회색 글자</label>
+        <select id="dictHelp">
+          <option value="flash" ${(STORE.settings.dictHelp || 'flash') === 'flash' ? 'selected' : ''}>처음에 3초 보여 주고 숨기기 (추천)</option>
+          <option value="always" ${STORE.settings.dictHelp === 'always' ? 'selected' : ''}>계속 연하게 보여 주기</option>
+          <option value="none" ${STORE.settings.dictHelp === 'none' ? 'selected' : ''}>보여 주지 않기</option>
+        </select></div>
+      <p class="muted">어느 쪽이든 쓰는 칸에 '힌트' 버튼이 있어서 누르면 회색 글자를 잠깐 다시 보여 줘요. 힌트를 쓰면 그 문제는 도움 받은 것으로 기록돼요.</p>
     </section>
     <section class="panel">
       <h2>채점은 이렇게 해요</h2>
@@ -2034,6 +2111,9 @@ function showParent() {
     } catch (e) { bkMsg('이 파일은 포켓몬 한글 모험 기록 파일이 아니에요.'); }
     bkFile.value = '';
   };
+  $('#voiceReload').onclick = () => { loadVoices(); go(showParent); };
+  const dh = $('#dictHelp');
+  dh.onchange = () => { STORE.settings.dictHelp = dh.value; persist(); };
   const sel = $('#voiceSel');
   sel.onchange = () => { STORE.settings.voice = sel.value; persist(); say('피카츄! 가 나 다'); };
   $('#voiceTest').onclick = () => say('안녕! 피카츄랑 한글 놀이 하자. 가, 나, 다');
