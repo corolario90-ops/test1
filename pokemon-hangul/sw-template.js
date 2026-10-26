@@ -29,7 +29,9 @@ self.addEventListener('fetch', e => {
   if (url.origin !== location.origin) return;
   if (req.mode === 'navigate') {
     // 화면은 인터넷이 되면 새 버전을, 안 되면 보관한 버전을
+    // 사이트가 내려가서 404가 와도 보관한 앱을 그대로 열도록, 정상 응답일 때만 새 버전으로 바꿈
     e.respondWith(fetch(req).then(res => {
+      if (!res.ok) return caches.match('index.html').then(hit => hit || res);
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put('index.html', copy));
       return res;
