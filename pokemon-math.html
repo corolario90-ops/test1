@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>포켓몬 숫자 놀이</title>
+<style>
+:root{
+  --bg:#fff7dc;--card:#ffffff;--ink:#2b2b2b;--muted:#7a7468;--line:#f0e2b0;
+  --red:#e3350d;--yellow:#ffcb05;--blue:#3b4cca;--green:#2fae5a;--shadow:0 4px 0 rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;min-height:100vh;user-select:none}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.wrap{max-width:760px;margin:0 auto;padding:12px 16px 40px}
+
+header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+header h1{font-size:22px;margin:0;flex:1;display:flex;align-items:center;gap:8px}
+.ball{width:28px;height:28px;border-radius:50%;border:3px solid #222;background:linear-gradient(var(--red) 0 44%,#222 44% 56%,#fff 56%);position:relative;flex:none}
+.ball::after{content:"";position:absolute;inset:50% auto auto 50%;width:9px;height:9px;transform:translate(-50%,-50%);background:#fff;border:2.5px solid #222;border-radius:50%}
+.icon-btn{background:var(--card);border-radius:14px;padding:8px 12px;box-shadow:var(--shadow);font-size:16px;font-weight:700}
+
+.screen{display:none}
+.screen.on{display:block}
+.card{background:var(--card);border-radius:22px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+h2{margin:0 0 12px;font-size:20px}
+
+/* Home */
+.hero{text-align:center}
+.hero img{width:150px;height:150px;image-rendering:auto}
+.hero p{margin:4px 0 0;color:var(--muted)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mode{background:#fffbea;border:3px solid var(--line);border-radius:18px;padding:16px 10px;text-align:center;font-size:20px;font-weight:800}
+.mode small{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-top:4px}
+.mode .emo{font-size:32px;display:block;margin-bottom:4px}
+.mode.sel{border-color:var(--blue);background:#eef0ff}
+.levels{display:flex;gap:10px}
+.level{flex:1;background:#fffbea;border:3px solid var(--line);border-radius:16px;padding:12px 6px;font-weight:800;font-size:18px}
+.level small{display:block;font-weight:500;font-size:13px;color:var(--muted)}
+.level.sel{border-color:var(--blue);background:#eef0ff}
+.start{display:block;width:100%;background:var(--red);color:#fff;font-size:24px;font-weight:900;padding:18px;border-radius:20px;box-shadow:0 5px 0 #a3260a}
+.start:active{transform:translateY(3px);box-shadow:0 2px 0 #a3260a}
+
+/* Game */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dots{display:flex;gap:5px;flex:1;flex-wrap:wrap}
+.dot{width:14px;height:14px;border-radius:50%;background:#e8dcb5}
+.dot.ok{background:var(--green)}
+.dot.retry{background:var(--yellow)}
+.dot.now{outline:3px solid var(--blue);outline-offset:1px}
+.question{font-size:22px;font-weight:800;text-align:center;margin:2px 0 6px;line-height:1.4}
+.equation{font-size:40px;font-weight:900;text-align:center;letter-spacing:2px;margin:0 0 6px;color:var(--blue)}
+.hint{font-size:13px;color:var(--muted);text-align:center;margin:0 0 6px}
+.scene{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;min-height:120px;padding:6px 0}
+.group{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;background:#fffbea;border:3px dashed var(--line);border-radius:18px;padding:8px;max-width:100%}
+.op{font-size:40px;font-weight:900;color:var(--red)}
+.mon{position:relative;width:var(--sz,72px);height:var(--sz,72px);display:flex;align-items:center;justify-content:center;transition:transform .5s,opacity .5s,filter .5s}
+.mon img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.mon.pop{animation:pop .35s ease-out backwards}
+.mon .tag{position:absolute;top:-4px;right:-4px;min-width:24px;height:24px;padding:0 5px;border-radius:12px;background:var(--blue);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;animation:pop .25s}
+.mon.gone{opacity:.28;filter:grayscale(1);transform:translateX(14px) scale(.85)}
+.mon.gone::after{content:"💨";position:absolute;left:-6px;bottom:0;font-size:20px}
+.fallback{width:80%;height:80%;border-radius:50%;border:3px solid #222;background:linear-gradient(var(--red) 0 44%,#222 44% 56%,#fff 56%)}
+.answers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+.ans{background:var(--yellow);border-radius:18px;padding:12px 4px 8px;font-size:38px;font-weight:900;box-shadow:0 5px 0 #c99c00;line-height:1}
+.ans small{display:block;font-size:14px;font-weight:700;margin-top:4px;color:#6b5400}
+.ans:active{transform:translateY(3px);box-shadow:0 2px 0 #c99c00}
+.ans.wrong{background:#e9e4d6;box-shadow:0 5px 0 #c8c1ad;color:#aaa;animation:shake .4s}
+.ans.wrong small{color:#aaa}
+.ans.right{background:var(--green);color:#fff;box-shadow:0 5px 0 #1d7a3c}
+.ans.right small{color:#e3ffe9}
+.speak{background:#eef0ff;color:var(--blue);border-radius:12px;padding:6px 12px;font-weight:700;font-size:15px}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;background:rgba(30,25,10,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.overlay.on{display:flex}
+.pop-card{background:var(--card);border-radius:26px;padding:22px 20px;text-align:center;width:min(360px,100%);animation:pop .35s ease-out}
+.pop-card h3{margin:0;font-size:30px;color:var(--green)}
+.pop-card p{margin:6px 0;font-size:18px}
+.pop-card img{width:160px;height:160px;object-fit:contain;animation:wiggle 1s ease-in-out}
+.pop-card .new{display:inline-block;background:var(--red);color:#fff;border-radius:10px;padding:2px 8px;font-size:13px;font-weight:800;margin-left:4px;vertical-align:middle}
+.next{margin-top:12px;background:var(--blue);color:#fff;font-size:20px;font-weight:800;padding:12px 28px;border-radius:16px;box-shadow:0 4px 0 #24318f}
+
+/* Result */
+.stars{font-size:54px;text-align:center;letter-spacing:6px;margin:6px 0}
+.result-score{text-align:center;font-size:22px;font-weight:800;margin:0 0 12px}
+.caught-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0 16px}
+.caught-row img{width:64px;height:64px}
+.row-btns{display:flex;gap:10px}
+.row-btns button{flex:1}
+.ghost{background:#fffbea;border:3px solid var(--line);border-radius:18px;padding:14px;font-size:18px;font-weight:800}
+
+/* Dex */
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.dex-item{background:#fffbea;border-radius:14px;padding:6px 4px;text-align:center;font-size:13px;font-weight:700}
+.dex-item img{display:block;width:72px;height:72px;object-fit:contain;margin:0 auto}
+.dex-item span{display:block}
+.dex-item.no img{filter:brightness(0);opacity:.25}
+.dex-item.no span{color:#bbb}
+.dex-item .cnt{display:block;font-size:11px;color:var(--muted);font-weight:500}
+.dex-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.dex-head h2{margin:0}
+.small-link{background:none;color:var(--muted);text-decoration:underline;font-size:13px;margin-top:14px}
+
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) scale(1.05)}75%{transform:rotate(8deg) scale(1.05)}}
+
+@media (max-width:480px){
+  .answers{grid-template-columns:repeat(2,1fr)}
+  .equation{font-size:34px}
+  .question{font-size:19px}
+  .op{font-size:30px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="ball"></span>포켓몬 숫자 놀이</h1>
+    <button class="icon-btn" id="soundBtn" title="소리 켜기/끄기">🔊</button>
+    <button class="icon-btn" id="dexBtn">📖 도감</button>
+  </header>
+
+  <!-- 홈 -->
+  <section class="screen on" id="home">
+    <div class="card hero">
+      <img id="heroImg" alt="피카츄">
+      <p>문제를 맞히면 포켓몬을 잡을 수 있어요!</p>
+    </div>
+    <div class="card">
+      <h2>무엇을 할까요?</h2>
+      <div class="modes" id="modes">
+        <button class="mode sel" data-mode="count"><span class="emo">👆</span>세어 보기<small>몇 마리일까?</small></button>
+        <button class="mode" data-mode="add"><span class="emo">➕</span>더하기<small>모두 몇 마리?</small></button>
+        <button class="mode" data-mode="sub"><span class="emo">➖</span>빼기<small>몇 마리 남았지?</small></button>
+        <button class="mode" data-mode="mix"><span class="emo">🎲</span>섞어서<small>골고루 풀기</small></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>얼마나 어렵게?</h2>
+      <div class="levels" id="levels">
+        <button class="level sel" data-max="5">쉬움<small>5까지</small></button>
+        <button class="level" data-max="10">보통<small>10까지</small></button>
+        <button class="level" data-max="20">어려움<small>20까지</small></button>
+      </div>
+    </div>
+    <button class="start" id="startBtn">시작하기!</button>
+  </section>
+
+  <!-- 게임 -->
+  <section class="screen" id="game">
+    <div class="topbar">
+      <button class="icon-btn" id="homeBtn">🏠</button>
+      <div class="dots" id="dots"></div>
+      <button class="speak" id="replayBtn">🔈 다시 듣기</button>
+    </div>
+    <div class="card">
+      <p class="question" id="question"></p>
+      <p class="equation" id="equation"></p>
+      <p class="hint" id="hint"></p>
+      <div class="scene" id="scene"></div>
+    </div>
+    <div class="answers" id="answers"></div>
+  </section>
+
+  <!-- 결과 -->
+  <section class="screen" id="result">
+    <div class="card">
+      <div class="stars" id="stars"></div>
+      <p class="result-score" id="resultScore"></p>
+      <h2 style="text-align:center">이번에 잡은 포켓몬</h2>
+      <div class="caught-row" id="caughtRow"></div>
+      <div class="row-btns">
+        <button class="ghost" id="toHome">🏠 처음으로</button>
+        <button class="start" id="again">한 번 더!</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 도감 -->
+  <section class="screen" id="dexScreen">
+    <div class="card">
+      <div class="dex-head">
+        <h2 id="dexTitle">포켓몬 도감</h2>
+        <button class="icon-btn" id="dexBack">← 돌아가기</button>
+      </div>
+      <div class="dex" id="dex"></div>
+      <button class="small-link" id="resetDex">도감 비우기</button>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="pop-card" id="popCard"></div>
+</div>
+
+<script>
+const POKEMON = [
+  [25,'피카츄'],[1,'이상해씨'],[4,'파이리'],[7,'꼬부기'],[39,'푸린'],[52,'나옹'],
+  [54,'고라파덕'],[133,'이브이'],[143,'잠만보'],[35,'삐삐'],[16,'구구'],[19,'꼬렛'],
+  [10,'캐터피'],[129,'잉어킹'],[74,'꼬마돌'],[92,'고오스'],[94,'팬텀'],[26,'라이츄'],
+  [37,'식스테일'],[58,'가디'],[60,'발챙이'],[79,'야돈'],[81,'코일'],[113,'럭키'],
+  [131,'라프라스'],[147,'미뇽'],[132,'메타몽'],[43,'뚜벅쵸'],[50,'디그다'],[104,'탕구리'],
+  [41,'주뱃'],[27,'모래두지'],[2,'이상해풀'],[5,'리자드'],[8,'어니부기'],[3,'이상해꽃'],
+  [6,'리자몽'],[9,'거북왕'],[149,'망나뇽'],[151,'뮤']
+];
+const NAME = Object.fromEntries(POKEMON);
+const SPRITE = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+const ART = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const ROUND = 10;
+
+// ---------- 저장 ----------
+function load(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch{ return fallback; } }
+function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch{} }
+let caught = load('pkmath.caught', {});   // { id: 잡은 횟수 }
+let soundOn = load('pkmath.sound', true);
+
+// ---------- 한국어 ----------
+function hasBatchim(w){ const c = w.charCodeAt(w.length-1); return c>=0xac00 && c<=0xd7a3 && (c-0xac00)%28 !== 0; }
+const iga = w => w + (hasBatchim(w) ? '이' : '가');
+const eulreul = w => w + (hasBatchim(w) ? '을' : '를');
+const ONES = ['','하나','둘','셋','넷','다섯','여섯','일곱','여덟','아홉'];
+const ONES_C = ['','한','두','세','네','다섯','여섯','일곱','여덟','아홉'];
+function nativeNum(n){ if(n===20) return '스물'; return (n>=10?'열':'') + ONES[n%10]; }
+function counterNum(n){ if(n===20) return '스무'; return (n>=10?'열':'') + ONES_C[n%10]; }
+const mari = n => `${counterNum(n)} 마리`;
+
+// ---------- 소리 ----------
+let voice = null;
+function pickVoice(){ voice = (speechSynthesis.getVoices()||[]).find(v => v.lang && v.lang.startsWith('ko')) || null; }
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(text){
+  if(!soundOn || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR'; u.rate = 0.95; u.pitch = 1.15;
+  if(voice) u.voice = voice;
+  speechSynthesis.speak(u);
+}
+let actx = null;
+function tone(freqs, dur=0.12, type='triangle'){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i) => {
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i*dur;
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur*1.6);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur*1.7);
+    });
+  }catch{}
+}
+const sfx = {
+  right: () => tone([660,880,1100]),
+  wrong: () => tone([220,180], 0.15, 'square'),
+  tap:   () => tone([520], 0.06),
+  catch: () => tone([523,659,784,1046], 0.11)
+};
+
+// ---------- 유틸 ----------
+const $ = id => document.getElementById(id);
+const rand = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function img(src, cls){
+  const el = document.createElement('img');
+  el.src = src; el.alt = ''; el.draggable = false; if(cls) el.className = cls;
+  el.onerror = () => { const f = document.createElement('div'); f.className = 'fallback'; el.replaceWith(f); };
+  return el;
+}
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
+
+// ---------- 홈 ----------
+let mode = 'count', maxN = 5;
+$('heroImg').src = ART(25);
+$('modes').onclick = e => { const b = e.target.closest('.mode'); if(!b) return; mode = b.dataset.mode; document.querySelectorAll('.mode').forEach(x => x.classList.toggle('sel', x===b)); sfx.tap(); };
+$('levels').onclick = e => { const b = e.target.closest('.level'); if(!b) return; maxN = +b.dataset.max; document.querySelectorAll('.level').forEach(x => x.classList.toggle('sel', x===b)); sfx.tap(); };
+$('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+$('soundBtn').onclick = () => { soundOn = !soundOn; save('pkmath.sound', soundOn); $('soundBtn').textContent = soundOn ? '🔊' : '🔇'; if(!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
+
+// ---------- 게임 ----------
+let qi = 0, results = [], current = null, newlyCaught = [], counted = 0, locked = false;
+
+function makeQuestion(){
+  const kind = mode === 'mix' ? pick(['count','add','sub']) : mode;
+  const [id, name] = pick(POKEMON);
+  let q;
+  if(kind === 'count'){
+    const n = rand(1, maxN);
+    q = { kind, id, name, n, answer: n,
+      text: `${iga(name)} 몇 마리 있나요?`, eq: '' };
+  } else if(kind === 'add'){
+    const s = rand(2, maxN), a = rand(1, s-1), b = s - a;
+    q = { kind, id, name, a, b, answer: s,
+      text: `${name} ${mari(a)}에 ${mari(b)}가 더 왔어요. 모두 몇 마리일까요?`, eq: `${a} + ${b} = ?` };
+  } else {
+    const a = rand(2, maxN), b = rand(1, a-1);
+    q = { kind, id, name, a, b, answer: a - b,
+      text: `${name} ${mari(a)} 중에 ${mari(b)}가 도망갔어요. 몇 마리 남았을까요?`, eq: `${a} − ${b} = ?` };
+  }
+  // 보기 4개: 정답 근처 숫자에서 고르기
+  const pool = [];
+  for(let v = Math.max(1, q.answer-4); v <= Math.min(maxN, q.answer+4); v++) if(v !== q.answer) pool.push(v);
+  q.choices = shuffle([q.answer, ...shuffle(pool).slice(0,3)]);
+  return q;
+}
+
+function startRound(){
+  qi = 0; results = []; newlyCaught = [];
+  show('game');
+  nextQuestion();
+}
+
+function renderDots(){
+  $('dots').innerHTML = '';
+  for(let i=0;i<ROUND;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (results[i]===true ? ' ok' : results[i]===false ? ' retry' : '') + (i===qi ? ' now' : '');
+    $('dots').appendChild(d);
+  }
+}
+
+function monEl(q, delay, gone){
+  const m = document.createElement('div');
+  m.className = 'mon pop';
+  m.style.animationDelay = `${delay*40}ms`;
+  m.appendChild(img(SPRITE(q.id)));
+  if(gone) m.dataset.gone = '1';
+  m.onclick = () => {
+    if(m.dataset.gone || m.querySelector('.tag')) return;
+    counted++;
+    const t = document.createElement('span'); t.className = 'tag'; t.textContent = counted;
+    m.appendChild(t); sfx.tap(); speak(nativeNum(counted));
+  };
+  return m;
+}
+
+function nextQuestion(){
+  current = makeQuestion(); counted = 0; locked = false;
+  const q = current;
+  renderDots();
+  $('question').textContent = q.text;
+  $('equation').textContent = q.eq;
+  $('equation').style.display = q.eq ? '' : 'none';
+  $('hint').textContent = '포켓몬을 누르면 하나씩 세어 줘요';
+
+  const total = q.kind === 'count' ? q.n : q.kind === 'add' ? q.a + q.b : q.a;
+  const sz = total <= 5 ? 80 : total <= 10 ? 64 : total <= 14 ? 52 : 44;
+  const scene = $('scene'); scene.innerHTML = ''; scene.style.setProperty('--sz', sz+'px');
+
+  const group = (n, start, goneFrom=Infinity) => {
+    const g = document.createElement('div'); g.className = 'group';
+    for(let i=0;i<n;i++) g.appendChild(monEl(q, start+i, i >= goneFrom));
+    return g;
+  };
+  if(q.kind === 'count'){
+    scene.appendChild(group(q.n, 0));
+  } else if(q.kind === 'add'){
+    scene.appendChild(group(q.a, 0));
+    const op = document.createElement('span'); op.className = 'op'; op.textContent = '+';
+    scene.appendChild(op);
+    scene.appendChild(group(q.b, q.a));
+  } else {
+    scene.appendChild(group(q.a, 0, q.a - q.b));
+    setTimeout(() => scene.querySelectorAll('[data-gone]').forEach(m => m.classList.add('gone')), 700 + q.a*40);
+  }
+
+  const ans = $('answers'); ans.innerHTML = '';
+  q.choices.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'ans';
+    b.innerHTML = `${v}<small>${nativeNum(v)}</small>`;
+    b.onclick = () => choose(v, b);
+    ans.appendChild(b);
+  });
+  speak(q.text);
+}
+
+function choose(v, btn){
+  if(locked || btn.classList.contains('wrong')) return;
+  const q = current;
+  if(v !== q.answer){
+    btn.classList.add('wrong'); sfx.wrong();
+    if(results[qi] === undefined) results[qi] = false;
+    renderDots();
+    speak('다시 한 번 세어 볼까요?');
+    return;
+  }
+  locked = true;
+  btn.classList.add('right'); sfx.right();
+  const firstTry = results[qi] === undefined;
+  results[qi] = firstTry;
+  renderDots();
+  setTimeout(() => showReward(firstTry), 500);
+}
+
+function showReward(firstTry){
+  const q = current;
+  const card = $('popCard'); card.innerHTML = '';
+  const h = document.createElement('h3'); h.textContent = firstTry ? '정답이에요! 🎉' : '맞았어요! 👏';
+  const p = document.createElement('p'); p.textContent = `${q.eq ? q.eq.replace('?', q.answer) + ' · ' : ''}${mari(q.answer)}`;
+  card.append(h, p);
+  let say = `정답! ${mari(q.answer)}.`;
+
+  if(firstTry){
+    // 아직 못 잡은 포켓몬을 먼저 만나게
+    const notYet = POKEMON.filter(([id]) => !caught[id]);
+    const [id, name] = pick(notYet.length ? notYet : POKEMON);
+    const isNew = !caught[id];
+    caught[id] = (caught[id]||0) + 1; save('pkmath.caught', caught);
+    newlyCaught.push(id);
+    card.appendChild(img(ART(id)));
+    const c = document.createElement('p');
+    c.innerHTML = `<b></b>${isNew ? '<span class="new">NEW</span>' : ''}`;
+    c.querySelector('b').textContent = `${eulreul(name)} 잡았어요!`;
+    card.appendChild(c);
+    say += ` ${eulreul(name)} 잡았어요!`;
+    setTimeout(sfx.catch, 250);
+  } else {
+    const c = document.createElement('p'); c.textContent = '다음엔 한 번에 맞혀서 포켓몬을 잡아 보자!';
+    card.appendChild(c);
+  }
+  const next = document.createElement('button'); next.className = 'next';
+  next.textContent = qi + 1 < ROUND ? '다음 문제 ▶' : '결과 보기 ▶';
+  next.onclick = () => { $('overlay').classList.remove('on'); qi++; qi < ROUND ? nextQuestion() : showResult(); };
+  card.appendChild(next);
+  $('overlay').classList.add('on');
+  speak(say);
+}
+
+function showResult(){
+  const score = results.filter(r => r === true).length;
+  const stars = score >= 9 ? 3 : score >= 6 ? 2 : 1;
+  $('stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+  $('resultScore').textContent = `${ROUND}문제 중 ${score}문제를 한 번에 맞혔어요!`;
+  const row = $('caughtRow'); row.innerHTML = '';
+  if(!newlyCaught.length) row.textContent = '다음엔 꼭 잡아 보자!';
+  newlyCaught.forEach(id => { const i = img(SPRITE(id)); i.title = NAME[id]; row.appendChild(i); });
+  show('result');
+  speak(stars === 3 ? '최고예요! 포켓몬 마스터!' : stars === 2 ? '잘했어요!' : '수고했어요! 또 해 볼까요?');
+}
+
+// ---------- 도감 ----------
+let dexReturn = 'home';
+function showDex(){
+  dexReturn = document.querySelector('.screen.on').id === 'dexScreen' ? dexReturn : document.querySelector('.screen.on').id;
+  const dex = $('dex'); dex.innerHTML = '';
+  const have = POKEMON.filter(([id]) => caught[id]).length;
+  $('dexTitle').textContent = `포켓몬 도감 ${have}/${POKEMON.length}`;
+  POKEMON.forEach(([id, name]) => {
+    const d = document.createElement('div');
+    d.className = 'dex-item' + (caught[id] ? '' : ' no');
+    d.appendChild(img(ART(id)));
+    const s = document.createElement('span'); s.textContent = caught[id] ? name : '???';
+    d.appendChild(s);
+    if(caught[id]){ const c = document.createElement('span'); c.className = 'cnt'; c.textContent = `${caught[id]}번 잡음`; d.appendChild(c); d.onclick = () => speak(name); }
+    dex.appendChild(d);
+  });
+  show('dexScreen');
+}
+$('dexBtn').onclick = () => { if(document.querySelector('.screen.on').id === 'game' && !confirm('게임을 멈추고 도감을 볼까요?')) return; showDex(); };
+$('dexBack').onclick = () => show(dexReturn === 'game' ? 'home' : dexReturn);
+$('resetDex').onclick = () => { if(confirm('잡은 포켓몬을 모두 놓아줄까요?')){ caught = {}; save('pkmath.caught', caught); showDex(); } };
+
+// ---------- 버튼 ----------
+$('startBtn').onclick = () => { sfx.tap(); startRound(); };
+$('again').onclick = startRound;
+$('toHome').onclick = () => show('home');
+$('homeBtn').onclick = () => { if(confirm('처음 화면으로 갈까요?')){ if('speechSynthesis' in window) speechSynthesis.cancel(); show('home'); } };
+$('replayBtn').onclick = () => current && speak(current.text);
+</script>
+</body>
+</html>
