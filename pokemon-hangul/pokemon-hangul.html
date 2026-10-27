@@ -279,6 +279,66 @@ img.mon.photo { object-fit: contain; -webkit-user-drag: none; pointer-events: no
 .hit .mon { animation: hit .5s ease; }
 .lunge .mon { animation: lunge .45s ease; }
 
+/* ---------- 낱말카드 ---------- */
+.go-cards { width: 100%; min-height: 76px; background: var(--water); color: var(--ink); justify-content: flex-start; text-align: left; gap: 14px; }
+.go-cards > span:last-child { display: grid; font-size: clamp(22px, 2.8vw, 30px); }
+.go-cards small { font-size: 16px; opacity: .85; }
+.cardicon { display: grid; place-items: center; width: 48px; height: 60px; flex: none; background: var(--paper); border: 3px solid var(--ink); border-radius: 10px; font-family: var(--letter); font-weight: 700; font-size: 30px; transform: rotate(-6deg); }
+.lvgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; max-width: 1060px; margin: 0 auto; }
+.lvtile { display: grid; gap: 6px; text-align: left; padding: 14px 16px 16px; background: var(--paper); border: 3px solid var(--ink); border-radius: 22px; box-shadow: 0 5px 0 var(--ink); }
+.lvtile:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); }
+.lvtile:disabled { background: var(--paper-dim); box-shadow: none; border-color: var(--line); color: var(--ink-soft); }
+.lvtile .lvno { font-size: 15px; color: var(--ink-soft); }
+.lvtile strong { font-weight: 400; font-size: 24px; }
+.lvtile .ex { font-family: var(--letter); font-weight: 700; font-size: 20px; color: var(--pen); }
+.lvtile .meta { display: flex; justify-content: space-between; font-size: 15px; color: var(--ink-soft); }
+.lvtile .bar { height: 10px; border-radius: 99px; background: var(--paper-dim); border: 2px solid var(--ink); overflow: hidden; }
+.lvtile .bar i { display: block; height: 100%; background: var(--volt); }
+.lvtile.next { background: #FFF6CC; }
+.cardshead { display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 14px; font-size: 19px; }
+.deck { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; }
+.wcard {
+  position: relative; width: min(100%, 760px); min-height: clamp(170px, 28vh, 260px);
+  display: grid; place-items: center; padding: 34px 22px 22px;
+  background: var(--paper); border: 6px solid var(--lvc, var(--ink)); border-radius: 26px;
+  box-shadow: 0 8px 0 rgba(34, 48, 77, .3), inset 0 0 0 3px var(--white);
+}
+.wcard .wlabel { position: absolute; top: 8px; left: 16px; font-size: 15px; color: var(--ink-soft); }
+.wtext { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; }
+.wtext button {
+  font-family: var(--letter); font-weight: 700; line-height: 1.15; color: var(--ink);
+  font-size: var(--wsize, 64px); background: none; border: 0; border-radius: 14px; padding: 2px 6px; white-space: nowrap;
+}
+.wtext button:active, .wtext button.heard { background: #FFF6CC; }
+.wcard .wpic { width: clamp(110px, 16vw, 160px); aspect-ratio: 1; margin-top: 10px; animation: pop .4s ease; }
+.scene { position: relative; display: block; width: 100%; height: 100%; }
+.scene .mon { position: absolute; left: 0; bottom: 0; width: 72%; height: 72%; }
+.scene .emo { position: absolute; right: 0; top: 0; font-size: clamp(36px, 5.6vw, 64px); line-height: 1; }
+.emo.big { display: grid; place-items: center; width: 100%; height: 100%; font-size: clamp(56px, 8vw, 92px); line-height: 1; }
+.deck .pics { width: min(100%, 600px); }
+.deck .pic { padding: 10px; }
+.deckdots { display: flex; gap: 8px; }
+.deckdots span { width: 22px; height: 30px; border-radius: 5px; border: 2px solid var(--ink); background: var(--paper-dim); }
+.deckdots span.good { background: var(--volt); }
+.deckdots span.ok { background: #FFE9A8; }
+.deckdots span.miss { background: var(--berry); }
+.deckdots span.cur { outline: 3px solid var(--ball); outline-offset: 2px; }
+.albumtabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+.albumtabs button { font-size: 17px; padding: 8px 14px; border-radius: 12px; border: 2px solid var(--ink); background: var(--paper); }
+.albumtabs button.on { background: var(--volt); }
+.albumgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.acard { display: grid; justify-items: center; align-content: start; gap: 6px; min-height: 150px; padding: 12px 8px; text-align: center; background: var(--paper); border: 4px solid var(--line); border-radius: 16px; }
+.acard .t { font-family: var(--letter); font-weight: 700; font-size: 18px; line-height: 1.3; text-wrap: balance; }
+.acard .p { width: 70px; height: 70px; }
+.acard.silver { border-color: #A9B4C2; background: linear-gradient(160deg, #FFFFFF, #E9EDF2); }
+.acard.gold { border-color: #E2B53C; background: linear-gradient(160deg, #FFF8D8, #FFE9A0); }
+.acard.back { background: repeating-linear-gradient(45deg, #E8433F 0 10px, #F0625E 10px 20px); border-color: var(--ink); display: grid; place-items: center; color: var(--white); font-size: 40px; }
+.acard small { font-size: 13px; color: var(--ink-soft); }
+.packs { display: flex; gap: 14px; justify-content: center; }
+.packs button { width: clamp(90px, 14vw, 130px); aspect-ratio: .72; border: 4px solid var(--ink); border-radius: 16px; background: repeating-linear-gradient(45deg, #E8433F 0 10px, #F0625E 10px 20px); box-shadow: 0 6px 0 var(--ink); display: grid; place-items: center; }
+.packs button:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--ink); }
+.packs .pball { width: 50px; height: 50px; }
+
 /* ---------- 도감 ---------- */
 .dexhead { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; font-size: 20px; margin-bottom: 14px; }
 .dexhead .count b { color: var(--ball); font-weight: 400; }
@@ -1142,7 +1202,7 @@ document.addEventListener('pointerdown', () => {
 
 /* ================= 저장: 이 기기 + 계정 (지워지지 않게 둘 다) ================= */
 const LS_KEY = 'pokemon-hangul.v2', LS_OLD = 'pokemon-hangul.v1';
-const blank = () => ({ v: 2, partner: null, caught: {}, stages: {}, badges: [], days: [], stats: { syl: {}, type: {} }, totals: { answers: 0, correct: 0, stages: 0 }, settings: { rate: .9, voice: '' }, updated: 0 });
+const blank = () => ({ v: 2, partner: null, caught: {}, stages: {}, cards: {}, cardLv: {}, badges: [], days: [], stats: { syl: {}, type: {} }, totals: { answers: 0, correct: 0, stages: 0 }, settings: { rate: .9, voice: '' }, updated: 0 });
 let S = blank();
 const clone = o => JSON.parse(JSON.stringify(o));
 // 두 기록을 합칠 때는 늘 '더 많이 한 쪽'을 남김 — 어느 쪽에서도 성과가 줄어들지 않게
@@ -1159,6 +1219,9 @@ function merge(a, b) {
     const x = r.stages[k];
     r.stages[k] = x ? { stars: Math.max(x.stars, v.stars), plays: Math.max(x.plays || 1, v.plays || 1) } : clone(v);
   }
+  r.cards = r.cards || {}; r.cardLv = r.cardLv || {};
+  for (const [k, v] of Object.entries(b.cards || {})) { const x = r.cards[k]; r.cards[k] = x ? { n: Math.max(x.n, v.n), g: Math.max(x.g, v.g), last: Math.max(x.last || 0, v.last || 0) } : clone(v); }
+  for (const [k, v] of Object.entries(b.cardLv || {})) r.cardLv[k] = Math.max(r.cardLv[k] || 0, v);
   r.badges = [...new Set([...(r.badges || []), ...(b.badges || [])])].sort((p, q) => p - q);
   r.days = [...new Set([...(r.days || []), ...(b.days || [])])].sort();
   for (const g of ['syl', 'type']) for (const [k, v] of Object.entries((b.stats || {})[g] || {})) { const x = r.stats[g][k]; if (!x || v[0] > x[0]) r.stats[g][k] = v.slice(); }
@@ -1252,7 +1315,7 @@ function switchAdventure(id) {
       if (d.store) STORE = mergeStore(STORE, d.store);
       else if (d.state) importLegacy(d.state);
       useActive();
-      if (JSON.stringify(STORE) !== before && ['home', 'map', 'dex', 'badges', 'parent', 'starter'].includes(current)) rerender();
+      if (JSON.stringify(STORE) !== before && ['home', 'map', 'dex', 'badges', 'parent', 'starter', 'cardshome', 'album'].includes(current)) rerender();
     }
     dirty = true; flush();
   } catch (e) { /* 계정 저장 없이 이 기기에만 */ }
@@ -1355,6 +1418,7 @@ function showHome() {
       </section>
       <section class="homeside">
         <button class="big go-adventure" id="goNext">모험 계속하기<small>${esc(nodeLabel(nx))}</small></button>
+        <button class="big go-cards" id="goCards"><span class="cardicon" aria-hidden="true">가</span><span>낱말카드 읽기<small>${CARD_LV[cardLevelNow()].t} · ${cardLevelNow() + 1}단계</small></span></button>
         <div class="menu">
           <button id="mMap"><span class="ic" style="background:var(--water)">길</span><span>모험 지도<small>마을 8곳 · 배지 ${S.badges.length}/8</small></span></button>
           <button id="mDex"><span class="ic" style="background:var(--volt)">도</span><span>포켓몬 도감<small>${caughtN} / ${MON.length}마리</small></span></button>
@@ -1366,6 +1430,7 @@ function showHome() {
     </div>`;
   $('#heroMon').onclick = e => { const b = e.currentTarget; b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop'); say(`${p.id}!`); };
   $('#goNext').onclick = () => { sfx.tap(); startNode(nx); };
+  $('#goCards').onclick = () => { sfx.tap(); go(showCardsHome); };
   $('#mMap').onclick = () => go(showMap);
   $('#mDex').onclick = () => go(showDex);
   $('#mBadge').onclick = () => go(showBadges);
@@ -1587,6 +1652,33 @@ function showGymLost(u, g) {
 }
 
 /* ---------- 결과 → (배지) → 레벨업/진화 → 야생 포켓몬 잡기 ---------- */
+/* 파트너 진화 (스테이지·낱말카드 공용). 끝나면 next() */
+function evoStep(next) {
+  const p = S.partner;
+  const to = evoReady();
+  overlay.innerHTML = `<div class="panel card"><div class="stage" id="evoPic">${art(MON_BY[p.id])}</div>
+    <h2>어라…? ${p.id}의 모습이…!</h2><p>${to}(으)로 진화할 수 있어!</p>
+    <div class="actions"><button class="big" id="yes">진화시키기</button><button class="big alt" id="no">지금 모습이 좋아</button></div></div>`;
+  say(`어라? ${p.id}의 모습이!`);
+  $('#yes').onclick = () => {
+    const from = p.id;
+    const pic = $('#evoPic'); pic.classList.add('evo');
+    sfx.level();
+    later(() => {
+      p.id = to;
+      if (!S.caught[to]) S.caught[to] = { n: 1, s: 0, t: Date.now() };
+      persist(); updateBar();
+      pic.innerHTML = art(MON_BY[to]);
+      overlay.querySelector('h2').textContent = `축하해! ${from}${josa(from, '은', '는')} ${to}${josa(to, '으로', '로')} 진화했다!`;
+      overlay.querySelector('p').textContent = '도감에도 새로 등록됐어!';
+      say(`축하해! ${to}${josa(to, '으로', '로')} 진화했다!`);
+      overlay.querySelector('.actions').innerHTML = '<button class="big" id="nx">좋아!</button>';
+      $('#nx').onclick = next;
+    }, 1100);
+  };
+  $('#no').onclick = next;
+}
+
 function showResult(r) {
   const p = S.partner;
   const steps = [];
@@ -1608,30 +1700,7 @@ function showResult(r) {
     if (r.g.ups) { sfx.level(); say(`${p.id}의 레벨이 ${p.lv}${josa(String(p.lv), '이', '가')} 되었다!`); } else { sfx.good(); say(r.stars === 3 ? '완벽해! 별 세 개!' : rand(PRAISE)); }
     $('#nx').onclick = next;
   });
-  if (evoReady()) steps.push(() => {
-    const to = evoReady();
-    overlay.innerHTML = `<div class="panel card"><div class="stage" id="evoPic">${art(MON_BY[p.id])}</div>
-      <h2>어라…? ${p.id}의 모습이…!</h2><p>${to}(으)로 진화할 수 있어!</p>
-      <div class="actions"><button class="big" id="yes">진화시키기</button><button class="big alt" id="no">지금 모습이 좋아</button></div></div>`;
-    say(`어라? ${p.id}의 모습이!`);
-    $('#yes').onclick = () => {
-      const from = p.id;
-      const pic = $('#evoPic'); pic.classList.add('evo');
-      sfx.level();
-      later(() => {
-        p.id = to;
-        if (!S.caught[to]) S.caught[to] = { n: 1, s: 0, t: Date.now() };
-        persist(); updateBar();
-        pic.innerHTML = art(MON_BY[to]);
-        overlay.querySelector('h2').textContent = `축하해! ${from}${josa(from, '은', '는')} ${to}${josa(to, '으로', '로')} 진화했다!`;
-        overlay.querySelector('p').textContent = '도감에도 새로 등록됐어!';
-        say(`축하해! ${to}${josa(to, '으로', '로')} 진화했다!`);
-        overlay.querySelector('.actions').innerHTML = '<button class="big" id="nx">좋아!</button>';
-        $('#nx').onclick = next;
-      }, 1100);
-    };
-    $('#no').onclick = next;
-  });
+  if (evoReady()) steps.push(() => evoStep(next));
   steps.push(() => catchScene(r));
   let si = 0;
   function next() { gen++; const f = steps[si++]; if (f) f(); }
@@ -1954,6 +2023,239 @@ function writeTask(q, el, o, done, mode) {
 Q.trace = (q, el, o, done) => writeTask(q, el, o, done, 'trace');
 Q.dictate = (q, el, o, done) => writeTask(q, el, o, done, 'dictate');
 
+/* ================= 낱말카드 =================
+   읽기 → 맞는 그림 고르기로 확인. 덱 5장마다 별을 받고, 별 6개면 다음 단계가 열림.
+   도움 없이 맞힌 카드는 앨범에 은색, 세 번 맞히면 금색으로 모임. 덱을 마치면 카드팩에서 포켓몬을 받음 */
+const NOUNS = [
+  ['사자','🦁'],['하마','🦛'],['기차','🚂'],['포도','🍇'],['토마토','🍅'],['피자','🍕'],['우유','🥛'],['여우','🦊'],['오리','🦆'],['나무','🌳'],
+  ['바나나','🍌'],['모자','🧢'],['치마','👗'],['바지','👖'],['거미','🕷️'],['나비','🦋'],['피아노','🎹'],['카메라','📷'],['코끼리','🐘'],['무지개','🌈'],
+  ['아기','👶'],['오이','🥒'],['고추','🌶️'],['쿠키','🍪'],['토끼','🐰'],['돼지','🐷'],['케이크','🎂'],['비누','🧼'],['해바라기','🌻'],['시계','⏰'],
+  ['사과','🍎'],['수박','🍉'],['딸기','🍓'],['버섯','🍄'],['사탕','🍬'],['빵','🍞'],['우산','☂️'],['풍선','🎈'],['강아지','🐶'],['고양이','🐱'],
+  ['곰','🐻'],['공','⚽'],['별','⭐'],['달','🌙'],['꽃','🌸'],['책','📚'],['연필','✏️'],['가방','🎒'],['자동차','🚗'],['자전거','🚲'],
+  ['비행기','✈️'],['기린','🦒'],['원숭이','🐒'],['물고기','🐟'],['거북이','🐢'],['눈사람','⛄'],['집','🏠'],['선물','🎁'],['햄버거','🍔'],['양말','🧦'],
+  ['신발','👟'],['안경','👓'],['공룡','🦕'],['펭귄','🐧'],['아이스크림','🍦'],['라면','🍜']
+];
+const SUBJ = ['피카츄','꼬부기','파이리','이상해씨','이브이','푸린','잠만보','고라파덕','메타몽','나옹','뮤','토게피'];
+const VERBS = [['자요','💤'],['웃어요','😄'],['울어요','😢'],['달려요','💨'],['노래해요','🎵'],['춤춰요','💃'],['화나요','😠']];
+const ACTS = [['버스','타요','🚌'],['기차','타요','🚂'],['자전거','타요','🚲'],['사과','먹어요','🍎'],['바나나','먹어요','🍌'],['케이크','먹어요','🎂'],['우유','마셔요','🥛'],['물','마셔요','💧'],['공','차요','⚽'],['책','읽어요','📚'],
+  ['모자','써요','🧢'],['안경','써요','👓'],['그림','그려요','🎨'],['피아노','쳐요','🎹'],['이','닦아요','🪥'],['손','씻어요','🧼'],['풍선','불어요','🎈'],['노래','불러요','🎤'],['편지','써요','✉️'],['선물','받아요','🎁']];
+const PLACES = [['학교에 가요','🏫'],['병원에 가요','🏥'],['바다에서 수영해요','🌊'],['집에서 자요','🏠'],['공원에서 놀아요','🌳'],['산에 올라가요','⛰️'],['시장에서 장을 봐요','🛒'],['부엌에서 요리해요','🍳'],['하늘을 날아요','☁️'],['눈사람을 만들어요','⛄']];
+const CARD_LV = [
+  { t: '포켓몬 이름 1', d: '받침 없는 쉬운 이름', ex: '피카츄', c: '#F2C230' },
+  { t: '포켓몬 이름 2', d: '받침 있는 이름', ex: '잠만보', c: '#F28A3A' },
+  { t: '낱말 1', d: '받침 없는 낱말', ex: '바나나', c: '#7FD36A' },
+  { t: '낱말 2', d: '받침 있는 낱말', ex: '강아지', c: '#3F9F50' },
+  { t: '포켓몬과 낱말', d: '두 낱말 읽기', ex: '피카츄와 사과', c: '#6EC3F0' },
+  { t: '짧은 문장', d: '누가 어떻게 해요', ex: '피카츄가 자요', c: '#3E8FD9' },
+  { t: '문장', d: '누가 무엇을 해요', ex: '피카츄가 버스를 타요', c: '#B48BE0' },
+  { t: '긴 문장', d: '누가 어디에서 무엇을 해요', ex: '꼬부기가 바다에서 수영해요', c: '#E8433F' }
+];
+const LV_STARS = 6;
+const hasJong = w => [...w].some(ch => (dec(ch) || {}).jong);
+const iga = s => s + josa(s, '이', '가');
+// 각 카드: 읽을 글(text), 맞는 그림(pic), 헷갈리는 그림 2개를 만드는 방법(lv에 따라)
+const CARDS = (() => {
+  const L = Array.from({ length: 8 }, () => []);
+  const add = (lv, text, pic, parts) => L[lv].push({ id: text, lv, text, pic, parts });
+  for (const m of MON.filter(x => !x.rare)) add(!hasJong(m.n) && m.n.length <= 3 ? 0 : 1, m.n, { m }, { m });
+  for (const [w, e] of NOUNS) add(hasJong(w) ? 3 : 2, w, { e }, { w, e });
+  NOUNS.forEach(([w, e], i) => { const s = SUBJ[i % SUBJ.length]; add(4, `${s}${josa(s, '과', '와')} ${w}`, { m: MON_BY[s], e }, { s, w, e }); });
+  VERBS.forEach(([v, e], i) => { for (let k = 0; k < 4; k++) { const s = SUBJ[(i * 3 + k) % SUBJ.length]; add(5, `${iga(s)} ${v}`, { m: MON_BY[s], e }, { s, v, e }); } });
+  ACTS.forEach(([o, v, e], i) => { for (const s of [SUBJ[i % SUBJ.length], SUBJ[(i * 5 + 3) % SUBJ.length]]) add(6, `${iga(s)} ${o}${josa(o, '을', '를')} ${v}`, { m: MON_BY[s], e }, { s, o, v, e }); });
+  PLACES.forEach(([pl, e], i) => { for (let k = 0; k < 3; k++) { const s = SUBJ[(i * 4 + k * 5) % SUBJ.length]; add(7, `${iga(s)} ${pl}`, { m: MON_BY[s], e }, { s, pl, e }); } });
+  return L;
+})();
+function cardOptions(c) {
+  const p = c.parts, otherS = () => MON_BY[rand(SUBJ.filter(x => x !== p.s))];
+  const pick = (arr, bad) => rand(arr.filter(x => !bad(x)));
+  if (c.lv <= 1) return sample(CARDS[c.lv].filter(x => x !== c), 2).map(x => ({ pic: x.pic, text: x.text }));
+  if (c.lv <= 3) return sample(NOUNS.filter(([w]) => w !== p.w), 2).map(([w, e]) => ({ pic: { e }, text: w }));
+  const s2 = otherS();
+  if (c.lv === 4) { const [w2, e2] = pick(NOUNS, ([w]) => w === p.w); return [{ pic: { m: MON_BY[p.s], e: e2 }, text: `${p.s}${josa(p.s, '과', '와')} ${w2}` }, { pic: { m: s2, e: p.e }, text: `${s2.n}${josa(s2.n, '과', '와')} ${p.w}` }]; }
+  if (c.lv === 5) { const [v2, e2] = pick(VERBS, ([v]) => v === p.v); return [{ pic: { m: MON_BY[p.s], e: e2 }, text: `${iga(p.s)} ${v2}` }, { pic: { m: s2, e: p.e }, text: `${iga(s2.n)} ${p.v}` }]; }
+  if (c.lv === 6) { const [o2, v2, e2] = pick(ACTS, ([o]) => o === p.o); return [{ pic: { m: MON_BY[p.s], e: e2 }, text: `${iga(p.s)} ${o2}${josa(o2, '을', '를')} ${v2}` }, { pic: { m: s2, e: p.e }, text: `${iga(s2.n)} ${p.o}${josa(p.o, '을', '를')} ${p.v}` }]; }
+  const [pl2, e2] = pick(PLACES, ([pl]) => pl === p.pl);
+  return [{ pic: { m: MON_BY[p.s], e: e2 }, text: `${iga(p.s)} ${pl2}` }, { pic: { m: s2, e: p.e }, text: `${iga(s2.n)} ${p.pl}` }];
+}
+function picHTML(pic) {
+  if (pic.m && pic.e) return `<span class="scene">${art(pic.m)}<span class="emo">${pic.e}</span></span>`;
+  if (pic.m) return art(pic.m);
+  return `<span class="emo big">${pic.e}</span>`;
+}
+const cardStat = id => (S.cards || {})[id] || { n: 0, g: 0, last: 0 };
+const cardUnlocked = li => li === 0 || ((S.cardLv || {})[li - 1] || 0) >= LV_STARS;
+const cardLevelNow = () => { let li = 0; while (li < 7 && cardUnlocked(li + 1)) li++; return li; };
+function pickDeck(li) {
+  const pool = CARDS[li], st = cardStat;
+  const unseen = shuffle(pool.filter(c => !st(c.id).n));
+  const learning = pool.filter(c => st(c.id).n && st(c.id).g < 3).sort((a, b) => (st(a.id).g - st(b.id).g) || (st(a.id).last - st(b.id).last));
+  const mastered = shuffle(pool.filter(c => st(c.id).g >= 3));
+  const deck = [];
+  const take = (arr, n) => { for (const c of arr) { if (n <= 0 || deck.length >= 5) break; if (!deck.includes(c)) { deck.push(c); n--; } } };
+  // 덜 익힌 카드 2장, 새 카드 2장, 다 익힌 카드 1장 (모자라면 남은 카드로 채움)
+  take(learning, 2); take(unseen, 2); take(mastered, 1);
+  take(unseen, 5); take(learning, 5); take(shuffle(pool), 5);
+  return shuffle(deck);
+}
+
+function showCardsHome() {
+  current = 'cardshome';
+  setTitle('낱말카드');
+  const now = cardLevelNow();
+  const silverAll = Object.values(S.cards || {}).filter(v => v.g >= 1).length, goldAll = Object.values(S.cards || {}).filter(v => v.g >= 3).length;
+  stage.innerHTML = `<div class="scroll">
+    <div class="cardshead"><span>모은 카드 은색 <b style="font-weight:400;color:var(--ink-soft)">${silverAll}</b> · 금색 <b style="font-weight:400;color:#B98A12">${goldAll}</b></span><button class="smallbtn" id="toAlbum">카드 앨범 보기</button></div>
+    <div class="lvgrid">${CARD_LV.map((L, li) => {
+      const open = cardUnlocked(li), stars = Math.min(LV_STARS, (S.cardLv || {})[li] || 0);
+      const silver = CARDS[li].filter(c => cardStat(c.id).g >= 1).length;
+      return `<button class="lvtile${li === now ? ' next' : ''}" data-li="${li}" ${open ? '' : 'disabled'} style="border-top:8px solid ${L.c}">
+        <span class="lvno">${li + 1}단계</span><strong>${L.t}</strong><span class="ex">${L.ex}</span>
+        <span class="meta"><span>${open ? `별 ${stars}/${LV_STARS}${stars >= LV_STARS ? ' · 통과!' : ''}` : '앞 단계에서 별 6개를 모으면 열려요'}</span><span>카드 ${silver}/${CARDS[li].length}</span></span>
+        <span class="bar"><i style="width:${stars / LV_STARS * 100}%"></i></span></button>`;
+    }).join('')}</div></div>`;
+  stage.querySelector('.lvgrid').onclick = e => { const b = e.target.closest('.lvtile'); if (b && !b.disabled) { sfx.tap(); go(runDeck, +b.dataset.li); } };
+  $('#toAlbum').onclick = () => go(showAlbum, now);
+}
+
+function runDeck(li) {
+  current = 'deck';
+  const L = CARD_LV[li];
+  setTitle(`낱말카드 · ${li + 1}단계 ${L.t}`);
+  const deck = pickDeck(li), res = [];
+  const fresh = { silver: 0, gold: 0 };
+  let i = 0;
+  stage.innerHTML = `<section class="panel deck" id="deck"></section>`;
+  const box = $('#deck');
+  const dots = () => `<div class="deckdots" aria-label="카드 ${deck.length}장">${deck.map((_, k) => `<span class="${res[k] || ''}${k === res.length ? ' cur' : ''}"></span>`).join('')}</div>`;
+  function show() {
+    const c = deck[i];
+    let helped = false, tries = 0, over = false;
+    const words = c.text.split(' ');
+    const size = c.text.length <= 4 ? 'clamp(54px, 9vw, 96px)' : c.text.length <= 8 ? 'clamp(42px, 6.6vw, 72px)' : 'clamp(32px, 4.8vw, 54px)';
+    const opts = shuffle([{ pic: c.pic, text: c.text, ok: true }, ...cardOptions(c)]);
+    box.innerHTML = `${dots()}
+      <div class="wcard" style="--lvc:${L.c}"><span class="wlabel">${li + 1}단계 · ${L.t}</span>
+        <div class="wtext" style="--wsize:${size}">${words.map(w => `<button>${w}</button>`).join('')}</div></div>
+      <p class="hint" id="dhint">소리 내어 읽어 봐! 모르는 낱말은 눌러서 들어 봐</p>
+      <div class="tools" id="dtools"><button class="big go" id="readDone">다 읽었어!</button></div>
+      <div class="pics" id="dpics" hidden>${opts.map((o, k) => `<button class="pic" data-k="${k}" aria-label="그림 ${k + 1}">${picHTML(o.pic)}</button>`).join('')}</div>`;
+    box.querySelector('.wtext').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (!over) helped = true; b.classList.add('heard'); say(b.textContent, true); };
+    $('#readDone').onclick = () => { $('#dtools').hidden = true; $('#dpics').hidden = false; $('#dhint').textContent = '어떤 그림일까? 맞는 그림을 골라 봐!'; say('어떤 그림일까?'); };
+    $('#dpics').onclick = e => {
+      const b = e.target.closest('.pic'); if (!b || over) return;
+      const o = opts[+b.dataset.k];
+      if (o.ok) {
+        over = true;
+        b.classList.add('right'); sfx.good();
+        const r = !helped && tries === 0 ? 'good' : 'ok';
+        finishCard(c, r, b);
+      } else {
+        tries++; sfx.bad();
+        b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
+        say(`이건 ${o.text}`);
+        if (tries >= 2) { over = true; box.querySelectorAll('.pic')[opts.findIndex(x => x.ok)].classList.add('reveal'); finishCard(c, 'miss'); }
+      }
+    };
+  }
+  function finishCard(c, r) {
+    res.push(r);
+    const st = { ...cardStat(c.id) };
+    st.n++; st.last = Date.now();
+    if (r === 'good') { st.g++; if (st.g === 1) fresh.silver++; if (st.g === 3) fresh.gold++; }
+    S.cards[c.id] = st;
+    record('cards', c.text, r === 'good');
+    const card = box.querySelector('.wcard');
+    card.insertAdjacentHTML('beforeend', `<span class="wpic">${picHTML(c.pic)}</span>`);
+    sayNext(r === 'miss' ? `정답은 ${c.text}` : `${c.text}. ${r === 'good' ? rand(PRAISE) : '잘했어!'}`);
+    if (r === 'good' && st.g === 3) sayNext('금색 카드가 됐어!');
+    later(() => { i++; if (i < deck.length) show(); else finishDeck(); }, 2600);
+  }
+  function finishDeck() {
+    const good = res.filter(r => r === 'good').length, right = res.filter(r => r !== 'miss').length;
+    const stars = good === 5 ? 3 : right >= 4 ? 2 : right >= 3 ? 1 : 0;
+    const before = (S.cardLv[li] || 0);
+    S.cardLv[li] = before + stars;
+    const unlocked = li < 7 && before < LV_STARS && S.cardLv[li] >= LV_STARS;
+    markDay();
+    const g = gainExp(right * 10 + stars * 10);
+    persist(); updateBar();
+    const p = S.partner;
+    const steps = [];
+    steps.push(() => {
+      overlay.innerHTML = `<div class="panel card">
+        <h2>${stars ? '카드 다 읽었다!' : '조금 더 연습해 보자!'}</h2>
+        <div class="bigstars" aria-label="별 ${stars}개">${[0, 1, 2].map(k => `<i class="${k < stars ? '' : 'off'}" style="animation-delay:${k * .25}s">★</i>`).join('')}</div>
+        <p>5장 중 ${right}장 맞혔어${good ? ` · 혼자 읽은 카드 ${good}장` : ''}</p>
+        ${fresh.silver || fresh.gold ? `<p class="new">앨범에 ${fresh.silver ? `은색 카드 ${fresh.silver}장` : ''}${fresh.silver && fresh.gold ? ', ' : ''}${fresh.gold ? `금색 카드 ${fresh.gold}장` : ''}이 새로 생겼어!</p>` : ''}
+        ${unlocked ? `<p class="new">${li + 2}단계 '${CARD_LV[li + 1].t}'가 열렸어!</p>` : ''}
+        <div class="expline"><span>${p.id} 경험치 +${right * 10 + stars * 10}${g.ups ? ` · <b style="font-weight:400;color:var(--ball)">레벨 업! Lv.${p.lv}</b>` : ''}</span><div class="expbar"><i style="width:${Math.round(p.exp / needExp(p.lv) * 100)}%"></i></div></div>
+        <div class="actions"><button class="big" id="nx">${stars ? '카드팩 열기!' : '다음'}</button></div></div>`;
+      if (unlocked) { sfx.level(); say(`${li + 2}단계가 열렸어!`); } else if (g.ups) { sfx.level(); say(`${p.id}의 레벨이 올랐다!`); } else { sfx.good(); say(stars === 3 ? '혼자서 다 읽었어! 최고야!' : stars ? rand(PRAISE) : '괜찮아, 다시 해 보자!'); }
+      $('#nx').onclick = next;
+    });
+    if (evoReady()) steps.push(() => evoStep(next));
+    if (stars) steps.push(() => openPack(li));
+    else steps.push(() => deckEnd(li));
+    let si = 0;
+    function next() { gen++; const f = steps[si++]; if (f) f(); }
+    overlay.hidden = false;
+    next();
+  }
+  show();
+}
+
+// 카드팩: 뒤집힌 카드 3장 중 하나를 골라 포켓몬 받기
+function openPack(li) {
+  overlay.innerHTML = `<div class="panel card"><h2>카드팩에서 하나를 골라 봐!</h2>
+    <div class="packs">${[0, 1, 2].map(k => `<button data-k="${k}" aria-label="카드 ${k + 1}"><span class="pball"></span></button>`).join('')}</div></div>`;
+  say('카드팩에서 하나를 골라 봐!');
+  overlay.querySelector('.packs').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const pool = MON.filter(m => !m.rare), unc = pool.filter(m => !S.caught[m.n]);
+    const m = rand(unc.length ? unc : pool), shiny = !!S.caught[m.n] && Math.random() < .25;
+    const first = !S.caught[m.n];
+    const c = S.caught[m.n] || { n: 0, s: 0, t: Date.now() };
+    c.n++; if (shiny) c.s = (c.s || 0) + 1;
+    S.caught[m.n] = c;
+    persist(); updateBar();
+    sfx.catch();
+    const title = `${shiny ? '반짝이는 ' : ''}${m.n}${josa(m.n, '이', '가')} 나왔다!`;
+    overlay.innerHTML = `<div class="panel card"><div class="stage"><div class="caught">${art(m, { shiny })}</div></div>
+      <h2>${title}</h2><p class="${first ? 'new' : ''}">${first ? '도감에 새로 등록됐어!' : `${m.n}${josa(m.n, '은', '는')} ${c.n}마리째야!`}</p>
+      <div class="nametiles">${[...m.n].map(ch => `<button>${ch}</button>`).join('')}</div>
+      <div class="actions"><button class="big" id="more">한 덱 더!</button><button class="big alt" id="toCards">낱말카드</button></div></div>`;
+    say(title);
+    overlay.querySelector('.nametiles').onclick = ev => { const t = ev.target.closest('button'); if (t) say(t.textContent, true); };
+    $('#more').onclick = () => go(runDeck, cardLevelNow() > li && (S.cardLv[li] || 0) >= LV_STARS ? li + 1 : li);
+    $('#toCards').onclick = () => go(showCardsHome);
+  };
+}
+function deckEnd(li) {
+  overlay.innerHTML = `<div class="panel card"><div class="stage" style="width:min(100%,160px)">${art(MON_BY[S.partner.id])}</div>
+    <h2>다시 해 보자!</h2><p>3장 이상 맞히면 카드팩을 열 수 있어.</p>
+    <div class="actions"><button class="big" id="more">다시 하기</button><button class="big alt" id="toCards">낱말카드</button></div></div>`;
+  $('#more').onclick = () => go(runDeck, li);
+  $('#toCards').onclick = () => go(showCardsHome);
+}
+
+function showAlbum(li) {
+  current = 'album';
+  setTitle('카드 앨범');
+  const open = CARD_LV.map((_, k) => cardUnlocked(k));
+  const cards = CARDS[li];
+  const got = cards.filter(c => cardStat(c.id).g >= 1).length, gold = cards.filter(c => cardStat(c.id).g >= 3).length;
+  stage.innerHTML = `<div class="scroll">
+    <div class="albumtabs">${CARD_LV.map((L, k) => `<button class="${k === li ? 'on' : ''}" data-li="${k}" ${open[k] ? '' : 'disabled'}>${k + 1}단계</button>`).join('')}</div>
+    <p class="hint" style="margin-bottom:12px">${CARD_LV[li].t} · 은색 ${got}/${cards.length}장 · 금색 ${gold}장 (혼자 세 번 읽으면 금색이 돼요)</p>
+    <div class="albumgrid">${cards.map(c => {
+      const st = cardStat(c.id);
+      if (!st.n) return '<div class="acard back" aria-label="아직 못 본 카드">?</div>';
+      return `<button class="acard ${st.g >= 3 ? 'gold' : st.g >= 1 ? 'silver' : ''}" data-id="${esc(c.id)}"><span class="p">${picHTML(c.pic)}</span><span class="t">${c.text}</span><small>${st.g >= 3 ? '금색 카드' : st.g >= 1 ? `혼자 읽기 ${st.g}/3` : '다시 도전!'}</small></button>`;
+    }).join('')}</div></div>`;
+  stage.querySelector('.albumtabs').onclick = e => { const b = e.target.closest('button'); if (b && !b.disabled) go(showAlbum, +b.dataset.li); };
+  stage.querySelector('.albumgrid').onclick = e => { const b = e.target.closest('.acard[data-id]'); if (b) say(b.dataset.id); };
+}
+
 /* ================= 도감 ================= */
 function showDex() {
   current = 'dex';
@@ -2008,7 +2310,7 @@ function showParent() {
   setTitle('부모님');
   const t = S.totals, acc = t.answers ? Math.round(t.correct / t.answers * 100) : 0;
   const weak = Object.entries(S.stats.syl).filter(([, v]) => v[0] >= 2 && v[1] > 0).sort((a, b) => (b[1][1] / b[1][0]) - (a[1][1] / a[1][0]) || b[1][1] - a[1][1]).slice(0, 12);
-  const typeRows = ['listen', 'build', 'trace', 'read', 'dictate'].map(k => { const v = S.stats.type[k] || [0, 0]; return `<tr><td>${KIND[k].t}</td><td class="n">${v[0]}</td><td class="n">${v[0] ? Math.round((v[0] - v[1]) / v[0] * 100) + '%' : '–'}</td></tr>`; }).join('');
+  const typeRows = ['listen', 'build', 'trace', 'read', 'dictate', 'cards'].map(k => { const v = S.stats.type[k] || [0, 0]; return `<tr><td>${k === 'cards' ? '낱말카드' : KIND[k].t}</td><td class="n">${v[0]}</td><td class="n">${v[0] ? Math.round((v[0] - v[1]) / v[0] * 100) + '%' : '–'}</td></tr>`; }).join('');
   const vs = voices.slice().sort((p, q) => voiceScore(q) - voiceScore(p));
   const curVoice = pickVoice();
   const ids = Object.keys(STORE.slots).sort((a, b) => STORE.slots[a].created - STORE.slots[b].created);
