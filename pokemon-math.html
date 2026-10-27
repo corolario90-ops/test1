@@ -79,6 +79,8 @@ h2{margin:0 0 12px;font-size:20px}
 .bag{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:2px;padding:10px;border:3px solid var(--red);border-radius:26px;background:var(--red-soft);max-width:calc(3 * (var(--sz) + 2px) + 26px)}
 /* 시계 */
 .clock{width:230px;height:230px;max-width:100%}
+/* 디지털 시계 */
+.digital{background:#22302a;color:#7dfc9a;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:72px;font-weight:700;letter-spacing:4px;padding:14px 30px;border-radius:20px;border:6px solid #2b2b2b;font-variant-numeric:tabular-nums;text-shadow:0 0 12px rgba(125,252,154,.5)}
 /* 달력 */
 .cal{width:160px;border-radius:16px;overflow:hidden;border:3px solid var(--ink);background:var(--card);text-align:center}
 .cal .m{background:var(--red);color:#fff;font-size:26px;font-weight:900;padding:6px}
@@ -162,7 +164,7 @@ h2{margin:0 0 12px;font-size:20px}
     <div class="card">
       <h2>무엇을 할까요?</h2>
       <div class="modes" id="modes">
-        <button class="mode sel" data-mode="two"><span class="emo">🔟</span>두 자리 셈<small>10마리 묶음으로 더하고 빼기</small></button>
+        <button class="mode sel" data-mode="two"><span class="emo">➕</span>더하기·빼기<small>10마리 묶음으로 자리값 익히기</small></button>
         <button class="mode" data-mode="mul"><span class="emo">✖️</span>곱하기<small>몇씩 몇 묶음?</small></button>
         <button class="mode" data-mode="clock"><span class="emo">🕒</span>시계 읽기<small>몇 시 몇 분?</small></button>
         <button class="mode" data-mode="unit"><span class="emo">🍎</span>세는 말<small>개·마리·명·날짜</small></button>
@@ -265,9 +267,9 @@ const THINGS = [
 const COUNTERS = ['개','마리','명','대','권','자루','송이','장','잔','그루','채'];
 
 const LEVEL_DESC = {
-  two:   ['23 + 4', '23 + 14', '27 + 5 받아올림'],
-  mul:   ['2씩 3묶음', '5씩 4묶음', '9씩 묶음까지'],
-  clock: ['정각', '30분', '5분 단위'],
+  two:   ['3 + 4', '23 + 4', '23 + 14'],
+  mul:   ['2 + 2 + 2', '2씩 3묶음', '5씩 4묶음'],
+  clock: ['디지털 시계', '정각·30분', '5분 단위'],
   unit:  ['개·마리·명·대', '권·자루·송이', '나이·날짜까지'],
   mix:   ['골고루', '골고루', '골고루']
 };
@@ -451,11 +453,14 @@ let mode = 'two', level = 1;
 function qTwo(){
   const [id, name] = pick(POKEMON);
   const add = Math.random() < 0.5;
+  if(level === 1) return qSmall(id, name, add);
   let a, b;
-  if(level === 1){        // 두 자리 ± 한 자리, 받아올림 없음
-    if(add){ const o = rand(0,8); a = rand(1,8)*10 + o; b = rand(1, 9-o); }
+  const hard = level === 3 && Math.random() < 0.4;
+  if(level === 2){        // 두 자리 ± 한 자리, 받아올림 없음 (가끔 '묶음 + 낱개')
+    if(add && Math.random() < 0.3){ a = rand(1,9)*10; b = rand(1,9); }
+    else if(add){ const o = rand(0,8); a = rand(1,8)*10 + o; b = rand(1, 9-o); }
     else   { const o = rand(1,9); a = rand(1,9)*10 + o; b = rand(1, o); }
-  } else if(level === 2){ // 두 자리 ± 두 자리, 받아올림 없음
+  } else if(!hard){       // 두 자리 ± 두 자리, 받아올림 없음
     if(add){ const t1 = rand(1,7), o1 = rand(0,8); a = t1*10 + o1; b = rand(1, 8-t1)*10 + rand(1, 9-o1); }
     else   { const t1 = rand(2,9), o1 = rand(1,9); a = t1*10 + o1; b = rand(1, t1-1)*10 + rand(0, o1); }
   } else {                // 두 자리 ± 한 자리, 받아올림·받아내림
@@ -467,10 +472,11 @@ function qTwo(){
   const carry = add && oa + ob >= 10, borrow = !add && ob > oa;
   let hint, likely;
   if(add){
-    if(carry) hint = [`${a} = ${ta} + ${oa}`, `일의 자리끼리: ${oa} + ${ob} = ${oa+ob}`, `10마리가 모이면 묶음 1개! ${ta} + ${oa+ob} = ${ans}`];
+    if(oa === 0 && b < 10) hint = [`${a} = 10마리 묶음 ${ta/10}개`, `묶음 ${ta/10}개 + 낱개 ${b}마리 = ${ans}`];
+    else if(carry) hint = [`${a} = ${ta} + ${oa}`, `일의 자리끼리: ${oa} + ${ob} = ${oa+ob}`, `10마리가 모이면 묶음 1개! ${ta} + ${oa+ob} = ${ans}`];
     else if(b < 10) hint = [`${a} = ${ta} + ${oa}`, `일의 자리끼리: ${oa} + ${ob} = ${oa+ob}`, `${ta} + ${oa+ob} = ${ans}`];
     else hint = [`십의 자리끼리: ${ta} + ${tb} = ${ta+tb}`, `일의 자리끼리: ${oa} + ${ob} = ${oa+ob}`, `${ta+tb} + ${oa+ob} = ${ans}`];
-    likely = carry ? [ans-10, ans+10] : b < 10 ? [ans+10, a + b*10] : [ans+10, ans-10];
+    likely = carry ? [ans-10, ans+10] : b < 10 ? [b*10 + ta/10, a + b*10, ans+10] : [ans+10, ans-10];
   } else {
     if(borrow) hint = [`${a} = ${ta-10} + ${oa+10}  (묶음 1개를 풀었어요)`, `${oa+10} − ${ob} = ${oa+10-ob}`, `${ta-10} + ${oa+10-ob} = ${ans}`];
     else if(b < 10) hint = [`${a} = ${ta} + ${oa}`, `일의 자리끼리: ${oa} − ${ob} = ${oa-ob}`, `${ta} + ${oa-ob} = ${ans}`];
@@ -498,14 +504,45 @@ function qTwo(){
   };
 }
 
+// 쉬움: 한 자리 수끼리 더하고 빼기 (10까지)
+function qSmall(id, name, add){
+  let a, b;
+  if(add){ a = rand(1,8); b = rand(1, 10-a); } else { a = rand(2,10); b = rand(1, a-1); }
+  const ans = add ? a + b : a - b;
+  const steps = [];
+  for(let k=1;k<=b;k++) steps.push(add ? a+k : a-k);
+  return {
+    kind:'two', id,
+    text: add ? `${name} ${a}마리가 있는데 ${b}마리가 더 왔어요. 모두 몇 마리일까요?`
+              : `${name} ${a}마리 중에 ${b}마리가 도망갔어요. 몇 마리 남았을까요?`,
+    say:  add ? `${name} ${mari(a)}가 있는데 ${mari(b)}가 더 왔어요. 모두 몇 마리일까요?`
+              : `${name} ${mari(a)} 중에 ${mari(b)}가 도망갔어요. 몇 마리 남았을까요?`,
+    eq: `${a} ${add ? '+' : '−'} ${b} = ?`,
+    tapHint: '포켓몬을 누르면 하나씩 세어 줘요',
+    hint: [add ? `${a}에서 ${b}만큼 이어서 세어요` : `${a}에서 ${b}만큼 거꾸로 세어요`, `${a} → ${steps.join(', ')}`],
+    choices: numChoices(ans, [ans+1, ans-1], 12), answer: String(ans),
+    done: `${a} ${add ? '+' : '−'} ${b} = ${ans}`, answerSay: mari(ans),
+    render(scene){
+      scene.style.setProperty('--sz', '56px');
+      const grp = (n, gone=0) => { const g = div('group'); for(let i=0;i<n;i++) g.appendChild(monEl(id, i, i >= n - gone)); return g; };
+      if(add) scene.append(grp(a), opEl('+'), grp(b));
+      else {
+        scene.append(grp(a, b));
+        setTimeout(() => scene.querySelectorAll('[data-gone]').forEach(m => m.classList.add('gone')), 900);
+      }
+    }
+  };
+}
+
 function qMul(){
   const [id, name] = pick(POKEMON);
   let per, groups;
-  if(level === 1){ per = rand(2,5); groups = rand(2,3); }
-  else if(level === 2){ per = rand(2,5); groups = rand(2,5); }
-  else { per = rand(3,9); groups = rand(2,5); }
+  if(level === 1){ per = rand(2,4); groups = rand(2,3); }
+  else if(level === 2){ per = rand(2,5); groups = rand(2,3); }
+  else { per = rand(2,5); groups = rand(2,5); }
   const ans = per * groups;
-  const hint = [`${per}씩 ${groups}묶음`, `${Array(groups).fill(per).join(' + ')} = ${ans}`, `${per} × ${groups} = ${ans}`];
+  const sum = Array(groups).fill(per).join(' + ');
+  const hint = [`${per}씩 ${groups}묶음`, `${sum} = ${ans}`, `${per} × ${groups} = ${ans}`];
   const render = scene => {
     scene.style.setProperty('--sz', per <= 3 ? '44px' : per <= 6 ? '36px' : '30px');
     for(let g=0; g<groups; g++){
@@ -517,7 +554,15 @@ function qMul(){
   const base = { kind:'mul', id, hint, render, tapHint: '포켓몬을 누르면 하나씩 세어 줘요',
     done: `${per} × ${groups} = ${ans}`,
     answerSay: `${sino(per)} 곱하기 ${eunneun(sino(groups))} ${sino(ans)}` };
-  if(level > 1 && Math.random() < 0.35){
+  if(level === 1){
+    // 같은 수 더하기로 먼저 익혀요
+    return { ...base, done: `${sum} = ${ans} → ${per} × ${groups}`, answerSay: mari(ans),
+      text: `몬스터볼 ${groups}개에 ${iga(name)} ${per}마리씩 들어 있어요. 모두 몇 마리일까요?`,
+      say: `몬스터볼 ${counterNum(groups)} 개에 ${iga(name)} ${counterNum(per)} 마리씩 들어 있어요. 모두 몇 마리일까요?`,
+      eq: `${sum} = ?`,
+      choices: numChoices(ans, [ans + 1, ans - 1], 20), answer: String(ans) };
+  }
+  if(level === 3 && Math.random() < 0.35){
     // 그림을 보고 곱셈식 고르기
     const right = `${per} × ${groups}`;
     return { ...base,
@@ -535,28 +580,35 @@ function qMul(){
 
 function qClock(){
   const h = rand(1,12);
-  const m = level === 1 ? 0 : level === 2 ? pick([0,30,30]) : rand(0,11)*5;
+  const m = level === 3 ? rand(0,11)*5 : pick([0,30]);
+  const digital = level === 1;
   const wrap = x => ((x - 1 + 12) % 12) + 1;
   const label = (hh, mm) => mm ? `${hh}시 ${mm}분` : `${hh}시`;
   const read = (hh, mm) => `${counterNum(hh)} 시` + (mm ? ` ${sino(mm)} 분` : '');
-  const hint = ['빨간 짧은 바늘은 \'시\', 파란 긴 바늘은 \'분\'이에요.',
-    m ? `긴 바늘이 가리키는 숫자 ${m/5} → ${m}분 (5, 10, 15 … 5분씩)` : '긴 바늘이 12에 있으면 \'정각\'이에요.'];
-  if(m) hint.push('짧은 바늘이 두 숫자 사이에 있으면 작은 숫자를 읽어요.');
+  const hint = digital
+    ? ['앞의 숫자는 \'시\', 뒤의 숫자는 \'분\'이에요.', m ? `${h}:30 → ${h}시 30분` : `뒤가 00이면 '정각'이에요. ${h}:00 → ${h}시`]
+    : ['빨간 짧은 바늘은 \'시\', 파란 긴 바늘은 \'분\'이에요.',
+       m ? `긴 바늘이 가리키는 숫자 ${m/5} → ${m}분 (5, 10, 15 … 5분씩)` : '긴 바늘이 12에 있으면 \'정각\'이에요.'];
+  if(m && !digital) hint.push('짧은 바늘이 두 숫자 사이에 있으면 작은 숫자를 읽어요.');
   if(m === 30) hint.push(`30분은 '반'이라고도 해요. ${counterNum(h)} 시 반!`);
   hint.push('시는 \'한, 두, 세 시\', 분은 \'일, 이, 삼 분\'으로 읽어요.');
   const base = { kind:'clock', hint, tapHint: '', answerSay: read(h, m), done: label(h, m),
-    render(scene){ scene.appendChild(clockSVG(h, m)); } };
+    render(scene){
+      if(!digital){ scene.appendChild(clockSVG(h, m)); return; }
+      const d = div('digital pop'); d.textContent = `${h}:${String(m).padStart(2,'0')}`; scene.appendChild(d);
+    } };
 
-  if(level > 1 && Math.random() < 0.35){
+  if(level !== 2 && Math.random() < (digital ? 0.4 : 0.35)){
     // 시각을 우리말로 읽기
     const wrongs = m
       ? [`${sino(h)} 시 ${sino(m)} 분`, `${counterNum(h)} 시 ${counterNum(m)} 분`, `${sino(h)} 시 ${counterNum(m)} 분`]
       : [`${sino(h)} 시`, `${nativeNum(h)} 시`, `${counterNum(h)} 분`, `${sino(h)} 분`];
     return { ...base, text: '이 시각을 어떻게 읽을까요?', say: '이 시각을 어떻게 읽을지 골라 보세요.',
-      eq: `${h}:${String(m).padStart(2,'0')}`, choices: textChoices(read(h, m), wrongs), answer: read(h, m) };
+      eq: digital ? '' : `${h}:${String(m).padStart(2,'0')}`, choices: textChoices(read(h, m), wrongs), answer: read(h, m) };
   }
   let wrongs;
-  if(!m) wrongs = [label(wrap(h+1),0), label(wrap(h-1),0), label(wrap(h+6),0)];
+  if(digital) wrongs = [label(wrap(h+1), m), label(h, m ? 0 : 30), label(wrap(h-1), m)];
+  else if(!m) wrongs = [label(wrap(h+1),0), label(wrap(h-1),0), label(wrap(h+6),0)];
   else {
     wrongs = [label(wrap(m >= 30 ? h+1 : h-1), m)];          // 짧은 바늘을 다음 숫자로 읽는 실수
     if(m/5 !== m) wrongs.push(label(h, m/5));                // 숫자를 그대로 '분'으로 읽는 실수
@@ -566,7 +618,7 @@ function qClock(){
   const choices = textChoices(label(h, m), wrongs.filter(w => w !== label(h, m)));
   choices.forEach(c => { const [, hh, mm] = c.key.match(/(\d+)시(?: (\d+)분)?/); c.sub = read(+hh, +(mm||0)); });
   return { ...base, text: '시계가 가리키는 시각은 몇 시 몇 분일까요?',
-    say: '짧은 바늘과 긴 바늘을 보고, 몇 시 몇 분인지 골라 보세요.',
+    say: digital ? '디지털 시계를 보고, 몇 시 몇 분인지 골라 보세요.' : '짧은 바늘과 긴 바늘을 보고, 몇 시 몇 분인지 골라 보세요.',
     eq: '', choices, answer: label(h, m) };
 }
 
