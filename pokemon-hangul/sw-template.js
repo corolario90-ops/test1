@@ -27,6 +27,8 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin !== location.origin) return;
+  // 같은 사이트의 숫자 놀이 앱(math/)은 그 앱의 서비스 워커가 맡음
+  if (url.pathname.startsWith(new URL('math/', self.registration.scope).pathname)) return;
   if (req.mode === 'navigate') {
     // 화면은 인터넷이 되면 새 버전을, 안 되면 보관한 버전을
     // 사이트가 내려가서 404가 와도 보관한 앱을 그대로 열도록, 정상 응답일 때만 새 버전으로 바꿈
