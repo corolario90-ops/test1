@@ -1,0 +1,1225 @@
+<title>포켓몬 숫자 놀이</title>
+<style>
+:root{
+  --bg:#fff7dc;--card:#ffffff;--ink:#2b2b2b;--muted:#7a7468;--line:#f0e2b0;--soft:#fffbea;
+  --red:#e3350d;--yellow:#ffcb05;--blue:#3b4cca;--blue-soft:#eef0ff;--red-soft:#fff1ee;--green:#2fae5a;--shadow:0 4px 0 rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;min-height:100vh;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.wrap{max-width:760px;margin:0 auto;padding:12px 16px 40px}
+
+header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+header h1{font-size:22px;margin:0;flex:1;display:flex;align-items:center;gap:8px}
+.ball{width:28px;height:28px;border-radius:50%;border:3px solid #222;background:linear-gradient(var(--red) 0 44%,#222 44% 56%,#fff 56%);position:relative;flex:none}
+.ball::after{content:"";position:absolute;inset:50% auto auto 50%;width:9px;height:9px;transform:translate(-50%,-50%);background:#fff;border:2.5px solid #222;border-radius:50%}
+.icon-btn{background:var(--card);border-radius:14px;padding:8px 12px;box-shadow:var(--shadow);font-size:16px;font-weight:700}
+
+.screen{display:none}
+.screen.on{display:block}
+.card{background:var(--card);border-radius:22px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+h2{margin:0 0 12px;font-size:20px}
+
+/* 홈 */
+.hero{text-align:center}
+.hero .pic{width:150px;height:150px;margin:0 auto}
+.hero p{margin:4px 0 0;color:var(--muted)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mode{background:var(--soft);border:3px solid var(--line);border-radius:18px;padding:16px 10px;text-align:center;font-size:20px;font-weight:800}
+.mode small{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-top:4px}
+.mode .emo{font-size:32px;display:block;margin-bottom:4px}
+.mode.wide{grid-column:1 / -1}
+.mode.sel,.level.sel{border-color:var(--blue);background:var(--blue-soft)}
+.levels{display:flex;gap:10px}
+.level{flex:1;background:var(--soft);border:3px solid var(--line);border-radius:16px;padding:12px 6px;font-weight:800;font-size:18px}
+.level small{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
+.start{display:block;width:100%;background:var(--red);color:#fff;font-size:24px;font-weight:900;padding:18px;border-radius:20px;box-shadow:0 5px 0 #a3260a}
+.start:active{transform:translateY(3px);box-shadow:0 2px 0 #a3260a}
+.voice-row{display:flex;gap:8px}
+.voice-row select{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px;border-radius:12px;border:3px solid var(--line);background:var(--soft);color:var(--ink)}
+.voice-info{margin:8px 0 0;font-size:13px;color:var(--muted)}
+
+/* 게임 */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dots{display:flex;gap:5px;flex:1;flex-wrap:wrap}
+.dot{width:14px;height:14px;border-radius:50%;background:#e8dcb5}
+.dot.ok{background:var(--green)}
+.dot.retry{background:var(--yellow)}
+.dot.now{outline:3px solid var(--blue);outline-offset:1px}
+.question{font-size:22px;font-weight:800;text-align:center;margin:2px 0 6px;line-height:1.45;text-wrap:balance}
+.equation{font-size:40px;font-weight:900;text-align:center;letter-spacing:1px;margin:0 0 6px;color:var(--blue)}
+.equation.long{font-size:30px}
+.tap-hint{font-size:13px;color:var(--muted);text-align:center;margin:0 0 6px}
+.scene{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;min-height:120px;padding:6px 0}
+.group{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;background:var(--soft);border:3px dashed var(--line);border-radius:18px;padding:10px;max-width:100%}
+.op{font-size:40px;font-weight:900;color:var(--red)}
+.mon{position:relative;width:var(--sz,72px);height:var(--sz,72px);display:flex;align-items:center;justify-content:center;transition:transform .5s,opacity .5s,filter .5s;cursor:pointer}
+.pic{display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
+img.pic{object-fit:contain;-webkit-user-drag:none}
+.mon .emo-item{font-size:calc(var(--sz,72px) * .78);line-height:1}
+.pop{animation:pop .35s ease-out backwards}
+.tag{position:absolute;top:-6px;right:-6px;min-width:24px;height:24px;padding:0 5px;border-radius:12px;background:var(--blue);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;animation:pop .25s;z-index:1}
+.gone{opacity:.25;filter:grayscale(1);transform:translateX(12px) scale(.85)}
+.mon.gone::after{content:"💨";position:absolute;left:-6px;bottom:0;font-size:18px}
+
+/* 10마리 묶음 */
+.ten{position:relative;display:grid;grid-template-columns:repeat(5,22px);gap:1px;padding:16px 5px 5px;border:3px solid var(--blue);border-radius:12px;background:var(--blue-soft);cursor:pointer;transition:opacity .5s,filter .5s,transform .5s}
+.ten .pic{width:22px;height:22px}
+.ten::before{content:"10마리";position:absolute;top:0;left:7px;font-size:11px;font-weight:800;color:var(--blue)}
+.unpacked{position:relative;display:flex;flex-wrap:wrap;gap:2px;max-width:calc(5 * (var(--sz) + 2px) + 14px);padding:18px 5px 5px;border:3px dashed var(--blue);border-radius:12px}
+.unpacked::before{content:"묶음 1개를 풀었어요";position:absolute;top:1px;left:7px;font-size:11px;font-weight:800;color:var(--blue);white-space:nowrap}
+/* 곱하기 묶음 */
+.bag{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:2px;padding:10px;border:3px solid var(--red);border-radius:26px;background:var(--red-soft);max-width:calc(3 * (var(--sz) + 2px) + 26px)}
+/* 시계 */
+.clock{width:230px;height:230px;max-width:100%}
+/* 디지털 시계 */
+.digital{background:#22302a;color:#7dfc9a;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:72px;font-weight:700;letter-spacing:4px;padding:14px 30px;border-radius:20px;border:6px solid #2b2b2b;font-variant-numeric:tabular-nums;text-shadow:0 0 12px rgba(125,252,154,.5)}
+/* 달력 */
+.cal{width:160px;border-radius:16px;overflow:hidden;border:3px solid var(--ink);background:var(--card);text-align:center}
+.cal .m{background:var(--red);color:#fff;font-size:26px;font-weight:900;padding:6px}
+.cal .d{font-size:70px;font-weight:900;padding:6px 0 10px;line-height:1}
+
+.hint-row{display:flex;justify-content:center;margin-top:6px}
+.hint-btn{background:var(--soft);border:2px solid var(--line);border-radius:12px;padding:6px 14px;font-weight:700;font-size:15px}
+.hint-box{margin:10px auto 0;max-width:460px;background:var(--blue-soft);border-radius:14px;padding:10px 14px;font-size:17px;font-weight:700;line-height:1.6;color:var(--blue);text-align:center}
+
+.answers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+.answers.text{grid-template-columns:repeat(2,1fr)}
+.ans{background:var(--yellow);border-radius:18px;padding:12px 4px 8px;font-size:38px;font-weight:900;box-shadow:0 5px 0 #c99c00;line-height:1.1}
+.answers.text .ans{font-size:22px;padding:16px 6px}
+.ans small{display:block;font-size:14px;font-weight:700;margin-top:4px;color:#6b5400}
+.ans:active{transform:translateY(3px);box-shadow:0 2px 0 #c99c00}
+.ans.wrong{background:#e9e4d6;box-shadow:0 5px 0 #c8c1ad;color:#aaa;animation:shake .4s}
+.ans.wrong small{color:#aaa}
+.ans.right{background:var(--green);color:#fff;box-shadow:0 5px 0 #1d7a3c}
+.ans.right small{color:#e3ffe9}
+.speak{background:var(--blue-soft);color:var(--blue);border-radius:12px;padding:6px 12px;font-weight:700;font-size:15px}
+
+/* 정답 창 */
+.overlay{position:fixed;inset:0;background:rgba(30,25,10,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.overlay.on{display:flex}
+.pop-card{background:var(--card);border-radius:26px;padding:22px 20px;text-align:center;width:min(360px,100%);animation:pop .35s ease-out}
+.pop-card h3{margin:0;font-size:30px;color:var(--green)}
+.pop-card p{margin:6px 0;font-size:18px}
+.pop-card .pic{width:160px;height:160px;margin:0 auto;animation:wiggle 1s ease-in-out}
+.pop-card .new{display:inline-block;background:var(--red);color:#fff;border-radius:10px;padding:2px 8px;font-size:13px;font-weight:800;margin-left:4px;vertical-align:middle}
+.next{margin-top:12px;background:var(--blue);color:#fff;font-size:20px;font-weight:800;padding:12px 28px;border-radius:16px;box-shadow:0 4px 0 #24318f}
+
+/* 결과 */
+.stars{font-size:54px;text-align:center;letter-spacing:6px;margin:6px 0}
+.result-score{text-align:center;font-size:22px;font-weight:800;margin:0 0 12px}
+.caught-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0 16px}
+.caught-row .pic{width:64px;height:64px}
+.row-btns{display:flex;gap:10px}
+.row-btns button{flex:1}
+.ghost{background:var(--soft);border:3px solid var(--line);border-radius:18px;padding:14px;font-size:18px;font-weight:800}
+
+/* 도감 */
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.dex-item{background:var(--soft);border-radius:14px;padding:6px 4px;text-align:center;font-size:13px;font-weight:700}
+.dex-item .pic{width:72px;height:72px;margin:0 auto}
+.dex-item span{display:block}
+.dex-item.no .pic{filter:brightness(0);opacity:.25}
+.dex-item.no span{color:#bbb}
+.dex-item .cnt{font-size:11px;color:var(--muted);font-weight:500}
+.dex-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.dex-head h2{margin:0}
+.small-link{background:none;color:var(--muted);text-decoration:underline;font-size:13px;margin-top:14px}
+
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) scale(1.05)}75%{transform:rotate(8deg) scale(1.05)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:480px){
+  .answers{grid-template-columns:repeat(2,1fr)}
+  .equation{font-size:34px}
+  .equation.long{font-size:24px}
+  .question{font-size:19px}
+  .op{font-size:30px}
+}
+</style>
+<div class="wrap">
+  <header>
+    <h1><span class="ball"></span>포켓몬 숫자 놀이</h1>
+    <button class="icon-btn" id="soundBtn" title="소리 켜기/끄기">🔊</button>
+    <button class="icon-btn" id="dexBtn">📖 도감</button>
+  </header>
+
+  <!-- 홈 -->
+  <section class="screen on" id="home">
+    <div class="card hero">
+      <div id="hero"></div>
+      <p>문제를 한 번에 맞히면 포켓몬을 잡을 수 있어요!</p>
+    </div>
+    <div class="card">
+      <h2>무엇을 할까요?</h2>
+      <div class="modes" id="modes">
+        <button class="mode sel" data-mode="two"><span class="emo">➕</span>더하기·빼기<small>10마리 묶음으로 자리값 익히기</small></button>
+        <button class="mode" data-mode="mul"><span class="emo">✖️</span>곱하기<small>몇씩 몇 묶음?</small></button>
+        <button class="mode" data-mode="clock"><span class="emo">🕒</span>시계 읽기<small>몇 시 몇 분?</small></button>
+        <button class="mode" data-mode="unit"><span class="emo">🍎</span>세는 말<small>개·마리·명·날짜</small></button>
+        <button class="mode wide" data-mode="mix"><span class="emo">🎲</span>섞어서<small>네 가지를 골고루</small></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>얼마나 어렵게?</h2>
+      <div class="levels" id="levels">
+        <button class="level sel" data-level="1">쉬움<small></small></button>
+        <button class="level" data-level="2">보통<small></small></button>
+        <button class="level" data-level="3">어려움<small></small></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>목소리</h2>
+      <div class="voice-row">
+        <select id="voiceSel" aria-label="목소리 고르기"></select>
+        <button class="speak" id="voiceTest">▶ 들어 보기</button>
+      </div>
+      <p class="voice-info" id="voiceInfo"></p>
+    </div>
+    <div class="card">
+      <h2>그림</h2>
+      <div id="artBox"></div>
+    </div>
+    <button class="start" id="startBtn">시작하기!</button>
+  </section>
+
+  <!-- 게임 -->
+  <section class="screen" id="game">
+    <div class="topbar">
+      <button class="icon-btn" id="homeBtn">🏠</button>
+      <div class="dots" id="dots"></div>
+      <button class="speak" id="replayBtn">🔈 다시 듣기</button>
+    </div>
+    <div class="card">
+      <p class="question" id="question"></p>
+      <p class="equation" id="equation"></p>
+      <p class="tap-hint" id="tapHint"></p>
+      <div class="scene" id="scene"></div>
+      <div class="hint-row"><button class="hint-btn" id="hintBtn">💡 힌트</button></div>
+      <div class="hint-box" id="hintBox" hidden></div>
+    </div>
+    <div class="answers" id="answers"></div>
+  </section>
+
+  <!-- 결과 -->
+  <section class="screen" id="result">
+    <div class="card">
+      <div class="stars" id="stars"></div>
+      <p class="result-score" id="resultScore"></p>
+      <h2 style="text-align:center">이번에 잡은 포켓몬</h2>
+      <div class="caught-row" id="caughtRow"></div>
+      <div class="row-btns">
+        <button class="ghost" id="toHome">🏠 처음으로</button>
+        <button class="start" id="again">한 번 더!</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 도감 -->
+  <section class="screen" id="dexScreen">
+    <div class="card">
+      <div class="dex-head">
+        <h2 id="dexTitle">포켓몬 도감</h2>
+        <button class="icon-btn" id="dexBack">← 돌아가기</button>
+      </div>
+      <div class="dex" id="dex"></div>
+      <button class="small-link" id="resetDex">도감 비우기</button>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="pop-card" id="popCard"></div>
+</div>
+
+<script>
+const POKEMON = [
+  [25,'피카츄'],[1,'이상해씨'],[4,'파이리'],[7,'꼬부기'],[39,'푸린'],[52,'나옹'],
+  [54,'고라파덕'],[133,'이브이'],[143,'잠만보'],[35,'삐삐'],[16,'구구'],[19,'꼬렛'],
+  [10,'캐터피'],[129,'잉어킹'],[74,'꼬마돌'],[92,'고오스'],[94,'팬텀'],[26,'라이츄'],
+  [37,'식스테일'],[58,'가디'],[60,'발챙이'],[79,'야돈'],[81,'코일'],[113,'럭키'],
+  [131,'라프라스'],[147,'미뇽'],[132,'메타몽'],[43,'뚜벅쵸'],[50,'디그다'],[104,'탕구리'],
+  [41,'주뱃'],[27,'모래두지'],[2,'이상해풀'],[5,'리자드'],[8,'어니부기'],[3,'이상해꽃'],
+  [6,'리자몽'],[9,'거북왕'],[149,'망나뇽'],[151,'뮤']
+];
+const NAME = Object.fromEntries(POKEMON);
+// 'artifact' = Claude 링크, 'app' = 아이패드 홈 화면 앱 (build.py가 바꿔 넣어요)
+const BUILD = /*BUILD*/'artifact';
+// 직접 그린 포켓몬 그림 (몬스터 한글 모험 pokemon-hangul/app-src.html 에서 그대로 가져옴)
+// 공식 이미지를 쓰지 않고 SVG로 그려요. 한 줄: 도감번호|이름|몸 색|모양|꾸밈
+const MON_SPEC = `
+1|이상해씨|#82D6BC|wide|ears=cat bulb=#3F9F50 spots eye=big ec=#B3263A mouth=open
+2|이상해풀|#6FC7AE|wide|ears=cat bulb=#E98BB0 sprout=#3F9F50 spots eye=big ec=#B3263A mouth=open
+3|이상해꽃|#5FB89B|wide|ears=cat flower=#F27A93 spots eye=dot mouth=open
+4|파이리|#FF9940|tall|b=#FFE3A3 tail=flame eye=big mouth=smile
+5|리자드|#E9573F|tall|b=#FFE3A3 tail=flame horn=#E9573F eye=dot mouth=open
+6|리자몽|#FF8A2E|tall|b=#FFE3A3 tail=flame wings=#2F8F94 ears=nub eye=dot mouth=open
+7|꼬부기|#86CDF2|round|b=#FFE2A0 shell=#C47A3A plates tail=thin eye=big mouth=smile
+8|어니부기|#7BA9E8|round|b=#FFE2A0 shell=#A0673A plates tail=fluffy ears=fox ear2=#E9F1FA eye=dot mouth=smile
+9|거북왕|#5B9FE3|wide|b=#FFE2A0 shell=#8A5A2E plates cannons ears=nub eye=dot mouth=open
+10|캐터피|#8ED35B|tall|b=#FFE7A6 antenna=#E2493B eye=big mouth=smile
+11|단데기|#7FC25A|tall|spikes=#5E9C3F eye=dot mouth=none
+12|버터플|#5E58C4|small|wings=#F4F4FF antenna=#2B2B2B eye=big ec=#D8323A mouth=smile
+13|뿔충이|#E3A44D|tall|horn=#B8B8B8 eye=dot mouth=none nose=#F49AB0
+15|독침붕|#F2C230|small|wings=#DDEFFF stripes=#2B2B2B eye=big ec=#D8323A mouth=none
+16|구구|#C68E58|round|b=#F4E2C4 crest=#E2B56A eye=dot mouth=beak bk=#8E8E8E
+17|피죤|#C9905A|round|b=#F4E2C4 crest=#E8584A wings=#B98250 eye=dot mouth=beak bk=#C9A0A0
+18|피죤투|#C08A55|tall|b=#F4E2C4 crest=#E8584A wings=#B98250 eye=dot mouth=beak bk=#C9A0A0
+19|꼬렛|#9E7BC6|round|b=#EADCF5 ears=cat ear2=#E7B9D3 whisk tail=thin eye=big ec=#B3263A mouth=teeth
+21|깨비참|#B97F4F|small|crest=#D8484A wings=#8A5C3A eye=dot mouth=beak bk=#F2B4A0
+23|아보|#A77BC9|tall|b=#F2E3A0 eye=dot mouth=smile
+24|아보크|#7F55B0|tall|b=#F2E3A0 hood=#5E3E8C eye=dot mouth=open
+25|피카츄|#FFD23F|round|ears=pika tail=bolt cheek=#F2554C eye=dot mouth=smile
+26|라이츄|#F2A03D|round|b=#FBE6BE ears=pika tip=#7A4A1F tail=thin cheek=#FFE45C eye=dot mouth=smile
+27|모래두지|#E8C66A|round|b=#FFF1C9 ears=nub stripes=#C99B3A eye=dot mouth=smile
+35|삐삐|#FFC2D4|round|ears=pika tip=#7A4A4A curl wings=#FFC2D4 eye=dot mouth=smile
+36|픽시|#F7AFC6|tall|ears=pika tip=#7A4A4A curl wings=#FFFFFF eye=dot mouth=smile
+37|식스테일|#D7653A|round|b=#F2B35A ears=fox ear2=#8A3B22 tail=fluffy curl eye=big mouth=smile
+38|나인테일|#F5E3A6|tall|ears=fox ear2=#E2B56A tail=fluffy mane=#FFF4D2 eye=dot ec=#B3263A mouth=smile
+39|푸린|#FFB6D2|round|ears=cat ear2=#2B2B2B curl eye=big ec=#2A8DA0 mouth=smile
+40|푸크린|#FFC6DA|tall|ears=fox ear2=#2B2B2B curl b=#FFFFFF eye=dot mouth=smile
+41|주뱃|#5E8BD8|small|wings=#9B6CD6 ears=cat ear2=#9B6CD6 eye=none mouth=open
+43|뚜벅쵸|#4F6FB8|small|sprout=#4FA33F eye=dot ec=#D8323A mouth=smile
+45|라플레시아|#4E6DA8|wide|flower=#E9573F eye=dot mouth=smile
+46|파라스|#F29A44|wide|mush=#E9573F eye=dot mouth=none
+48|콘팡|#8A6CC9|round|antenna=#8A6CC9 eye=big ec=#D8323A mouth=teeth
+50|디그다|#A06B44|tall|ground eye=dot mouth=none nose=#F49AB0
+51|닥트리오|#9A6440|tall|ground triple eye=dot mouth=none nose=#F49AB0
+52|나옹|#F6E5B2|round|ears=cat ear2=#3A2A22 coin whisk tail=thin eye=dot mouth=smile
+53|페르시온|#F1DDA6|tall|ears=cat ear2=#3A2A22 gem=#E8433F whisk tail=thin eye=dot mouth=smile
+54|고라파덕|#FFD54A|round|tuft eye=dot mouth=beak bk=#FBE7B4
+55|골덕|#5E9CE0|tall|gem=#E8433F eye=dot ec=#D8323A mouth=beak bk=#F2E3A0
+56|망키|#F2E1C6|round|ears=nub tail=thin eye=dot mouth=open nose=#F49AB0
+58|가디|#F28A3A|round|mane=#FFF0C9 stripes=#2B2B2B ears=cat tail=fluffy eye=dot mouth=smile
+59|윈디|#EE7D30|tall|mane=#FFF0C9 stripes=#2B2B2B ears=cat tail=fluffy eye=dot mouth=smile
+60|발챙이|#5D86C9|round|swirl=#FFFFFF eye=big mouth=smile
+63|캐이시|#E8C66A|round|ears=fox ear2=#8A5A2E eye=sleepy mouth=none
+64|윤겔라|#E2B94F|tall|ears=fox ear2=#8A5A2E gem=#E8433F eye=dot mouth=none
+65|후딘|#E2B94F|tall|ears=fox ear2=#8A5A2E whisk eye=dot mouth=none
+66|알통몬|#A9B6C4|tall|arms=#A9B6C4 crest=#A9B6C4 eye=dot ec=#D8323A mouth=smile
+69|모다피|#F2E07A|small|leaf=#4FA33F eye=dot mouth=open
+72|왕눈해|#7EC8F0|tall|gem=#E8433F tentacles=#B5DCF0 eye=dot mouth=none
+74|꼬마돌|#A39B8C|round|arms=#A39B8C eye=dot mouth=smile
+75|데구리|#9C9484|wide|arms=#9C9484 eye=dot mouth=open
+77|포니타|#F7E8C6|tall|mane=#FF7A2C tail=flame eye=dot mouth=smile
+79|야돈|#F5A7BE|wide|b=#F7E1A8 ears=nub eye=sleepy mouth=open tail=thin
+80|야도란|#F29CB4|tall|shell=#BCB8C8 eye=sleepy mouth=open
+81|코일|#BAC4CE|small|magnet eye=one mouth=none
+83|파오리|#C59A6B|round|b=#F0E2CA leek eye=dot mouth=beak bk=#F2B84B
+84|두두|#B67A47|tall|triple crest=#B67A47 eye=dot mouth=beak bk=#E8D5A6
+86|쥬쥬|#F2F5FA|wide|horn=#EAF0F8 tail=fish eye=dot mouth=smile
+88|질퍽이|#9B6CD6|blob|eye=dot mouth=open
+90|셀러|#7E6CC9|round|shell=#7E6CC9 eye=dot mouth=teeth
+92|고오스|#3E2A5C|round|aura=#9B6CD6 eye=ghost mouth=open
+93|고우스트|#7E5BC2|round|ears=cat aura=#5E3E8C eye=ghost mouth=teeth
+94|팬텀|#6E4FAF|wide|ears=cat spikes=#6E4FAF eye=ghost mouth=teeth
+95|롱스톤|#9C9A92|tall|horn=#9C9A92 spikes=#8A8880 eye=dot mouth=open
+96|슬리프|#F2C94C|tall|b=#7A5232 eye=sleepy mouth=smile nose=#E2B53C
+98|크랩|#E9573F|wide|b=#F7E1A8 claws=#E9573F eye=dot mouth=smile
+100|찌리리공|#E8433F|round|ball eye=dot mouth=smile
+102|아라리|#FBE3D2|small|triple spots eye=dot mouth=smile
+104|탕구리|#C9A36B|small|hood=#F2EEE4 eye=dot mouth=smile
+108|내루미|#F2A7B8|wide|tongue eye=dot mouth=open
+109|또가스|#9B7CC1|round|aura=#C8C0A0 spots eye=dot mouth=open
+110|또도가스|#8F72B6|wide|aura=#C8C0A0 triple spots eye=dot mouth=open
+111|뿔카노|#9EA5B0|wide|horn=#F2EEE4 spikes=#9EA5B0 eye=dot mouth=smile
+113|럭키|#FBC6D3|round|b=#FFFFFF egg eye=dot mouth=smile
+114|덩쿠리|#3F5C9E|round|vines=#2E4A85 eye=dot mouth=none
+115|캥카|#B38B5A|tall|b=#F2E3C6 ears=cat eye=dot mouth=open
+116|쏘드라|#7EC8F0|small|b=#FFF4C2 crest=#7EC8F0 eye=dot mouth=beak bk=#7EC8F0
+118|콘치|#F7F3EE|wide|horn=#F2E3C6 fin=#F28A3A tail=fish spots eye=dot mouth=smile
+120|별가사리|#C8964F|star|gem=#E8433F eye=none mouth=none
+121|아쿠스타|#8A6CC9|star|gem=#E8433F eye=none mouth=none
+123|스라크|#7FD36A|tall|wings=#EAF8FF claws=#DDE5E8 eye=dot mouth=none
+125|에레브|#F7D23F|tall|stripes=#2B2B2B eye=dot mouth=teeth
+126|마그마|#F2783A|tall|tail=flame crest=#F2D35A eye=dot mouth=beak bk=#F2D35A
+127|쁘사이저|#B9A37E|tall|claws=#F2EEE4 eye=dot mouth=teeth
+128|켄타로스|#B57A3E|wide|horns=#E8E1CF mane=#5A3A22 tail=thin eye=dot mouth=smile
+129|잉어킹|#F2683A|round|crest=#F2D35A fin=#F2EEE4 tail=fish whisk eye=big mouth=open
+130|갸라도스|#3E8FD9|tall|b=#F2E3A0 crest=#F2EEE4 whisk spikes=#3E8FD9 eye=dot ec=#D8323A mouth=open
+131|라프라스|#4FA3E0|wide|b=#F2E3C6 shell=#7A8EA6 horn=#F2E3C6 eye=dot mouth=smile
+132|메타몽|#C49BE6|blob|eye=dot mouth=smile
+133|이브이|#B97F48|round|b=#F4E1B4 ears=fox ear2=#7A4E28 tail=fluffy mane=#F4E1B4 eye=big mouth=smile
+134|샤미드|#68B6E8|round|fin=#E9F6FF mane=#E9F6FF tail=fish eye=dot mouth=smile
+135|쥬피썬더|#F7D23F|round|ears=fox ear2=#2B2B2B mane=#FFFFFF spikes=#F7D23F eye=dot mouth=smile
+136|부스터|#F2783A|round|ears=fox ear2=#F2D35A mane=#F2D35A tail=fluffy eye=dot mouth=smile
+137|폴리곤|#F27A93|small|b=#5EC8E0 eye=dot mouth=beak bk=#5EC8E0
+142|프테라|#B8A6C9|tall|wings=#9E8BB3 horn=#B8A6C9 eye=dot mouth=teeth
+143|잠만보|#2E6F7C|wide|b=#F1E1C4 face=#F1E1C4 ears=nub eye=sleepy mouth=smile
+144|프리져|#7EC8F0|tall|wings=#A8DCF5 crest=#3E8FD9 eye=dot ec=#D8323A mouth=beak bk=#8E9BA8 rare
+145|썬더|#F7D23F|tall|wings=#F7D23F crest=#F2C230 spikes=#2B2B2B eye=dot mouth=beak bk=#5E5E5E rare
+146|파이어|#F7B23F|tall|wings=#F2783A crest=#F2783A tail=flame eye=dot mouth=beak bk=#F2D35A rare
+147|미뇽|#6E8FE0|tall|b=#F2EEE4 fin=#F2EEE4 gem=#F2EEE4 eye=dot mouth=smile
+148|신뇽|#5E7FD9|tall|b=#F2EEE4 fin=#F2EEE4 gem=#5EC8E0 eye=dot mouth=smile
+149|망나뇽|#F2A64A|tall|b=#F7E1A8 wings=#3F9F8A antenna=#F2A64A eye=dot mouth=smile
+150|뮤츠|#C9B8D9|tall|ears=nub tail=thin b=#9B6CD6 eye=dot ec=#7F55B0 mouth=none rare
+151|뮤|#FFC4DC|small|ears=cat tail=thin eye=big ec=#3E7FD9 mouth=smile rare
+152|치코리타|#B9DE8A|round|leaf=#4FA33F eye=big ec=#B3263A mouth=smile
+155|브케인|#3E5A78|tall|b=#F2E3A0 tail=flame eye=sleepy mouth=smile
+158|리아코|#5EB0E0|round|b=#F2E3A0 spikes=#E9573F eye=dot ec=#D8323A mouth=teeth
+172|피츄|#FFE27A|small|ears=pika cheek=#FF8FA0 eye=big mouth=smile
+173|삐|#FFC2D4|small|curl ears=pika tip=#7A4A4A eye=dot mouth=smile
+175|토게피|#FFF4D2|small|egg crown eye=dot mouth=smile
+179|메리프|#7EC8F0|round|mane=#FFF6D2 ears=cat tail=thin eye=dot mouth=smile
+183|마릴|#5E9CE0|round|b=#FFFFFF ears=nub tail=thin eye=big mouth=smile
+196|에브이|#D8A8D8|round|ears=fox ear2=#B07BB0 gem=#E8433F tail=thin eye=big ec=#7F55B0 mouth=smile
+197|블래키|#2E2E3A|round|ears=fox ear2=#F2C94C gem=#F2C94C tail=fluffy eye=dot ec=#E8433F mouth=smile
+249|루기아|#F3F5FA|tall|b=#BFD0EC wings=#E2E8F4 crest=#9FB6DD eye=dot mouth=smile rare
+250|칠색조|#E9573F|tall|b=#F7E1A8 wings=#F2A64A crest=#F7D23F tail=fluffy eye=dot mouth=beak bk=#F7D23F rare
+251|세레비|#B9DE8A|small|wings=#EAF8FF antenna=#3F9F50 eye=big ec=#3E7FD9 mouth=smile rare
+298|루리리|#5E9CE0|small|ears=nub tail=thin eye=dot mouth=smile
+387|모부기|#8BC85A|wide|b=#F2E3A0 shell=#A0673A sprout=#4FA33F eye=dot mouth=smile
+390|불꽃숭이|#F2A64A|tall|b=#F7E1A8 tail=flame ears=nub eye=dot mouth=smile
+393|팽도리|#5E9CE0|round|b=#FFFFFF arms=#3E7FD9 eye=dot mouth=beak bk=#F2C94C
+417|파치리스|#F2F5FA|round|stripes=#5EB0E0 ears=cat tail=fluffy cheek=#F2D35A eye=dot mouth=smile
+447|리오르|#5E9CE0|tall|mask=#2B2B2B ears=pika tip=#2B2B2B b=#2B2B2B eye=dot ec=#E8433F mouth=none
+448|루카리오|#4F8FD9|tall|mask=#2B2B2B ears=fox ear2=#2B2B2B b=#F2E3A0 eye=dot ec=#E8433F mouth=none
+587|에몽가|#F2F5FA|small|wings=#F2D35A ears=fox ear2=#2B2B2B cheek=#F2D35A eye=big mouth=smile
+650|도치마론|#8BC85A|round|b=#F2E3C6 hood=#8BC85A eye=dot mouth=smile
+653|푸호꼬|#F2D35A|round|ears=fox ear2=#F2783A mane=#F7E1A8 tail=fluffy eye=big mouth=smile
+656|개구마르|#7EC8F0|round|mane=#E9F6FF eye=big mouth=smile
+700|님피아|#F7F3EE|round|ears=cat ear2=#F2A7C6 ribbon=#F2A7C6 tail=fluffy eye=big ec=#3E7FD9 mouth=smile
+702|데덴네|#F2D35A|small|ears=nub whisk tail=thin cheek=#F2A64A eye=dot mouth=smile
+722|나몰빼미|#C9A36B|round|b=#F7F3E8 leaf=#4FA33F eye=dot mouth=beak bk=#F2A64A
+725|냐오불|#2E2E3A|round|stripes=#E9573F ears=cat ear2=#E9573F whisk eye=dot ec=#F2D35A mouth=smile
+728|누리공|#5E9CE0|round|b=#F2F5FA crest=#5EB0E0 eye=dot mouth=smile nose=#F2A7C6
+778|따라큐|#F2D35A|tall|ears=pika tip=#2B2B2B eye=dot mouth=smile
+906|나오하|#7FD36A|round|ears=cat ear2=#F2F5FA leaf=#F2D35A eye=big ec=#C9A23A mouth=smile
+909|뜨아거|#F2783A|wide|b=#F7E1A8 crest=#F2D35A eye=dot mouth=smile
+912|꾸왁스|#F2F5FA|round|crest=#5EB0E0 eye=dot mouth=beak bk=#F2D35A
+921|빠모|#F2A64A|round|ears=nub b=#F2E3C6 cheek=#F2D35A whisk eye=big mouth=smile
+`;
+const MON = MON_SPEC.trim().split('\n').map(line => {
+  const [no, n, c, shape, opts] = line.split('|');
+  const art = { c, shape };
+  let rare = false;
+  for (const tok of opts.split(' ')) {
+    const [k, v] = tok.split('=');
+    if (k === 'rare') rare = true; else art[k] = v === undefined ? true : v;
+  }
+  return { no: +no, n, art, rare };
+});
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const shade = (h, k) => '#' + hexRgb(h).map(v => Math.max(0, Math.min(255, Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k))).toString(16).padStart(2, '0')).join('');
+function drawnArt(m, o = {}) {
+  const a = m.art, c = a.c, dk = shade(c, -.32), lt = a.b || shade(c, .45);
+  const shape = a.shape || 'round';
+  const [cx, cy, rx, ry] = { small: [60, 76, 28, 26], round: [60, 72, 34, 31], tall: [60, 72, 29, 36], wide: [60, 78, 42, 28], blob: [60, 78, 40, 28], star: [60, 70, 40, 40] }[shape];
+  const top = cy - ry, back = [], front = [];
+  const st = `stroke="${dk}" stroke-width="2" stroke-linejoin="round"`;
+  const pts = p => p.map(q => q.map(v => v.toFixed(1)).join(',')).join(' ');
+  const mir = p => p.map(([x, y]) => [2 * cx - x, y]);
+  const poly = (p, fill, extra = '') => `<polygon points="${pts(p)}" fill="${fill}" ${extra}/>`;
+  const both = (p, fill, extra) => poly(p, fill, extra) + poly(mir(p), fill, extra);
+  const ring = (r1, r2, n) => { const p = []; for (let i = 0; i < n * 2; i++) { const t = i / (n * 2) * Math.PI * 2, r = i % 2 ? r1 : r2; p.push([cx + Math.cos(t) * r, cy - ry * .1 + Math.sin(t) * r]); } return p; };
+
+  // 몸 뒤
+  if (a.aura) back.push(poly(ring(rx + 8, rx + 17, 14), a.aura, 'opacity=".7"'));
+  if (a.mane) back.push(poly(ring(rx + 3, rx + 11, 11), a.mane, `stroke="${shade(a.mane, -.3)}" stroke-width="2" stroke-linejoin="round"`));
+  if (a.triple) {
+    back.push(`<ellipse cx="${cx - rx * .8}" cy="${cy + 6}" rx="${rx * .62}" ry="${ry * .7}" fill="${shade(c, -.12)}" ${st}/>`);
+    back.push(`<ellipse cx="${cx + rx * .8}" cy="${cy + 6}" rx="${rx * .62}" ry="${ry * .7}" fill="${shade(c, -.12)}" ${st}/>`);
+  }
+  if (a.wings) for (const s of [-1, 1]) back.push(`<ellipse cx="${cx + s * (rx + 4)}" cy="${cy - 12}" rx="17" ry="29" transform="rotate(${s * 28} ${cx + s * (rx + 4)} ${cy - 12})" fill="${a.wings}" ${st}/>`);
+  if (a.fin) for (const s of [-1, 1]) back.push(`<ellipse cx="${cx + s * (rx + 3)}" cy="${cy - 2}" rx="7" ry="14" transform="rotate(${s * 35} ${cx + s * (rx + 3)} ${cy - 2})" fill="${a.fin}" ${st}/>`);
+  if (a.flower) {
+    for (let i = 0; i < 5; i++) { const t = -Math.PI / 2 + i * Math.PI * 2 / 5, x = cx + Math.cos(t) * 20, y = top + 2 + Math.sin(t) * 12; back.push(`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="15" ry="10" transform="rotate(${(t * 180 / Math.PI).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${a.flower}" stroke="${shade(a.flower, -.3)}" stroke-width="2"/>`); }
+    back.push(`<circle cx="${cx}" cy="${top + 2}" r="9" fill="#F7D23F"/>`);
+  }
+  if (a.shell) {
+    back.push(`<ellipse cx="${cx}" cy="${cy + 2}" rx="${rx + 9}" ry="${ry + 5}" fill="${a.shell}" stroke="${shade(a.shell, -.35)}" stroke-width="2.5"/>`);
+    back.push(`<ellipse cx="${cx}" cy="${cy + 2}" rx="${rx + 9}" ry="${ry + 5}" fill="none" stroke="${shade(a.shell, .45)}" stroke-width="3" stroke-dasharray="2 6"/>`);
+  }
+  if (a.cannons) for (const s of [-1, 1]) back.push(`<rect x="${cx + s * (rx - 4) - 6}" y="${top - 6}" width="12" height="24" rx="3" fill="#9AA4B0" stroke="#5B6470" stroke-width="2" transform="rotate(${s * 20} ${cx + s * (rx - 4)} ${top + 6})"/>`);
+  if (a.claws) for (const s of [-1, 1]) {
+    const x = cx + s * (rx + 6), y = top + 4;
+    back.push(`<path d="M${x} ${y + 18} L${x} ${y + 6}" stroke="${shade(a.claws, -.2)}" stroke-width="5"/><circle cx="${x}" cy="${y}" r="11" fill="${a.claws}" ${st}/><path d="M${x - 2 * s} ${y - 11} L${x + 4 * s} ${y + 1}" stroke="${dk}" stroke-width="3"/>`);
+  }
+  if (a.magnet) {
+    for (const s of [-1, 1]) {
+      const x = cx + s * (rx + 10), y = cy;
+      back.push(`<path d="M${x - 7} ${y - 12} v12 a7 7 0 0 0 14 0 v-12" fill="none" stroke="#8E98A4" stroke-width="7"/><rect x="${x - 10.5}" y="${y - 16}" width="7" height="7" fill="#E8433F"/><rect x="${x + 3.5}" y="${y - 16}" width="7" height="7" fill="#3E7FD9"/>`);
+    }
+    back.push(`<path d="M${cx} ${top + 4} v-12" stroke="#8E98A4" stroke-width="4"/><circle cx="${cx}" cy="${top - 10}" r="4" fill="#8E98A4"/>`);
+  }
+  if (a.tentacles) for (let i = -2; i <= 2; i++) back.push(`<path d="M${cx + i * 8} ${cy + ry - 6} q${i * 3 + 4} 12 ${i * 2} 24" stroke="${a.tentacles}" stroke-width="5" fill="none" stroke-linecap="round"/>`);
+  const bx = cx + rx * .78, by = cy + ry * .35;
+  if (a.tail === 'bolt') {
+    const z = [[0, 0], [14, -10], [8, -14], [24, -30], [12, -34], [20, -54], [0, -34], [7, -30], [-6, -16], [0, -12], [-9, -5]];
+    back.push(poly(z.map(([x, y]) => [bx + x, by + y]), c, st));
+    back.push(poly([[bx - 9, by - 5], [bx, by], [bx + 6, by - 4], [bx - 3, by - 9]], '#8A5A2E'));
+  }
+  if (a.tail === 'flame') {
+    const tx = bx + 16, ty = by - 20;
+    back.push(`<path d="M${bx - 6} ${by + 2} Q${bx + 16} ${by + 2} ${tx} ${ty + 6}" stroke="${c}" stroke-width="8" fill="none" stroke-linecap="round"/>`);
+    back.push(`<path d="M${tx} ${ty - 18} C${tx + 11} ${ty - 6} ${tx + 9} ${ty + 8} ${tx} ${ty + 8} C${tx - 9} ${ty + 8} ${tx - 11} ${ty - 6} ${tx} ${ty - 18}Z" fill="#FF5A2C"/>`);
+    back.push(`<path d="M${tx} ${ty - 8} C${tx + 5} ${ty - 2} ${tx + 4} ${ty + 6} ${tx} ${ty + 6} C${tx - 4} ${ty + 6} ${tx - 5} ${ty - 2} ${tx} ${ty - 8}Z" fill="#FFD23F"/>`);
+  }
+  if (a.tail === 'fluffy') {
+    back.push(`<ellipse cx="${bx + 8}" cy="${by - 14}" rx="14" ry="21" transform="rotate(35 ${bx + 8} ${by - 14})" fill="${c}" ${st}/>`);
+    back.push(`<ellipse cx="${bx + 15}" cy="${by - 27}" rx="8" ry="10" transform="rotate(35 ${bx + 15} ${by - 27})" fill="${lt}"/>`);
+  }
+  if (a.tail === 'thin') {
+    back.push(`<path d="M${bx - 4} ${by} Q${bx + 34} ${by - 4} ${bx + 20} ${by - 42}" stroke="${dk}" stroke-width="7" fill="none" stroke-linecap="round"/>`);
+    back.push(`<path d="M${bx - 4} ${by} Q${bx + 34} ${by - 4} ${bx + 20} ${by - 42}" stroke="${c}" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+    back.push(`<circle cx="${bx + 20}" cy="${by - 44}" r="6" fill="${c}" ${st}/>`);
+  }
+  if (a.tail === 'fish') back.push(poly([[bx, by - 6], [bx + 24, by - 22], [bx + 18, by - 4], [bx + 24, by + 12]], a.fin || c, st));
+  if (a.ears === 'pika' || a.ears === 'fox' || a.ears === 'cat') {
+    const e = {
+      pika: [[cx - rx * .62, top + ry * .42], [cx - rx * .12, top + 2], [cx - rx * .98, top - 30]],
+      fox:  [[cx - rx * .72, top + ry * .5], [cx - rx * .1, top + 3], [cx - rx * 1.1, top - 26]],
+      cat:  [[cx - rx * .8, top + ry * .42], [cx - rx * .2, top + 3], [cx - rx * .72, top - 14]]
+    }[a.ears];
+    back.push(both(e, c, st));
+    const [A, B, X] = e;
+    if (a.ears === 'pika') {
+      const t = .32;
+      back.push(both([X, [X[0] + (A[0] - X[0]) * t, X[1] + (A[1] - X[1]) * t], [X[0] + (B[0] - X[0]) * t, X[1] + (B[1] - X[1]) * t]], a.tip || '#2B2B2B'));
+    } else {
+      const g = [(A[0] + B[0] + X[0]) / 3, (A[1] + B[1] + X[1]) / 3];
+      back.push(both([A, B, X].map(([x, y]) => [g[0] + (x - g[0]) * .5, g[1] + (y - g[1]) * .5]), a.ear2 || dk));
+    }
+  }
+  if (a.ears === 'nub') back.push(`<circle cx="${cx - rx * .55}" cy="${top + 6}" r="7" fill="${dk}"/><circle cx="${cx + rx * .55}" cy="${top + 6}" r="7" fill="${dk}"/>`);
+  if (a.bulb) {
+    back.push(`<path d="M${cx - 26} ${top + 14} C${cx - 30} ${top - 14} ${cx - 6} ${top - 26} ${cx + 4} ${top - 22} C${cx + 26} ${top - 20} ${cx + 32} ${top - 2} ${cx + 22} ${top + 14}Z" fill="${a.bulb}" stroke="${shade(a.bulb, -.35)}" stroke-width="2"/>`);
+    back.push(`<path d="M${cx - 2} ${top - 20} C${cx - 8} ${top - 6} ${cx - 8} ${top + 4} ${cx - 6} ${top + 12} M${cx + 12} ${top - 16} C${cx + 14} ${top - 4} ${cx + 12} ${top + 4} ${cx + 8} ${top + 12}" stroke="${shade(a.bulb, -.35)}" stroke-width="2" fill="none"/>`);
+  }
+  if (a.sprout) for (const r of [-40, 0, 40]) back.push(`<ellipse cx="${cx}" cy="${top - 10}" rx="7" ry="16" transform="rotate(${r} ${cx} ${top + 4})" fill="${a.sprout}" stroke="${shade(a.sprout, -.35)}" stroke-width="2"/>`);
+  if (a.leaf) back.push(`<ellipse cx="${cx + 8}" cy="${top - 12}" rx="9" ry="19" transform="rotate(32 ${cx + 8} ${top - 12})" fill="${a.leaf}" stroke="${shade(a.leaf, -.35)}" stroke-width="2"/><path d="M${cx} ${top + 4} L${cx + 16} ${top - 26}" stroke="${shade(a.leaf, -.35)}" stroke-width="2"/>`);
+  if (a.mush) for (const s of [-1, 1]) back.push(`<ellipse cx="${cx + s * 14}" cy="${top - 2}" rx="15" ry="10" fill="${a.mush}" ${st}/><circle cx="${cx + s * 14 - 5}" cy="${top - 5}" r="2.5" fill="#FFF"/><circle cx="${cx + s * 14 + 5}" cy="${top - 2}" r="2" fill="#FFF"/>`);
+  if (a.tuft) back.push(`<path d="M${cx} ${top + 4} q-3 -14 1 -20 M${cx - 5} ${top + 5} q-9 -8 -12 -14 M${cx + 5} ${top + 5} q9 -8 12 -14" stroke="#2B2B2B" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+  if (a.antenna) back.push(`<path d="M${cx} ${top + 6} v-14 M${cx} ${top - 8} l-7 -9 M${cx} ${top - 8} l7 -9" stroke="${a.antenna === true ? '#E2493B' : a.antenna}" stroke-width="4" stroke-linecap="round" fill="none"/>`);
+  if (a.crest) back.push(poly([[cx - 6, top + 6], [cx - 16, top - 16], [cx, top - 6], [cx + 6, top - 22], [cx + 10, top + 6]], a.crest, `stroke="${shade(a.crest, -.35)}" stroke-width="2" stroke-linejoin="round"`));
+  if (a.horn) back.push(poly([[cx - 6, top + 6], [cx, top - 16], [cx + 6, top + 6]], a.horn, `stroke="${shade(a.horn, -.35)}" stroke-width="2" stroke-linejoin="round"`));
+  if (a.horns) for (const s of [-1, 1]) back.push(`<path d="M${cx + s * 14} ${top + 8} q${s * 18} -4 ${s * 16} -22" stroke="${a.horns}" stroke-width="7" fill="none" stroke-linecap="round"/>`);
+  if (a.spikes) back.push(poly([[cx - 22, top + 8], [cx - 16, top - 10], [cx - 8, top + 4]], a.spikes, st) + poly([[cx - 6, top + 2], [cx, top - 14], [cx + 6, top + 2]], a.spikes, st) + poly([[cx + 8, top + 4], [cx + 16, top - 10], [cx + 22, top + 8]], a.spikes, st));
+  if (a.crown) for (let i = 0; i < 5; i++) { const x = cx - 14 + i * 7; back.push(poly([[x - 4, top + 5], [x, top - 6 - (i === 2 ? 4 : 0)], [x + 4, top + 5]], c, st)); }
+  if (a.arms) for (const s of [-1, 1]) back.push(`<ellipse cx="${cx + s * (rx + 1)}" cy="${cy + 6}" rx="8" ry="12" transform="rotate(${s * -20} ${cx + s * (rx + 1)} ${cy + 6})" fill="${a.arms}" ${st}/>`);
+
+  // 몸
+  let body;
+  if (shape === 'blob') body = `<path d="M${cx - rx} ${cy + ry} Q${cx - rx - 8} ${cy} ${cx - rx * .6} ${cy - ry * .6} Q${cx - rx * .2} ${cy - ry - 8} ${cx} ${cy - ry * .7} Q${cx + rx * .35} ${cy - ry - 6} ${cx + rx * .7} ${cy - ry * .5} Q${cx + rx + 10} ${cy} ${cx + rx} ${cy + ry} Z" fill="${c}" ${st}/>`;
+  else if (shape === 'star') { const p = []; for (let i = 0; i < 10; i++) { const t = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 17 : 42; p.push([cx + Math.cos(t) * r, cy + 6 + Math.sin(t) * r]); } body = poly(p, c, st); }
+  else body = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" ${st}/>`;
+  if (a.ball) front.push(`<path d="M${cx - rx} ${cy} A${rx} ${ry} 0 0 0 ${cx + rx} ${cy} Z" fill="#FFFFFF" ${st}/><path d="M${cx - rx} ${cy} H${cx + rx}" stroke="#22304D" stroke-width="4"/>`);
+  if (a.b && !a.egg) {
+    front.push(`<ellipse cx="${cx}" cy="${cy + ry * .5}" rx="${rx * .58}" ry="${ry * .4}" fill="${a.b}"/>`);
+    if (a.plates) front.push(`<path d="M${cx - rx * .5} ${cy + ry * .38} h${rx} M${cx - rx * .52} ${cy + ry * .6} h${rx * 1.04}" stroke="${shade(a.b, -.3)}" stroke-width="2"/>`);
+  }
+  if (a.swirl) front.push(`<ellipse cx="${cx}" cy="${cy + ry * .45}" rx="${rx * .55}" ry="${ry * .42}" fill="${a.swirl}"/><path d="M${cx} ${cy + ry * .45} m-2 0 a3 3 0 1 1 5 2 a7 7 0 1 1 -10 -6 a11 11 0 1 1 16 9" stroke="#22304D" stroke-width="2" fill="none"/>`);
+  if (a.face) front.push(`<ellipse cx="${cx}" cy="${cy - ry * .2}" rx="${rx * .62}" ry="${ry * .42}" fill="${a.face}"/>`);
+  if (a.hood) front.push(`<path d="M${cx - rx} ${top + ry * .55} A${rx} ${ry * .95} 0 0 1 ${cx + rx} ${top + ry * .55} Z" fill="${a.hood}" stroke="${shade(a.hood, -.3)}" stroke-width="2"/>`);
+  if (a.stripes) front.push(`<path d="M${cx - 8} ${top + 3} l3 9 M${cx + 8} ${top + 3} l-3 9 M${cx - rx + 4} ${cy} l8 3 M${cx + rx - 4} ${cy} l-8 3" stroke="${a.stripes}" stroke-width="3.5" stroke-linecap="round"/>`);
+  if (a.spots) front.push(`<ellipse cx="${cx - 14}" cy="${top + 10}" rx="6" ry="4" fill="${dk}" opacity=".45"/><ellipse cx="${cx + 8}" cy="${top + 8}" rx="5" ry="3.5" fill="${dk}" opacity=".45"/><ellipse cx="${cx + 26}" cy="${cy + 4}" rx="5" ry="4" fill="${dk}" opacity=".45"/>`);
+  if (a.vines) for (let i = 0; i < 6; i++) front.push(`<path d="M${cx - rx + 6 + i * 11} ${cy + ry - 4} q-6 -${ry} 4 -${ry * 1.7}" stroke="${a.vines}" stroke-width="3" fill="none"/>`);
+  if (a.curl) front.push(`<path d="M${cx + 4} ${top + 14} C${cx - 14} ${top + 10} ${cx - 8} ${top - 8} ${cx + 4} ${top - 4} C${cx + 12} ${top} ${cx + 6} ${top + 8} ${cx} ${top + 4}" stroke="${dk}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+  if (a.coin) front.push(`<ellipse cx="${cx}" cy="${top + 10}" rx="7" ry="8" fill="#F6C343" stroke="#B98A12" stroke-width="2"/>`);
+  if (a.gem) front.push(`<circle cx="${cx}" cy="${shape === 'star' ? cy + 6 : top + 10}" r="${shape === 'star' ? 8 : 5}" fill="${a.gem}" stroke="${shade(a.gem, -.35)}" stroke-width="1.5"/>`);
+  if (a.ribbon) front.push(poly([[cx + rx * .55, top + 10], [cx + rx * .55 - 12, top + 2], [cx + rx * .55 - 12, top + 18]], a.ribbon, st) + poly([[cx + rx * .55, top + 10], [cx + rx * .55 + 12, top + 2], [cx + rx * .55 + 12, top + 18]], a.ribbon, st) + `<circle cx="${cx + rx * .55}" cy="${top + 10}" r="4" fill="#5EB0E0"/>`);
+
+  // 얼굴
+  const ey = shape === 'star' ? cy - 4 : cy - ry * .2, ex = rx * .38, my = ey + 11;
+  if (a.mask) front.push(`<rect x="${cx - rx * .8}" y="${ey - 6}" width="${rx * 1.6}" height="12" rx="6" fill="${a.mask}"/>`);
+  const eye = a.eye || 'dot';
+  for (const s of (eye === 'one' ? [0] : eye === 'none' ? [] : [-1, 1])) {
+    const x = cx + s * ex;
+    if (eye === 'dot') front.push(`<circle cx="${x}" cy="${ey}" r="4.6" fill="${a.mask ? a.ec || '#E8433F' : '#1E1E28'}"/><circle cx="${x + 1.5}" cy="${ey - 1.6}" r="1.6" fill="#fff"/>`);
+    if (eye === 'big') front.push(`<ellipse cx="${x}" cy="${ey}" rx="6" ry="7.5" fill="${a.ec || '#1E1E28'}" stroke="#1E1E28" stroke-width="1.5"/><circle cx="${x + 2}" cy="${ey - 2.6}" r="2.4" fill="#fff"/>`);
+    if (eye === 'sleepy') front.push(`<path d="M${x - 6} ${ey} h12" stroke="#1E1E28" stroke-width="2.6" stroke-linecap="round"/>`);
+    if (eye === 'ghost') front.push(`<path d="M${x - 9} ${ey - 6} Q${x} ${ey - 2} ${x + 9 * s} ${ey - 9} Q${x + 6} ${ey + 8} ${x - 9} ${ey - 6}Z" fill="#fff"/><circle cx="${x + 2 * s}" cy="${ey - 2}" r="2.2" fill="#1E1E28"/>`);
+    if (eye === 'one') front.push(`<circle cx="${x}" cy="${ey + 2}" r="9" fill="#fff" stroke="#1E1E28" stroke-width="2"/><circle cx="${x}" cy="${ey + 2}" r="3.6" fill="#1E1E28"/>`);
+  }
+  if (a.cheek) front.push(`<circle cx="${cx - rx * .68}" cy="${ey + 10}" r="6.5" fill="${a.cheek}"/><circle cx="${cx + rx * .68}" cy="${ey + 10}" r="6.5" fill="${a.cheek}"/>`);
+  if (a.whisk) front.push(`<path d="M${cx - rx * .5} ${ey + 9} l-14 -3 M${cx - rx * .5} ${ey + 12} l-14 2 M${cx + rx * .5} ${ey + 9} l14 -3 M${cx + rx * .5} ${ey + 12} l14 2" stroke="#1E1E28" stroke-width="1.6" stroke-linecap="round"/>`);
+  const mouth = a.mouth || 'smile';
+  if (mouth === 'smile') front.push(`<path d="M${cx - 5} ${my} Q${cx - 2.5} ${my + 4} ${cx} ${my} Q${cx + 2.5} ${my + 4} ${cx + 5} ${my}" stroke="#1E1E28" stroke-width="2" fill="none" stroke-linecap="round"/>`);
+  if (mouth === 'open') front.push(`<path d="M${cx - 6} ${my} Q${cx} ${my + 11} ${cx + 6} ${my} Z" fill="#8A2A3A"/>`);
+  if (mouth === 'teeth') front.push(`<path d="M${cx - 7} ${my} Q${cx} ${my + 12} ${cx + 7} ${my} Z" fill="#8A2A3A"/>` + poly([[cx - 5, my], [cx - 2, my + 4], [cx + 1, my]], '#FFF') + poly([[cx + 1, my], [cx + 4, my + 4], [cx + 6, my]], '#FFF'));
+  if (mouth === 'beak') front.push(`<ellipse cx="${cx}" cy="${my + 1}" rx="11" ry="5.5" fill="${a.bk}" stroke="${shade(a.bk, -.35)}" stroke-width="1.5"/>`);
+  if (a.tongue) front.push(`<ellipse cx="${cx + 3}" cy="${my + 12}" rx="6" ry="9" fill="#F27A93"/>`);
+  if (a.nose) front.push(`<ellipse cx="${cx}" cy="${my - (mouth === 'none' ? 0 : 3)}" rx="7" ry="4.5" fill="${a.nose}"/>`);
+
+  // 몸 앞
+  if (a.egg) {
+    let d = `M${cx - rx - 2} ${cy + 4}`;
+    for (let i = 1; i <= 8; i++) d += ` L${(cx - rx - 2 + i * (2 * rx + 4) / 8).toFixed(1)} ${cy + (i % 2 ? -4 : 6)}`;
+    d += ` A${rx + 2} ${ry} 0 0 1 ${cx - rx - 2} ${cy + 4}Z`;
+    front.push(`<path d="${d}" fill="#FFFFFF" stroke="#9A9486" stroke-width="2" stroke-linejoin="round"/>`);
+    front.push(poly([[cx - 16, cy + 22], [cx - 8, cy + 12], [cx - 2, cy + 22]], '#E8433F') + poly([[cx + 4, cy + 20], [cx + 12, cy + 10], [cx + 18, cy + 20]], '#3E7FD9'));
+  }
+  if (a.leek) front.push(`<path d="M${cx + rx - 6} ${cy + ry - 4} L${cx + rx + 18} ${top - 8}" stroke="#4FA33F" stroke-width="7" stroke-linecap="round"/><path d="M${cx + rx - 6} ${cy + ry - 4} L${cx + rx} ${cy + ry - 18}" stroke="#F4F1E1" stroke-width="7" stroke-linecap="round"/>`);
+  if (a.ground) front.push(`<ellipse cx="${cx}" cy="${cy + ry}" rx="${rx + 22}" ry="12" fill="#7A4E2D"/><circle cx="${cx - 22}" cy="${cy + ry - 2}" r="2.5" fill="#5A3820"/><circle cx="${cx + 18}" cy="${cy + ry + 3}" r="3" fill="#5A3820"/>`);
+
+  const floor = a.ground ? '' : `<ellipse cx="${cx}" cy="${Math.min(116, cy + ry + 6)}" rx="${rx * .85}" ry="5" fill="#22304D" opacity=".14"/>`;
+  const cls = ['mon', o.shadow && 'shadow', o.shiny && 'shiny'].filter(Boolean).join(' ');
+  return `<svg class="${cls}" viewBox="0 0 120 120" role="img" aria-label="${o.shadow ? '누구일까?' : m.n}">${floor}${back.join('')}${body}${front.join('')}</svg>`;
+}
+const MON_NO = Object.fromEntries(MON.map(m => [m.no, m]));
+// 공식 이미지: 앱 버전에서 부모님이 켰을 때만. 그림은 저장소에 넣지 않고, 아이패드가 PokeAPI 공개 저장소에서 직접 받아 기기에만 보관
+const ART = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const ROUND = 10;
+
+// 세는 말 문제에 쓰는 물건들 (lv: 처음 나오는 난이도)
+const THINGS = [
+  {e:'🍎', n:'사과', c:'개', lv:1}, {e:'⚽', n:'공', c:'개', lv:1},
+  {e:'🐶', n:'강아지', c:'마리', lv:1}, {e:'🐟', n:'물고기', c:'마리', lv:1},
+  {e:'🧒', n:'어린이', c:'명', lv:1}, {e:'🚗', n:'자동차', c:'대', lv:1},
+  {e:'📕', n:'책', c:'권', lv:2}, {e:'✏️', n:'연필', c:'자루', lv:2},
+  {e:'🌷', n:'꽃', c:'송이', lv:2}, {e:'📄', n:'종이', c:'장', lv:2},
+  {e:'🥛', n:'우유', c:'잔', lv:2}, {e:'🚲', n:'자전거', c:'대', lv:2},
+  {e:'🌳', n:'나무', c:'그루', lv:3}, {e:'🏠', n:'집', c:'채', lv:3}
+];
+const COUNTERS = ['개','마리','명','대','권','자루','송이','장','잔','그루','채'];
+
+const LEVEL_DESC = {
+  two:   ['3 + 4', '23 + 4', '23 + 14'],
+  mul:   ['2 + 2 + 2', '2씩 3묶음', '5씩 4묶음'],
+  clock: ['디지털 시계', '정각·30분', '5분 단위'],
+  unit:  ['개·마리·명·대', '권·자루·송이', '나이·날짜까지'],
+  mix:   ['골고루', '골고루', '골고루']
+};
+
+// ---------- 저장 ----------
+function load(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch{ return fallback; } }
+function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch{} }
+let caught = load('pkmath.caught', {});   // { id: 잡은 횟수 }
+let officialArt = load('pkmath.officialArt', false);
+const officialOn = () => BUILD === 'app' && officialArt;
+let soundOn = load('pkmath.sound', true);
+
+// ---------- 한국어 ----------
+function hasBatchim(w){ const c = w.charCodeAt(w.length-1); return c>=0xac00 && c<=0xd7a3 && (c-0xac00)%28 !== 0; }
+const iga = w => w + (hasBatchim(w) ? '이' : '가');
+const eulreul = w => w + (hasBatchim(w) ? '을' : '를');
+const eunneun = w => w + (hasBatchim(w) ? '은' : '는');
+// '로/으로': 받침이 없거나 ㄹ 받침이면 '로'
+const euro = w => { const c = w.charCodeAt(w.length-1) - 0xac00; return w + (c % 28 === 0 || c % 28 === 8 ? '로' : '으로'); };
+const DIGITS = ['영','일','이','삼','사','오','육','칠','팔','구'];
+const N_ONES = ['','하나','둘','셋','넷','다섯','여섯','일곱','여덟','아홉'];
+const N_ONES_C = ['','한','두','세','네','다섯','여섯','일곱','여덟','아홉'];
+const N_TENS = ['','열','스물','서른','마흔','쉰','예순','일흔','여든','아흔'];
+// 이십삼 (한자어 수)
+function sino(n){ if(n < 10) return DIGITS[n]; const t = Math.floor(n/10), o = n%10; return (t>1 ? DIGITS[t] : '') + '십' + (o ? DIGITS[o] : ''); }
+// 스물셋 (고유어 수)
+function nativeNum(n){ return N_TENS[Math.floor(n/10)] + N_ONES[n%10]; }
+// 스물세 마리 (세는 말 앞)
+function counterNum(n){ if(n === 20) return '스무'; return N_TENS[Math.floor(n/10)] + N_ONES_C[n%10]; }
+const mari = n => `${counterNum(n)} 마리`;
+const monthWord = m => m === 6 ? '유월' : m === 10 ? '시월' : sino(m) + '월';
+
+// ---------- 소리 ----------
+// 좋은 음성(프리미엄·향상됨·Natural)을 먼저 고르고, 고른 목소리는 기억해요
+let voice = null;
+let savedVoice = load('pkmath.voice', '');
+function voiceRank(v){
+  const n = v.name.toLowerCase();
+  if(/premium|프리미엄/.test(n)) return 0;
+  if(/enhanced|향상/.test(n)) return 1;
+  if(/natural|online|neural/.test(n)) return 2;
+  if(/google/.test(n)) return 3;
+  if(/yuna|유나|sunhi|선희/.test(n)) return 4;
+  return 5;
+}
+function koVoices(){
+  return (speechSynthesis.getVoices()||[]).filter(v => v.lang && v.lang.replace('_','-').toLowerCase().startsWith('ko'))
+    .sort((a,b) => voiceRank(a) - voiceRank(b));
+}
+function pickVoice(){
+  const list = koVoices();
+  voice = list.find(v => v.voiceURI === savedVoice) || list[0] || null;
+  const sel = $('voiceSel'); sel.innerHTML = '';
+  list.forEach(v => { const o = document.createElement('option'); o.value = v.voiceURI; o.textContent = v.name + (v.localService ? '' : ' (온라인)'); o.selected = v === voice; sel.appendChild(o); });
+  if(!list.length){ const o = document.createElement('option'); o.textContent = '한국어 음성이 없어요'; sel.appendChild(o); }
+  $('voiceInfo').textContent = `이 기기에서 쓸 수 있는 한국어 목소리 ${list.length}개`;
+}
+function speak(text){
+  if(!soundOn || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR'; u.rate = 0.95; u.pitch = 1.15;
+  if(voice) u.voice = voice;
+  speechSynthesis.speak(u);
+}
+let actx = null;
+function tone(freqs, dur=0.12, type='triangle'){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i) => {
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i*dur;
+      o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur*1.6);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur*1.7);
+    });
+  }catch{}
+}
+const sfx = {
+  right: () => tone([660,880,1100]),
+  wrong: () => tone([220,180], 0.15, 'square'),
+  tap:   () => tone([520], 0.06),
+  catch: () => tone([523,659,784,1046], 0.11)
+};
+
+// ---------- 유틸 ----------
+const $ = id => document.getElementById(id);
+const rand = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function div(cls){ const d = document.createElement('div'); d.className = cls; return d; }
+// 포켓몬 그림: 기본은 직접 그린 그림, 공식 이미지를 켜면 받아 둔 그림 (못 받으면 직접 그린 그림)
+function drawn(id){
+  const t = document.createElement('template');
+  t.innerHTML = drawnArt(MON_NO[id]);
+  const svg = t.content.firstElementChild;
+  svg.setAttribute('class', 'pic');
+  return svg;
+}
+function pic(id){
+  if(!officialOn()) return drawn(id);
+  const el = document.createElement('img');
+  el.className = 'pic'; el.src = ART(id); el.alt = NAME[id]; el.draggable = false;
+  el.onerror = () => el.replaceWith(drawn(id));
+  return el;
+}
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
+
+// 틀린 보기: 자주 하는 실수(likely)를 먼저 넣고 나머지는 가까운 수로 채워요
+function numChoices(ans, likely, max=99){
+  const ok = v => v > 0 && v <= max && v !== ans;
+  const wrong = [...new Set(likely.filter(ok))].slice(0, 2);
+  const near = shuffle([ans+1, ans-1, ans+2, ans-2, ans+10, ans-10, ans+3].filter(v => ok(v) && !wrong.includes(v)));
+  while(wrong.length < 3 && near.length) wrong.push(near.shift());
+  return shuffle([ans, ...wrong]).map(v => ({key: String(v), label: String(v), sub: sino(v)}));
+}
+function textChoices(answer, wrongs){
+  const list = [answer, ...[...new Set(wrongs)].filter(w => w !== answer).slice(0, 3)];
+  return shuffle(list).map(t => ({key: t, label: t}));
+}
+
+// ---------- 그림 조각 ----------
+let counted = 0;
+// 누르면 세어 주는 칸 (value: 1 또는 10)
+function tappable(el, value, gone){
+  if(gone) el.dataset.gone = '1';
+  el.onclick = () => {
+    if(el.dataset.gone || el.querySelector('.tag')) return;
+    counted += value;
+    const t = document.createElement('span'); t.className = 'tag'; t.textContent = counted;
+    el.appendChild(t); sfx.tap(); speak(nativeNum(counted));
+  };
+  return el;
+}
+function monEl(id, i, gone){
+  const m = div('mon pop'); m.style.animationDelay = `${Math.min(i,20)*30}ms`;
+  m.appendChild(pic(id));
+  return tappable(m, 1, gone);
+}
+function emojiEl(e, i){
+  const m = div('mon pop'); m.style.animationDelay = `${Math.min(i,20)*30}ms`;
+  const s = document.createElement('span'); s.className = 'emo-item'; s.textContent = e;
+  m.appendChild(s);
+  return tappable(m, 1, false);
+}
+function tenEl(id, i, gone){
+  const t = div('ten pop'); t.style.animationDelay = `${i*60}ms`;
+  for(let k=0;k<10;k++) t.appendChild(pic(id));
+  return tappable(t, 10, gone);
+}
+// 두 자리 수를 10마리 묶음과 낱개로 그려요
+function placeGroup(id, n, {goneTens=0, goneOnes=0, unpack=false} = {}){
+  const g = div('group');
+  const tens = Math.floor(n/10), ones = n%10;
+  const keep = unpack ? tens - 1 : tens;
+  for(let i=0;i<keep;i++) g.appendChild(tenEl(id, i, i >= keep - goneTens));
+  if(unpack){
+    const u = div('unpacked');
+    for(let i=0;i<10;i++) u.appendChild(monEl(id, i, i >= 10 - goneOnes));
+    g.appendChild(u);
+    for(let i=0;i<ones;i++) g.appendChild(monEl(id, i, false));
+  } else {
+    for(let i=0;i<ones;i++) g.appendChild(monEl(id, i, i >= ones - goneOnes));
+  }
+  return g;
+}
+function opEl(t){ const s = document.createElement('span'); s.className = 'op'; s.textContent = t; return s; }
+function clockSVG(h, m){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 200 200'); svg.setAttribute('class', 'clock');
+  const add = (tag, attrs, text) => { const e = document.createElementNS(NS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(text) e.textContent = text; svg.appendChild(e); return e; };
+  add('circle', {cx:100, cy:100, r:94, fill:'#ffffff', stroke:'#2b2b2b', 'stroke-width':6});
+  for(let i=0;i<60;i++){
+    const a = i*6*Math.PI/180, big = i%5 === 0, r1 = big ? 80 : 85;
+    add('line', {x1:100+r1*Math.sin(a), y1:100-r1*Math.cos(a), x2:100+89*Math.sin(a), y2:100-89*Math.cos(a), stroke:'#2b2b2b', 'stroke-width': big ? 3 : 1});
+  }
+  for(let i=1;i<=12;i++){
+    const a = i*30*Math.PI/180;
+    add('text', {x:100+66*Math.sin(a), y:100-66*Math.cos(a)+7, 'text-anchor':'middle', 'font-size':20, 'font-weight':800, fill:'#2b2b2b'}, String(i));
+  }
+  const hand = (deg, len, w, color) => { const a = deg*Math.PI/180; add('line', {x1:100, y1:100, x2:100+len*Math.sin(a), y2:100-len*Math.cos(a), stroke:color, 'stroke-width':w, 'stroke-linecap':'round'}); };
+  hand(((h%12) + m/60)*30, 44, 9, '#e3350d');   // 짧은 바늘 = 시
+  hand(m*6, 72, 5, '#3b4cca');                  // 긴 바늘 = 분
+  add('circle', {cx:100, cy:100, r:7, fill:'#2b2b2b'});
+  return svg;
+}
+
+// ---------- 문제 만들기 ----------
+let mode = 'two', level = 1;
+
+function qTwo(){
+  const [id, name] = pick(POKEMON);
+  const add = Math.random() < 0.5;
+  if(level === 1) return qSmall(id, name, add);
+  let a, b;
+  const hard = level === 3 && Math.random() < 0.4;
+  if(level === 2){        // 두 자리 ± 한 자리, 받아올림 없음 (가끔 '묶음 + 낱개')
+    if(add && Math.random() < 0.3){ a = rand(1,9)*10; b = rand(1,9); }
+    else if(add){ const o = rand(0,8); a = rand(1,8)*10 + o; b = rand(1, 9-o); }
+    else   { const o = rand(1,9); a = rand(1,9)*10 + o; b = rand(1, o); }
+  } else if(!hard){       // 두 자리 ± 두 자리, 받아올림 없음
+    if(add){ const t1 = rand(1,7), o1 = rand(0,8); a = t1*10 + o1; b = rand(1, 8-t1)*10 + rand(1, 9-o1); }
+    else   { const t1 = rand(2,9), o1 = rand(1,9); a = t1*10 + o1; b = rand(1, t1-1)*10 + rand(0, o1); }
+  } else {                // 두 자리 ± 한 자리, 받아올림·받아내림
+    if(add){ const o = rand(2,9); a = rand(1,8)*10 + o; b = rand(10-o, 9); }
+    else   { const o = rand(0,8); a = rand(2,9)*10 + o; b = rand(o+1, 9); }
+  }
+  const ans = add ? a + b : a - b;
+  const ta = a - a%10, oa = a%10, tb = b - b%10, ob = b%10;
+  const carry = add && oa + ob >= 10, borrow = !add && ob > oa;
+  let hint, likely;
+  if(add){
+    if(oa === 0 && b < 10) hint = [`${a} = 10마리 묶음 ${ta/10}개`, `묶음 ${ta/10}개 + 낱개 ${b}마리 = ${ans}`];
+    else if(carry) hint = [`${a} = ${ta} + ${oa}`, `일의 자리끼리: ${oa} + ${ob} = ${oa+ob}`, `10마리가 모이면 묶음 1개! ${ta} + ${oa+ob} = ${ans}`];
+    else if(b < 10) hint = [`${a} = ${ta} + ${oa}`, `일의 자리끼리: ${oa} + ${ob} = ${oa+ob}`, `${ta} + ${oa+ob} = ${ans}`];
+    else hint = [`십의 자리끼리: ${ta} + ${tb} = ${ta+tb}`, `일의 자리끼리: ${oa} + ${ob} = ${oa+ob}`, `${ta+tb} + ${oa+ob} = ${ans}`];
+    likely = carry ? [ans-10, ans+10] : b < 10 ? [b*10 + ta/10, a + b*10, ans+10] : [ans+10, ans-10];
+  } else {
+    if(borrow) hint = [`${a} = ${ta-10} + ${oa+10}  (묶음 1개를 풀었어요)`, `${oa+10} − ${ob} = ${oa+10-ob}`, `${ta-10} + ${oa+10-ob} = ${ans}`];
+    else if(b < 10) hint = [`${a} = ${ta} + ${oa}`, `일의 자리끼리: ${oa} − ${ob} = ${oa-ob}`, `${ta} + ${oa-ob} = ${ans}`];
+    else hint = [`십의 자리끼리: ${ta} − ${tb} = ${ta-tb}`, `일의 자리끼리: ${oa} − ${ob} = ${oa-ob}`, `${ta-tb} + ${oa-ob} = ${ans}`];
+    likely = borrow ? [ans+10, ta + (ob-oa)] : [ans-10, ans+10];
+  }
+  return {
+    kind:'two', id,
+    text: add ? `${name} ${a}마리가 있는데 ${b}마리가 더 왔어요. 모두 몇 마리일까요?`
+              : `${name} ${a}마리 중에 ${b}마리가 도망갔어요. 몇 마리 남았을까요?`,
+    say:  add ? `${name} ${mari(a)}가 있는데 ${mari(b)}가 더 왔어요. 모두 몇 마리일까요?`
+              : `${name} ${mari(a)} 중에 ${mari(b)}가 도망갔어요. 몇 마리 남았을까요?`,
+    eq: `${a} ${add ? '+' : '−'} ${b} = ?`,
+    tapHint: '묶음을 누르면 10씩, 한 마리를 누르면 1씩 세어 줘요',
+    hint, choices: numChoices(ans, likely), answer: String(ans),
+    done: `${a} ${add ? '+' : '−'} ${b} = ${ans}`, answerSay: mari(ans),
+    render(scene){
+      scene.style.setProperty('--sz', '40px');
+      if(add){ scene.append(placeGroup(id, a), opEl('+'), placeGroup(id, b)); }
+      else {
+        scene.append(placeGroup(id, a, borrow ? {goneOnes: ob, unpack: true} : {goneTens: tb/10, goneOnes: ob}));
+        setTimeout(() => scene.querySelectorAll('[data-gone]').forEach(m => m.classList.add('gone')), 900);
+      }
+    }
+  };
+}
+
+// 쉬움: 한 자리 수끼리 더하고 빼기 (10까지)
+function qSmall(id, name, add){
+  let a, b;
+  if(add){ a = rand(1,8); b = rand(1, 10-a); } else { a = rand(2,10); b = rand(1, a-1); }
+  const ans = add ? a + b : a - b;
+  const steps = [];
+  for(let k=1;k<=b;k++) steps.push(add ? a+k : a-k);
+  return {
+    kind:'two', id,
+    text: add ? `${name} ${a}마리가 있는데 ${b}마리가 더 왔어요. 모두 몇 마리일까요?`
+              : `${name} ${a}마리 중에 ${b}마리가 도망갔어요. 몇 마리 남았을까요?`,
+    say:  add ? `${name} ${mari(a)}가 있는데 ${mari(b)}가 더 왔어요. 모두 몇 마리일까요?`
+              : `${name} ${mari(a)} 중에 ${mari(b)}가 도망갔어요. 몇 마리 남았을까요?`,
+    eq: `${a} ${add ? '+' : '−'} ${b} = ?`,
+    tapHint: '포켓몬을 누르면 하나씩 세어 줘요',
+    hint: [add ? `${a}에서 ${b}만큼 이어서 세어요` : `${a}에서 ${b}만큼 거꾸로 세어요`, `${a} → ${steps.join(', ')}`],
+    choices: numChoices(ans, [ans+1, ans-1], 12), answer: String(ans),
+    done: `${a} ${add ? '+' : '−'} ${b} = ${ans}`, answerSay: mari(ans),
+    render(scene){
+      scene.style.setProperty('--sz', '56px');
+      const grp = (n, gone=0) => { const g = div('group'); for(let i=0;i<n;i++) g.appendChild(monEl(id, i, i >= n - gone)); return g; };
+      if(add) scene.append(grp(a), opEl('+'), grp(b));
+      else {
+        scene.append(grp(a, b));
+        setTimeout(() => scene.querySelectorAll('[data-gone]').forEach(m => m.classList.add('gone')), 900);
+      }
+    }
+  };
+}
+
+function qMul(){
+  const [id, name] = pick(POKEMON);
+  let per, groups;
+  if(level === 1){ per = rand(2,4); groups = rand(2,3); }
+  else if(level === 2){ per = rand(2,5); groups = rand(2,3); }
+  else { per = rand(2,5); groups = rand(2,5); }
+  const ans = per * groups;
+  const sum = Array(groups).fill(per).join(' + ');
+  const hint = [`${per}씩 ${groups}묶음`, `${sum} = ${ans}`, `${per} × ${groups} = ${ans}`];
+  const render = scene => {
+    scene.style.setProperty('--sz', per <= 3 ? '44px' : per <= 6 ? '36px' : '30px');
+    for(let g=0; g<groups; g++){
+      const bag = div('bag');
+      for(let i=0;i<per;i++) bag.appendChild(monEl(id, g*per+i, false));
+      scene.appendChild(bag);
+    }
+  };
+  const base = { kind:'mul', id, hint, render, tapHint: '포켓몬을 누르면 하나씩 세어 줘요',
+    done: `${per} × ${groups} = ${ans}`,
+    answerSay: `${sino(per)} 곱하기 ${eunneun(sino(groups))} ${sino(ans)}` };
+  if(level === 1){
+    // 같은 수 더하기로 먼저 익혀요
+    return { ...base, done: `${sum} = ${ans} → ${per} × ${groups}`, answerSay: mari(ans),
+      text: `몬스터볼 ${groups}개에 ${iga(name)} ${per}마리씩 들어 있어요. 모두 몇 마리일까요?`,
+      say: `몬스터볼 ${counterNum(groups)} 개에 ${iga(name)} ${counterNum(per)} 마리씩 들어 있어요. 모두 몇 마리일까요?`,
+      eq: `${sum} = ?`,
+      choices: numChoices(ans, [ans + 1, ans - 1], 20), answer: String(ans) };
+  }
+  if(level === 3 && Math.random() < 0.35){
+    // 그림을 보고 곱셈식 고르기
+    const right = `${per} × ${groups}`;
+    return { ...base,
+      text: `${iga(name)} 몇씩 몇 묶음 있나요? 알맞은 곱셈식을 골라요.`,
+      say: `${iga(name)} 몇씩 몇 묶음 있는지 보고, 알맞은 곱셈식을 골라 보세요.`,
+      eq: '', choices: textChoices(right, [`${per} + ${groups}`, `${per} × ${groups+1}`, `${per < 9 ? per+1 : per-1} × ${groups}`]),
+      answer: right };
+  }
+  return { ...base,
+    text: `몬스터볼 ${groups}개에 ${iga(name)} ${per}마리씩 들어 있어요. 모두 몇 마리일까요?`,
+    say: `몬스터볼 ${counterNum(groups)} 개에 ${iga(name)} ${counterNum(per)} 마리씩 들어 있어요. 모두 몇 마리일까요?`,
+    eq: `${per} × ${groups} = ?`,
+    choices: numChoices(ans, [per + groups, ans + per, ans - per]), answer: String(ans) };
+}
+
+function qClock(){
+  const h = rand(1,12);
+  const m = level === 3 ? rand(0,11)*5 : pick([0,30]);
+  const digital = level === 1;
+  const wrap = x => ((x - 1 + 12) % 12) + 1;
+  const label = (hh, mm) => mm ? `${hh}시 ${mm}분` : `${hh}시`;
+  const read = (hh, mm) => `${counterNum(hh)} 시` + (mm ? ` ${sino(mm)} 분` : '');
+  const hint = digital
+    ? ['앞의 숫자는 \'시\', 뒤의 숫자는 \'분\'이에요.', m ? `${h}:30 → ${h}시 30분` : `뒤가 00이면 '정각'이에요. ${h}:00 → ${h}시`]
+    : ['빨간 짧은 바늘은 \'시\', 파란 긴 바늘은 \'분\'이에요.',
+       m ? `긴 바늘이 가리키는 숫자 ${m/5} → ${m}분 (5, 10, 15 … 5분씩)` : '긴 바늘이 12에 있으면 \'정각\'이에요.'];
+  if(m && !digital) hint.push('짧은 바늘이 두 숫자 사이에 있으면 작은 숫자를 읽어요.');
+  if(m === 30) hint.push(`30분은 '반'이라고도 해요. ${counterNum(h)} 시 반!`);
+  hint.push('시는 \'한, 두, 세 시\', 분은 \'일, 이, 삼 분\'으로 읽어요.');
+  const base = { kind:'clock', hint, tapHint: '', answerSay: read(h, m), done: label(h, m),
+    render(scene){
+      if(!digital){ scene.appendChild(clockSVG(h, m)); return; }
+      const d = div('digital pop'); d.textContent = `${h}:${String(m).padStart(2,'0')}`; scene.appendChild(d);
+    } };
+
+  if(level !== 2 && Math.random() < (digital ? 0.4 : 0.35)){
+    // 시각을 우리말로 읽기
+    const wrongs = m
+      ? [`${sino(h)} 시 ${sino(m)} 분`, `${counterNum(h)} 시 ${counterNum(m)} 분`, `${sino(h)} 시 ${counterNum(m)} 분`]
+      : [`${sino(h)} 시`, `${nativeNum(h)} 시`, `${counterNum(h)} 분`, `${sino(h)} 분`];
+    return { ...base, text: '이 시각을 어떻게 읽을까요?', say: '이 시각을 어떻게 읽을지 골라 보세요.',
+      eq: digital ? '' : `${h}:${String(m).padStart(2,'0')}`, choices: textChoices(read(h, m), wrongs), answer: read(h, m) };
+  }
+  let wrongs;
+  if(digital) wrongs = [label(wrap(h+1), m), label(h, m ? 0 : 30), label(wrap(h-1), m)];
+  else if(!m) wrongs = [label(wrap(h+1),0), label(wrap(h-1),0), label(wrap(h+6),0)];
+  else {
+    wrongs = [label(wrap(m >= 30 ? h+1 : h-1), m)];          // 짧은 바늘을 다음 숫자로 읽는 실수
+    if(m/5 !== m) wrongs.push(label(h, m/5));                // 숫자를 그대로 '분'으로 읽는 실수
+    wrongs.push(label(wrap(m/5 || 12), (h*5) % 60));        // 두 바늘을 바꿔 읽는 실수
+    wrongs.push(label(h, (m + 5) % 60), label(h, (m + 55) % 60));
+  }
+  const choices = textChoices(label(h, m), wrongs.filter(w => w !== label(h, m)));
+  choices.forEach(c => { const [, hh, mm] = c.key.match(/(\d+)시(?: (\d+)분)?/); c.sub = read(+hh, +(mm||0)); });
+  return { ...base, text: '시계가 가리키는 시각은 몇 시 몇 분일까요?',
+    say: digital ? '디지털 시계를 보고, 몇 시 몇 분인지 골라 보세요.' : '짧은 바늘과 긴 바늘을 보고, 몇 시 몇 분인지 골라 보세요.',
+    eq: '', choices, answer: label(h, m) };
+}
+
+function qUnit(){
+  const sub = level < 3 ? (Math.random() < 0.6 ? 'read' : 'blank') : pick(['read','blank','age','date']);
+  const maxN = level === 1 ? 5 : level === 2 ? 10 : 20;
+  const numHint = '물건을 셀 때는 \'한, 두, 세, 네 …\'를 써요.';
+
+  if(sub === 'age'){
+    const n = rand(3, 12), right = `${counterNum(n)} 살`;
+    return { kind:'unit', text: `생일 케이크에 초가 ${n}개 있어요. 몇 살일까요?`,
+      say: `생일 케이크에 초가 ${counterNum(n)} 개 있어요. 몇 살일까요?`, eq: '',
+      tapHint: '초를 누르면 하나씩 세어 줘요',
+      hint: ['나이는 \'살\'로 세요.', `${n}살 → ${counterNum(n)} 살`],
+      choices: textChoices(right, [`${sino(n)} 살`, `${counterNum(n)} 개`, `${counterNum(n+1)} 살`]),
+      answer: right, done: right, answerSay: right,
+      render(scene){
+        scene.style.setProperty('--sz', '44px');
+        const g = div('group'); g.appendChild(emojiEl('🎂', 0));
+        const c = div('group'); for(let i=0;i<n;i++) c.appendChild(emojiEl('🕯️', i));
+        scene.append(g, c);
+        g.firstChild.onclick = null;
+      } };
+  }
+  if(sub === 'date'){
+    const mo = Math.random() < 0.4 ? pick([6,10]) : rand(1,12), d = rand(1,28);
+    const right = `${monthWord(mo)} ${sino(d)} 일`;
+    const badMonth = mo === 6 ? '육월' : mo === 10 ? '십월' : `${counterNum(mo)} 월`;
+    return { kind:'unit', text: '달력의 날짜를 어떻게 읽을까요?', say: '달력의 날짜를 어떻게 읽을지 골라 보세요.',
+      eq: '', tapHint: '',
+      hint: ['날짜는 \'일, 이, 삼 …\'으로 읽어요.', '6월은 \'유월\', 10월은 \'시월\'이라고 읽어요.'],
+      choices: textChoices(right, [`${badMonth} ${sino(d)} 일`, `${monthWord(mo)} ${counterNum(d)} 일`, `${badMonth} ${counterNum(d)} 일`]),
+      answer: right, done: `${mo}월 ${d}일 → ${right}`, answerSay: right,
+      render(scene){
+        const c = div('cal pop');
+        const a = div('m'); a.textContent = `${mo}월`;
+        const b = div('d'); b.textContent = d;
+        c.append(a, b); scene.appendChild(c);
+      } };
+  }
+
+  // 물건 세기
+  const pool = THINGS.filter(t => t.lv <= level);
+  const usePoke = Math.random() < 0.2;
+  const [pid, pname] = pick(POKEMON);
+  const t = usePoke ? {n: pname, c: '마리', poke: pid} : pick(pool);
+  const n = rand(1, maxN);
+  const hint = [`${eunneun(t.n)} '${t.c}'${euro(t.c).slice(t.c.length)} 세요.`, numHint];
+  const render = scene => {
+    scene.style.setProperty('--sz', n <= 5 ? '60px' : n <= 10 ? '48px' : '40px');
+    const g = div('group');
+    for(let i=0;i<n;i++) g.appendChild(t.poke ? monEl(t.poke, i, false) : emojiEl(t.e, i));
+    scene.appendChild(g);
+  };
+  const right = `${t.n} ${counterNum(n)} ${t.c}`;
+  const others = shuffle(COUNTERS.filter(c => c !== t.c));
+  const base = { kind:'unit', render, hint, tapHint: '그림을 누르면 하나씩 세어 줘요', done: right, answerSay: right };
+
+  if(sub === 'blank'){
+    return { ...base, text: '빈칸에 알맞은 말을 골라요.', say: `${t.n} ${counterNum(n)}, 무엇이라고 셀까요? 알맞은 말을 골라 보세요.`,
+      eq: `${t.n} ${counterNum(n)} ( ? )`,
+      choices: textChoices(t.c, others.slice(0, 3)), answer: t.c };
+  }
+  const badNum = (n%10 >= 1 && n%10 <= 4 && Math.random() < 0.5) ? nativeNum(n) : sino(n);
+  return { ...base, text: '어떻게 세면 좋을까요?', say: '그림을 보고, 알맞게 센 말을 골라 보세요.', eq: '',
+    choices: textChoices(right, [`${t.n} ${counterNum(n)} ${others[0]}`, `${t.n} ${badNum} ${t.c}`,
+      `${t.n} ${counterNum(n < maxN ? n+1 : n-1)} ${t.c}`]),
+    answer: right };
+}
+
+const MAKERS = {two: qTwo, mul: qMul, clock: qClock, unit: qUnit};
+const makeQuestion = () => MAKERS[mode === 'mix' ? pick(Object.keys(MAKERS)) : mode]();
+
+// ---------- 홈 ----------
+function renderHero(){ $('hero').replaceChildren(pic(25)); }
+renderHero();
+
+// 그림 설정 (공식 이미지는 앱 버전에서만)
+function renderArtBox(){
+  const box = $('artBox');
+  if(BUILD !== 'app'){
+    box.innerHTML = '<p class="voice-info">직접 그린 그림을 써요. 아이패드 홈 화면 앱에서는 공식 이미지로 바꿀 수 있어요.</p>';
+    return;
+  }
+  box.innerHTML = `
+    <div class="voice-row">
+      <select id="artSel" aria-label="그림 고르기">
+        <option value="drawn">직접 그린 그림 (기본)</option>
+        <option value="official">공식 이미지</option>
+      </select>
+      <button class="speak" id="artFetch">그림 미리 받기</button>
+    </div>
+    <p class="voice-info" id="artMsg"></p>
+    <p class="voice-info">공식 이미지는 포켓몬 회사(닌텐도·크리처스·게임프리크)의 저작물이에요. 이 앱에는 들어 있지 않고, 켜면 아이패드가 인터넷의 PokeAPI 공개 그림 저장소에서 직접 받아 이 기기에만 보관해요. 가족끼리 집에서만 쓰는 용도로 써 주세요. 인터넷 없이 쓰려면 켠 다음 '그림 미리 받기'를 눌러 주세요.</p>`;
+  const sel = $('artSel');
+  sel.value = officialArt ? 'official' : 'drawn';
+  $('artFetch').disabled = !officialArt;
+  sel.onchange = () => { officialArt = sel.value === 'official'; save('pkmath.officialArt', officialArt); renderArtBox(); renderHero(); };
+  $('artFetch').onclick = async () => {
+    let done = 0, fail = 0;
+    $('artFetch').disabled = true;
+    for(const [id] of POKEMON){
+      try{ const r = await fetch(ART(id), {mode:'cors'}); if(!r.ok) throw 0; await r.blob(); done++; }catch{ fail++; }
+      $('artMsg').textContent = `받는 중… ${done + fail}/${POKEMON.length}`;
+    }
+    $('artMsg').textContent = fail ? `${done}개를 받았어요. ${fail}개는 인터넷이 될 때 다시 눌러 주세요.` : `${done}개를 모두 받았어요. 이제 인터넷 없이도 보여요.`;
+    $('artFetch').disabled = false;
+  };
+}
+renderArtBox();
+function updateLevelDesc(){ document.querySelectorAll('.level').forEach((b,i) => b.querySelector('small').textContent = LEVEL_DESC[mode][i]); }
+updateLevelDesc();
+$('modes').onclick = e => { const b = e.target.closest('.mode'); if(!b) return; mode = b.dataset.mode; document.querySelectorAll('.mode').forEach(x => x.classList.toggle('sel', x===b)); updateLevelDesc(); sfx.tap(); };
+$('levels').onclick = e => { const b = e.target.closest('.level'); if(!b) return; level = +b.dataset.level; document.querySelectorAll('.level').forEach(x => x.classList.toggle('sel', x===b)); sfx.tap(); };
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; setTimeout(pickVoice, 500); }
+$('voiceSel').onchange = e => { savedVoice = e.target.value; save('pkmath.voice', savedVoice); pickVoice(); speak('안녕! 나랑 같이 숫자 놀이 하자!'); };
+$('voiceTest').onclick = () => { if(!soundOn){ soundOn = true; save('pkmath.sound', true); $('soundBtn').textContent = '🔊'; } speak('피카츄가 스물세 마리 있어요. 지금은 세 시 삼십 분이에요.'); };
+$('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+$('soundBtn').onclick = () => { soundOn = !soundOn; save('pkmath.sound', soundOn); $('soundBtn').textContent = soundOn ? '🔊' : '🔇'; if(!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
+
+// ---------- 게임 ----------
+let qi = 0, results = [], current = null, newlyCaught = [], locked = false;
+
+function startRound(){
+  qi = 0; results = []; newlyCaught = [];
+  show('game');
+  nextQuestion();
+}
+
+function renderDots(){
+  $('dots').innerHTML = '';
+  for(let i=0;i<ROUND;i++){
+    const d = div('dot' + (results[i]===true ? ' ok' : results[i]===false ? ' retry' : '') + (i===qi ? ' now' : ''));
+    $('dots').appendChild(d);
+  }
+}
+
+function showHint(){
+  const box = $('hintBox'); box.innerHTML = '';
+  current.hint.forEach(line => { const d = document.createElement('div'); d.textContent = line; box.appendChild(d); });
+  box.hidden = false; $('hintBtn').hidden = true;
+}
+
+function nextQuestion(){
+  current = makeQuestion(); counted = 0; locked = false;
+  const q = current;
+  renderDots();
+  $('question').textContent = q.text;
+  $('equation').textContent = q.eq;
+  $('equation').hidden = !q.eq;
+  $('equation').classList.toggle('long', q.eq.length > 10);
+  $('tapHint').textContent = q.tapHint;
+  $('tapHint').hidden = !q.tapHint;
+  $('hintBox').hidden = true; $('hintBtn').hidden = false;
+
+  const scene = $('scene'); scene.innerHTML = ''; scene.style.removeProperty('--sz');
+  q.render(scene);
+
+  const ans = $('answers'); ans.innerHTML = '';
+  ans.classList.toggle('text', q.choices.some(c => c.label.length > 3));
+  q.choices.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'ans';
+    b.textContent = c.label;
+    if(c.sub){ const s = document.createElement('small'); s.textContent = c.sub; b.appendChild(s); }
+    b.onclick = () => choose(c.key, b);
+    ans.appendChild(b);
+  });
+  speak(q.say);
+}
+
+function choose(key, btn){
+  if(locked || btn.classList.contains('wrong')) return;
+  const q = current;
+  if(key !== q.answer){
+    btn.classList.add('wrong'); sfx.wrong();
+    if(results[qi] === undefined) results[qi] = false;
+    renderDots();
+    if($('hintBox').hidden){ showHint(); speak('힌트를 보고 다시 생각해 볼까요?'); }
+    else speak('다시 한 번 생각해 볼까요?');
+    return;
+  }
+  locked = true;
+  btn.classList.add('right'); sfx.right();
+  const firstTry = results[qi] === undefined;
+  results[qi] = firstTry;
+  renderDots();
+  setTimeout(() => showReward(firstTry), 500);
+}
+
+function showReward(firstTry){
+  const q = current;
+  const card = $('popCard'); card.innerHTML = '';
+  const h = document.createElement('h3'); h.textContent = firstTry ? '정답이에요! 🎉' : '맞았어요! 👏';
+  const p = document.createElement('p'); p.textContent = q.done;
+  card.append(h, p);
+  let say = `정답! ${q.answerSay}.`;
+
+  if(firstTry){
+    // 아직 못 잡은 포켓몬을 먼저 만나게
+    const notYet = POKEMON.filter(([id]) => !caught[id]);
+    const [id, name] = pick(notYet.length ? notYet : POKEMON);
+    const isNew = !caught[id];
+    caught[id] = (caught[id]||0) + 1; save('pkmath.caught', caught);
+    newlyCaught.push(id);
+    card.appendChild(pic(id));
+    const c = document.createElement('p');
+    const b = document.createElement('b'); b.textContent = `${eulreul(name)} 잡았어요!`;
+    c.appendChild(b);
+    if(isNew){ const s = document.createElement('span'); s.className = 'new'; s.textContent = 'NEW'; c.appendChild(s); }
+    card.appendChild(c);
+    say += ` ${eulreul(name)} 잡았어요!`;
+    setTimeout(sfx.catch, 250);
+  } else {
+    const c = document.createElement('p'); c.textContent = '다음엔 한 번에 맞혀서 포켓몬을 잡아 보자!';
+    card.appendChild(c);
+  }
+  const next = document.createElement('button'); next.className = 'next';
+  next.textContent = qi + 1 < ROUND ? '다음 문제 ▶' : '결과 보기 ▶';
+  next.onclick = () => { $('overlay').classList.remove('on'); qi++; qi < ROUND ? nextQuestion() : showResult(); };
+  card.appendChild(next);
+  $('overlay').classList.add('on');
+  speak(say);
+}
+
+function showResult(){
+  const score = results.filter(r => r === true).length;
+  const stars = score >= 9 ? 3 : score >= 6 ? 2 : 1;
+  $('stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+  $('resultScore').textContent = `${ROUND}문제 중 ${score}문제를 한 번에 맞혔어요!`;
+  const row = $('caughtRow'); row.innerHTML = '';
+  if(!newlyCaught.length) row.textContent = '다음엔 꼭 잡아 보자!';
+  newlyCaught.forEach(id => row.appendChild(pic(id)));
+  show('result');
+  speak(stars === 3 ? '최고예요! 포켓몬 마스터!' : stars === 2 ? '잘했어요!' : '수고했어요! 또 해 볼까요?');
+}
+
+// ---------- 도감 ----------
+let dexReturn = 'home';
+function showDex(){
+  const now = document.querySelector('.screen.on').id;
+  if(now !== 'dexScreen') dexReturn = now;
+  const dex = $('dex'); dex.innerHTML = '';
+  const have = POKEMON.filter(([id]) => caught[id]).length;
+  $('dexTitle').textContent = `포켓몬 도감 ${have}/${POKEMON.length}`;
+  POKEMON.forEach(([id, name]) => {
+    const d = div('dex-item' + (caught[id] ? '' : ' no'));
+    d.appendChild(pic(id));
+    const s = document.createElement('span'); s.textContent = caught[id] ? name : '???';
+    d.appendChild(s);
+    if(caught[id]){ const c = document.createElement('span'); c.className = 'cnt'; c.textContent = `${caught[id]}번 잡음`; d.appendChild(c); d.onclick = () => speak(name); }
+    dex.appendChild(d);
+  });
+  show('dexScreen');
+}
+// 확인 창 대신 같은 버튼을 한 번 더 누르게 해요
+function twoTap(btn, ask, action){
+  const label = btn.textContent;
+  let timer = null;
+  const reset = () => { clearTimeout(timer); timer = null; btn.textContent = label; };
+  btn.onclick = () => {
+    if(timer){ reset(); action(); return; }
+    btn.textContent = ask;
+    timer = setTimeout(reset, 3000);
+  };
+}
+$('dexBtn').onclick = showDex;
+$('dexBack').onclick = () => show(dexReturn);
+twoTap($('resetDex'), '정말 비울까요? 한 번 더 누르세요', () => { caught = {}; save('pkmath.caught', caught); showDex(); });
+
+// ---------- 버튼 ----------
+$('startBtn').onclick = () => { sfx.tap(); startRound(); };
+$('again').onclick = startRound;
+$('toHome').onclick = () => show('home');
+twoTap($('homeBtn'), '🏠 그만할까요?', () => { if('speechSynthesis' in window) speechSynthesis.cancel(); show('home'); });
+$('hintBtn').onclick = showHint;
+$('replayBtn').onclick = () => current && speak(current.say);
+// 홈 화면 앱: 한 번 열면 인터넷 없이도 열리게
+if(BUILD === 'app'){
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+}
+</script>
