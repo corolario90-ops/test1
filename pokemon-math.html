@@ -70,6 +70,9 @@ h2{margin:0 0 12px;font-size:20px}
 .ans.wrong small{color:#aaa}
 .ans.right{background:var(--green);color:#fff;box-shadow:0 5px 0 #1d7a3c}
 .ans.right small{color:#e3ffe9}
+.voice-row{display:flex;gap:8px}
+.voice-row select{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px;border-radius:12px;border:3px solid var(--line);background:#fffbea;color:var(--ink)}
+.voice-info{margin:8px 0 0;font-size:13px;color:var(--muted)}
 .speak{background:#eef0ff;color:var(--blue);border-radius:12px;padding:6px 12px;font-weight:700;font-size:15px}
 
 /* Overlay */
@@ -145,6 +148,14 @@ h2{margin:0 0 12px;font-size:20px}
         <button class="level" data-max="10">보통<small>10까지</small></button>
         <button class="level" data-max="20">어려움<small>20까지</small></button>
       </div>
+    </div>
+    <div class="card">
+      <h2>목소리</h2>
+      <div class="voice-row">
+        <select id="voiceSel" aria-label="목소리 고르기"></select>
+        <button class="speak" id="voiceTest">▶ 들어 보기</button>
+      </div>
+      <p class="voice-info" id="voiceInfo"></p>
     </div>
     <button class="start" id="startBtn">시작하기!</button>
   </section>
@@ -228,9 +239,30 @@ function counterNum(n){ if(n===20) return '스무'; return (n>=10?'열':'') + ON
 const mari = n => `${counterNum(n)} 마리`;
 
 // ---------- 소리 ----------
+// 좋은 음성(프리미엄·향상됨·Natural)을 먼저 고르고, 고른 목소리는 기억해요
 let voice = null;
-function pickVoice(){ voice = (speechSynthesis.getVoices()||[]).find(v => v.lang && v.lang.startsWith('ko')) || null; }
-if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+let savedVoice = load('pkmath.voice', '');
+function voiceRank(v){
+  const n = v.name.toLowerCase();
+  if(/premium|프리미엄/.test(n)) return 0;
+  if(/enhanced|향상/.test(n)) return 1;
+  if(/natural|online|neural/.test(n)) return 2;
+  if(/google/.test(n)) return 3;
+  if(/yuna|유나|sunhi|선희/.test(n)) return 4;
+  return 5;
+}
+function koVoices(){
+  return (speechSynthesis.getVoices()||[]).filter(v => v.lang && v.lang.replace('_','-').toLowerCase().startsWith('ko'))
+    .sort((a,b) => voiceRank(a) - voiceRank(b));
+}
+function pickVoice(){
+  const list = koVoices();
+  voice = list.find(v => v.voiceURI === savedVoice) || list[0] || null;
+  const sel = $('voiceSel'); sel.innerHTML = '';
+  list.forEach(v => { const o = document.createElement('option'); o.value = v.voiceURI; o.textContent = v.name + (v.localService ? '' : ' (온라인)'); o.selected = v === voice; sel.appendChild(o); });
+  if(!list.length){ const o = document.createElement('option'); o.textContent = '한국어 음성이 없어요'; sel.appendChild(o); }
+  $('voiceInfo').textContent = `이 기기에서 쓸 수 있는 한국어 목소리 ${list.length}개`;
+}
 function speak(text){
   if(!soundOn || !('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
@@ -277,6 +309,9 @@ let mode = 'count', maxN = 5;
 $('heroImg').src = ART(25);
 $('modes').onclick = e => { const b = e.target.closest('.mode'); if(!b) return; mode = b.dataset.mode; document.querySelectorAll('.mode').forEach(x => x.classList.toggle('sel', x===b)); sfx.tap(); };
 $('levels').onclick = e => { const b = e.target.closest('.level'); if(!b) return; maxN = +b.dataset.max; document.querySelectorAll('.level').forEach(x => x.classList.toggle('sel', x===b)); sfx.tap(); };
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; setTimeout(pickVoice, 500); }
+$('voiceSel').onchange = e => { savedVoice = e.target.value; save('pkmath.voice', savedVoice); pickVoice(); speak('안녕! 나랑 같이 숫자 놀이 하자!'); };
+$('voiceTest').onclick = () => { if(!soundOn){ soundOn = true; save('pkmath.sound', true); $('soundBtn').textContent = '🔊'; } speak('피카츄가 세 마리 있어요. 하나, 둘, 셋!'); };
 $('soundBtn').textContent = soundOn ? '🔊' : '🔇';
 $('soundBtn').onclick = () => { soundOn = !soundOn; save('pkmath.sound', soundOn); $('soundBtn').textContent = soundOn ? '🔊' : '🔇'; if(!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
 
