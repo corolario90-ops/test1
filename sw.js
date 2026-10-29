@@ -1,6 +1,7 @@
-// 도형놀이 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
-const CACHE = 'shapeplay-v1';
-const SHELL = ['./shape-play.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+// 도형놀이·한글 드라이브 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
+const CACHE = 'kidsplay-v2';
+const SHELL = ['./shape-play.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png',
+  './word-drive.html', './word-drive.webmanifest', './icons/drive-192.png', './icons/drive-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

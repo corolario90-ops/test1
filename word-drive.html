@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>한글 드라이브</title>
+<meta name="theme-color" content="#7cc8ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="한글드라이브">
+<link rel="manifest" href="word-drive.webmanifest">
+<link rel="apple-touch-icon" href="icons/drive-192.png">
+<link rel="icon" href="icons/drive-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky1:#7cc8ff; --sky2:#d9f1ff; --ink:#2b2b3a; --card:#ffffff; --soft:#f2f6ff; --accent:#ff6b4a;
+  --shadow:0 6px 0 rgba(0,0,0,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --sky1:#1d2848; --sky2:#33406b; --ink:#f4f3ff; --card:#2d3454; --soft:#252b46; }
+}
+:root[data-theme="dark"]{ --sky1:#1d2848; --sky2:#33406b; --ink:#f4f3ff; --card:#2d3454; --soft:#252b46; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%}
+body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--sky1);
+  background-image:linear-gradient(var(--sky1),var(--sky2));background-attachment:fixed;overflow-x:hidden;min-height:100dvh}
+button,input{font:inherit;color:inherit}
+.page{max-width:900px;margin:0 auto;padding:12px 16px 32px}
+
+.top{display:flex;align-items:center;gap:10px;padding:0 0 12px}
+.icon-btn{font-size:26px;width:54px;height:54px;flex:none;border-radius:18px;border:none;background:var(--card);box-shadow:var(--shadow);cursor:pointer}
+.title{flex:1;font-size:clamp(20px,5vw,28px);text-align:center}
+.spacer{width:54px;flex:none}
+.icon-btn:active,.big-btn:active,.driver:active,.mode:active{transform:translateY(3px)}
+
+.logo{font-size:clamp(38px,10vw,64px);text-align:center;margin:8px 0 0;line-height:1.1;font-weight:normal}
+.logo span:nth-child(1){color:#ef4444}.logo span:nth-child(2){color:#f97316}.logo span:nth-child(3){color:#eab308}
+.logo span:nth-child(4){color:#22c55e}.logo span:nth-child(5){color:#3b82f6}.logo span:nth-child(6){color:#8b5cf6}
+.sub{text-align:center;font-size:clamp(17px,4.4vw,22px);margin:6px 0 16px}
+h2{font-weight:normal;font-size:22px;margin:18px 0 10px}
+
+.drivers{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.driver{border:4px solid transparent;background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:10px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;font-size:19px}
+.driver.on{border-color:var(--accent)}
+.driver canvas{width:110px;height:90px}
+
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:6px}
+.mode{border:none;border-radius:28px;padding:16px;font-size:clamp(24px,6vw,30px);color:#fff;cursor:pointer;
+  box-shadow:0 8px 0 rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;gap:2px;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.mode small{font-size:16px;opacity:.95}
+.mode .em{font-size:46px;line-height:1.15}
+
+.big-btn{border:none;background:#ffd54a;color:#3a2a00;border-radius:20px;padding:12px 20px;font-size:20px;box-shadow:var(--shadow);cursor:pointer;display:inline-block}
+.big-btn.alt{background:var(--card);color:var(--ink)}
+.big-btn.small{font-size:16px;padding:9px 14px;border-radius:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note{font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;opacity:.85}
+.parent{margin-top:24px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+
+.slot{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin-bottom:14px;display:grid;
+  grid-template-columns:120px 1fr;gap:12px;align-items:start}
+.slot canvas{width:120px;height:100px;background:var(--soft);border-radius:14px}
+.slot input[type=text]{width:100%;font-size:18px;padding:8px 10px;border-radius:12px;border:2px solid #cbd5e1;background:var(--soft)}
+.slot .lbl{font-family:system-ui,sans-serif;font-size:13px;opacity:.75;margin:8px 0 4px}
+@media (max-width:420px){ .slot{grid-template-columns:1fr} .slot canvas{margin:0 auto} }
+.opt{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin-bottom:14px;font-size:19px}
+.opt label{display:flex;align-items:center;gap:10px;margin:6px 0;cursor:pointer}
+.opt input{width:24px;height:24px}
+
+/* ---------- 게임 화면 ---------- */
+#game{position:fixed;inset:0;overflow:hidden;touch-action:none}
+#game canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 12px 0}
+.prog{flex:1;height:22px;background:rgba(255,255,255,.6);border-radius:12px;position:relative;overflow:hidden}
+.prog i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#ffd54a,#ff8a3d);border-radius:12px;transition:width .4s}
+.prog b{position:absolute;right:6px;top:-1px;font-size:18px;font-weight:normal}
+.score{background:var(--card);border-radius:16px;padding:8px 12px;font-size:20px;box-shadow:var(--shadow);white-space:nowrap}
+
+.wheel-wrap{position:absolute;left:50%;bottom:calc(-1 * var(--wh) * .42);width:var(--wh);height:var(--wh);transform:translateX(-50%);pointer-events:none}
+.wheel{width:100%;height:100%;transition:transform .25s ease-out;filter:drop-shadow(0 6px 0 rgba(0,0,0,.25))}
+.word{position:absolute;left:50%;bottom:calc(var(--wh) * .58 + 6px);transform:translate(-50%,0);background:#fff;color:#1f2340;
+  border:5px solid #ffb703;border-radius:26px;padding:6px 26px 10px;font-size:clamp(40px,11vw,76px);line-height:1.1;white-space:nowrap;
+  box-shadow:0 8px 0 rgba(0,0,0,.18);cursor:pointer;pointer-events:auto;letter-spacing:2px}
+.word.rise{animation:rise .55s cubic-bezier(.2,1.6,.4,1)}
+.word.hide{opacity:0;transform:translate(-50%,30px) scale(.6)}
+.word .spk{position:absolute;right:-14px;top:-14px;width:40px;height:40px;border-radius:50%;background:#ffd54a;font-size:20px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+@keyframes rise{from{opacity:0;transform:translate(-50%,60px) scale(.4)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+.word.ok{border-color:#22c55e;background:#eaffef}
+.word.no{animation:shake .45s}
+@keyframes shake{0%,100%{transform:translate(-50%,0)}20%,60%{transform:translate(calc(-50% - 12px),0)}40%,80%{transform:translate(calc(-50% + 12px),0)}}
+
+.arrow{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));width:clamp(72px,18vw,110px);height:clamp(72px,18vw,110px);border-radius:50%;border:none;
+  background:rgba(255,255,255,.85);font-size:clamp(34px,9vw,52px);box-shadow:0 6px 0 rgba(0,0,0,.2);cursor:pointer;color:#1f2340}
+.arrow:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.arrow.l{left:14px}.arrow.r{right:14px}
+
+.overlay{position:fixed;inset:0;background:rgba(10,20,50,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.panel{background:var(--card);border-radius:30px;padding:22px;max-width:560px;width:100%;text-align:center;box-shadow:0 10px 0 rgba(0,0,0,.2);max-height:92dvh;overflow:auto}
+.panel h3{font-weight:normal;font-size:clamp(30px,8vw,44px);margin:6px 0}
+.got{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0}
+.got div{background:var(--soft);border-radius:16px;padding:6px 10px;font-size:20px;cursor:pointer}
+.got div span{font-size:30px;display:block}
+.cheer{width:160px;height:130px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------- 낱말 (그림은 기기에 들어 있는 이모지 사용) ---------- */
+const WORDS=[
+  ['사과','🍎'],['바나나','🍌'],['포도','🍇'],['딸기','🍓'],['수박','🍉'],['당근','🥕'],['우유','🥛'],['빵','🍞'],
+  ['토마토','🍅'],['옥수수','🌽'],['감자','🥔'],['버섯','🍄'],['달걀','🥚'],['치즈','🧀'],['피자','🍕'],['사탕','🍬'],
+  ['케이크','🎂'],['아이스크림','🍦'],['공','⚽'],['꽃','🌸'],['나무','🌳'],['별','⭐'],['달','🌙'],['해','☀️'],
+  ['우산','☂️'],['집','🏠'],['무지개','🌈'],['눈사람','⛄'],['하트','❤️'],['열쇠','🔑'],['풍선','🎈'],['선물','🎁'],
+  ['왕관','👑'],['시계','⏰'],['모자','🧢'],['안경','👓'],['신발','👟'],['양말','🧦'],['가방','🎒'],['연필','✏️'],
+  ['책','📕'],['기차','🚂'],['비행기','✈️'],['자전거','🚲'],['버스','🚌'],['배','⛵'],['로켓','🚀'],['소방차','🚒'],
+  ['경찰차','🚓'],['강아지','🐶'],['고양이','🐱'],['토끼','🐰'],['곰','🐻'],['돼지','🐷'],['사자','🦁'],['기린','🦒'],
+  ['코끼리','🐘'],['오리','🦆'],['물고기','🐟'],['나비','🦋'],['거북이','🐢'],['원숭이','🐵'],['펭귄','🐧'],['닭','🐔'],
+  ['말','🐴'],['소','🐮'],['뱀','🐍'],['공룡','🦖'],['문어','🐙'],['개구리','🐸']
+].map(([w,e])=>({w,e}));
+const ROUND=10;
+
+/* ---------- 저장 ---------- */
+const KEY='worddrive.';
+const load=(k,d)=>{ try{ const v=localStorage.getItem(KEY+k); return v==null?d:JSON.parse(v); }catch(e){ return d; } };
+const save=(k,v)=>{ try{ localStorage.setItem(KEY+k,JSON.stringify(v)); return true; }catch(e){ return false; } };
+
+const DEFAULT_SLOTS=[
+  {name:'빨강 자동차',color:'#ef4444',pet:'🐶'},
+  {name:'파랑 자동차',color:'#3b82f6',pet:'🐱'},
+  {name:'노랑 자동차',color:'#f5b800',pet:'🐰'},
+  {name:'초록 자동차',color:'#22c55e',pet:'🐻'},
+  {name:'분홍 자동차',color:'#ec4899',pet:'🐼'},
+  {name:'보라 자동차',color:'#8b5cf6',pet:'🦊'}
+];
+let slots=DEFAULT_SLOTS.map((d,i)=>Object.assign({},d,load('slot'+i,{})));
+let opts=Object.assign({driver:0,speed:1,readAloud:true,stars:0},load('opts',{}));
+const saveOpts=()=>save('opts',opts);
+
+/* 저장된 그림을 Image로 미리 만들어 둠 */
+const imgCache={};
+function imgOf(src){
+  if(!src) return null;
+  if(!imgCache[src]){ const im=new Image(); im.src=src; imgCache[src]=im; }
+  const im=imgCache[src]; return im.complete&&im.naturalWidth?im:null;
+}
+
+/* ---------- 소리 ---------- */
+let actx=null;
+function tone(f,dur,type='sine',vol=.18,when=0){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const t=actx.currentTime+when, o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur);
+  }catch(e){}
+}
+const sfx={
+  pop:()=>tone(660,.08,'triangle'),
+  move:()=>{tone(420,.06,'triangle',.12);tone(560,.06,'triangle',.1,.05)},
+  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.18,'triangle',.18,i*.09)),
+  no:()=>{tone(300,.18,'square',.08);tone(220,.25,'square',.08,.15)},
+  win:()=>[523,659,784,659,784,1047].forEach((f,i)=>tone(f,.22,'triangle',.2,i*.13))
+};
+let koVoice=null;
+function pickVoice(){ try{ koVoice=speechSynthesis.getVoices().find(v=>/^ko/i.test(v.lang))||null; }catch(e){} }
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+function say(t){
+  try{
+    speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t);
+    u.lang='ko-KR'; if(koVoice) u.voice=koVoice; u.rate=.85; u.pitch=1.15; speechSynthesis.speak(u);
+  }catch(e){}
+}
+const hush=()=>{ try{ speechSynthesis.cancel(); }catch(e){} };
+
+/* 받침 있으면 '이야', 없으면 '야' */
+const hasJong=w=>{ const c=w.charCodeAt(w.length-1)-0xAC00; return c>=0&&c<11172&&c%28!==0; };
+const iya=w=>w+(hasJong(w)?'이야':'야');
+const eul=w=>w+(hasJong(w)?'을':'를');
+
+/* ---------- 자동차 그리기 ---------- */
+function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+/* (cx, by)=바닥 가운데, w=폭. 뒤에서 본 모습 */
+function drawCar(c,slot,cx,by,w,t=0){
+  const carImg=imgOf(slot.car), petImg=imgOf(slot.pet_img);
+  const bob=Math.sin(t*14)*w*.012;
+  if(carImg){
+    const h=w*carImg.naturalHeight/carImg.naturalWidth, hh=Math.min(h,w*1.1), ww=hh*carImg.naturalWidth/carImg.naturalHeight;
+    c.save(); c.globalAlpha=.25; c.fillStyle='#000'; c.beginPath(); c.ellipse(cx,by,ww*.45,w*.06,0,0,7); c.fill(); c.restore();
+    if(petImg){ const ph=w*.55, pw=ph*petImg.naturalWidth/petImg.naturalHeight; c.drawImage(petImg,cx-pw/2,by-hh*.8-ph*.7+bob,pw,ph); }
+    c.drawImage(carImg,cx-ww/2,by-hh+bob,ww,hh);
+    return;
+  }
+  const h=w*.62, y=by-h+bob;
+  c.save();
+  c.globalAlpha=.25; c.fillStyle='#000'; c.beginPath(); c.ellipse(cx,by,w*.52,w*.07,0,0,7); c.fill(); c.globalAlpha=1;
+  // 바퀴
+  c.fillStyle='#222'; rr(c,cx-w*.48,by-h*.32,w*.18,h*.34,w*.04); c.fill(); rr(c,cx+w*.30,by-h*.32,w*.18,h*.34,w*.04); c.fill();
+  // 운전자
+  const py=y-h*.12;
+  if(petImg){ const ph=w*.52, pw=ph*petImg.naturalWidth/petImg.naturalHeight; c.drawImage(petImg,cx-pw/2,py-ph*.62,pw,ph); }
+  else { c.font=`${w*.42}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText(slot.pet||'🐶',cx,py); }
+  // 앞유리 틀 + 몸체
+  c.fillStyle=slot.color||'#ef4444';
+  c.beginPath(); c.moveTo(cx-w*.36,y+h*.18); c.lineTo(cx-w*.3,y-h*.32); c.lineTo(cx-w*.26,y-h*.32); c.lineTo(cx-w*.28,y+h*.18); c.fill();
+  c.beginPath(); c.moveTo(cx+w*.36,y+h*.18); c.lineTo(cx+w*.3,y-h*.32); c.lineTo(cx+w*.26,y-h*.32); c.lineTo(cx+w*.28,y+h*.18); c.fill();
+  rr(c,cx-w*.31,y-h*.38,w*.62,h*.1,w*.03); c.fill();
+  rr(c,cx-w*.46,y+h*.1,w*.92,h*.72,w*.12); c.fill();
+  c.fillStyle='rgba(255,255,255,.25)'; rr(c,cx-w*.4,y+h*.16,w*.8,h*.12,w*.05); c.fill();
+  // 뒷등, 번호판
+  c.fillStyle='#ffe066'; rr(c,cx-w*.42,y+h*.36,w*.14,h*.14,w*.03); c.fill(); rr(c,cx+w*.28,y+h*.36,w*.14,h*.14,w*.03); c.fill();
+  c.fillStyle='#fff'; rr(c,cx-w*.14,y+h*.42,w*.28,h*.16,w*.03); c.fill();
+  c.fillStyle='#333'; c.font=`${w*.1}px Jua,sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText('가나다',cx,y+h*.505);
+  c.restore();
+}
+function carPreview(slot,w=220,h=180){
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const c=cv.getContext('2d');
+  const draw=()=>{ c.clearRect(0,0,w,h); drawCar(c,slot,w/2,h*.92,w*.62); };
+  draw(); [slot.car,slot.pet_img].forEach(s=>{ if(s){ imgOf(s); imgCache[s].addEventListener('load',draw,{once:true}); } });
+  return cv;
+}
+
+/* ---------- 홈 ---------- */
+const $app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function home(){
+  hush();
+  $app.innerHTML=`<div class="page">
+    <h1 class="logo"><span>한</span><span>글</span> <span>드</span><span>라</span><span>이</span><span>브</span></h1>
+    <p class="sub">운전대에 나온 글자를 읽고, 맞는 그림 쪽으로 달려가요! ⭐ ${opts.stars}</p>
+    <h2>누가 운전할까?</h2>
+    <div class="drivers" id="drivers"></div>
+    <h2>어떻게 놀까?</h2>
+    <div class="modes">
+      <button class="mode" style="background:#22c55e" data-mode="easy"><span class="em">🍎<small style="font-size:22px">사과</small></span>그림과 글자<small>글자 모양을 찾아요</small></button>
+      <button class="mode" style="background:#f97316" data-mode="hard"><span class="em">🍎🍌🍇</span>그림만 보기<small>글자를 읽고 그림을 찾아요</small></button>
+    </div>
+    <div class="parent">
+      <button class="big-btn alt small" id="setBtn">👨‍👩‍👧 보호자 설정 · 그림 바꾸기</button>
+      <button class="big-btn alt small" id="installBtn" hidden>📲 앱으로 설치</button>
+      <button class="big-btn alt small" id="iosBtn" hidden>📲 홈 화면에 추가하는 법</button>
+    </div>
+    <p class="note" style="text-align:center">키보드 ← → 방향키, 또는 화면 아래 화살표 버튼으로 움직여요.</p>
+  </div>`;
+  const box=document.getElementById('drivers');
+  slots.forEach((s,i)=>{
+    const b=document.createElement('button'); b.className='driver'+(i===opts.driver?' on':'');
+    b.appendChild(carPreview(s)); b.insertAdjacentHTML('beforeend',`<span>${esc(s.name)}</span>`);
+    b.onclick=()=>{ opts.driver=i; saveOpts(); sfx.pop(); box.querySelectorAll('.driver').forEach((d,j)=>d.classList.toggle('on',j===i)); };
+    box.appendChild(b);
+  });
+  $app.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ sfx.pop(); play(b.dataset.mode); });
+  document.getElementById('setBtn').onclick=()=>{ sfx.pop(); settings(); };
+  const ib=document.getElementById('installBtn'); ib.hidden=!installEvt;
+  ib.onclick=async()=>{ if(!installEvt) return; installEvt.prompt(); await installEvt.userChoice.catch(()=>{}); installEvt=null; ib.hidden=true; };
+  const ios=document.getElementById('iosBtn'); ios.hidden=!(isIOS&&!isStandalone());
+  ios.onclick=()=>alert('사파리에서 아래쪽 공유 버튼(□↑)을 누르고 "홈 화면에 추가"를 고르면 앱처럼 설치돼요.');
+  window.scrollTo(0,0);
+}
+
+/* ---------- 보호자 설정 ---------- */
+function settings(){
+  hush();
+  $app.innerHTML=`<div class="page">
+    <div class="top"><button class="icon-btn" id="back">🏠</button><div class="title">보호자 설정</div><div class="spacer"></div></div>
+    <div class="opt">
+      <label><input type="checkbox" id="optRead" ${opts.readAloud?'checked':''}> 글자가 나올 때 소리 내어 읽어 주기</label>
+      <div class="row" style="margin-top:8px">빠르기:
+        ${[['느리게',0],['보통',1],['빠르게',2]].map(([t,v])=>`<button class="big-btn small ${opts.speed===v?'':'alt'}" data-speed="${v}">${t}</button>`).join('')}
+      </div>
+      <p class="note">소리를 끄면 아이가 혼자 글자를 읽어야 해요. 게임 중 운전대 위 글자를 누르면 언제든 다시 들려줘요.</p>
+    </div>
+    <h2>자동차와 캐릭터 그림 넣기</h2>
+    <p class="note">이 앱에는 만화 캐릭터 그림이 들어 있지 않아요. 아이가 좋아하는 캐릭터 그림을 직접 내려받아 기기에 저장한 뒤,
+      아래에서 골라 넣으면 기본 자동차 대신 그 그림이 운전해요.<br>
+      · <b>자동차 그림</b>: 캐릭터가 차에 타고 있는 그림이면 이것 하나만 넣어도 돼요. 배경이 투명한 PNG가 가장 예뻐요.<br>
+      · <b>캐릭터 그림</b>(선택): 기본 자동차나 빈 자동차 그림 위에 운전자로 올라가요. 캐릭터가 이미 타고 있으면 비워 두세요.<br>
+      · 그림은 이 기기 안에만 저장되고 어디로도 보내지지 않아요. 저작권이 있는 그림은 가정에서 아이와 함께 쓰는 용도로만 사용해 주세요.</p>
+    <div id="slots"></div>
+    <h2>그림 꾸러미 옮기기</h2>
+    <p class="note">다른 기기에서도 같은 그림을 쓰려면 꾸러미 파일로 저장한 뒤 그 기기에서 불러오세요.</p>
+    <div class="row">
+      <button class="big-btn small" id="exp">💾 꾸러미 파일 저장</button>
+      <label class="big-btn small alt">📂 꾸러미 파일 불러오기<input type="file" accept=".json,application/json" id="imp" hidden></label>
+    </div>
+  </div>`;
+  document.getElementById('back').onclick=()=>{ sfx.pop(); home(); };
+  document.getElementById('optRead').onchange=e=>{ opts.readAloud=e.target.checked; saveOpts(); };
+  $app.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{ opts.speed=+b.dataset.speed; saveOpts(); sfx.pop(); settings(); });
+  const box=document.getElementById('slots');
+  slots.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='slot';
+    d.innerHTML=`<div class="pv"></div><div>
+      <input type="text" maxlength="12" value="${esc(s.name)}" aria-label="이름">
+      <div class="lbl">자동차 그림</div>
+      <div class="row">
+        <label class="big-btn small">📁 파일에서 고르기<input type="file" accept="image/*" data-k="car" hidden></label>
+        <button class="big-btn small alt" data-url="car">🔗 그림 주소로</button>
+        ${s.car?'<button class="big-btn small alt" data-del="car">지우기</button>':''}
+      </div>
+      <div class="lbl">캐릭터 그림 (선택)</div>
+      <div class="row">
+        <label class="big-btn small">📁 파일에서 고르기<input type="file" accept="image/*" data-k="pet_img" hidden></label>
+        <button class="big-btn small alt" data-url="pet_img">🔗 그림 주소로</button>
+        ${s.pet_img?'<button class="big-btn small alt" data-del="pet_img">지우기</button>':''}
+      </div></div>`;
+    d.querySelector('.pv').appendChild(carPreview(s,240,200));
+    const keep=()=>{ const {color,pet,...mine}=s; if(!save('slot'+i,mine)){ alert('저장 공간이 부족해요. 더 작은 그림을 쓰거나 다른 칸의 그림을 지워 주세요.'); return false; } return true; };
+    d.querySelector('input[type=text]').onchange=e=>{ s.name=e.target.value.trim()||DEFAULT_SLOTS[i].name; keep(); };
+    const put=async(k,blob)=>{
+      try{ const old=s[k]; s[k]=await shrink(blob,420); if(!keep()) s[k]=old; else sfx.pop(); }
+      catch(e){ alert('그림을 열지 못했어요. 다른 그림으로 해 주세요.'); }
+      settings();
+    };
+    d.querySelectorAll('input[type=file]').forEach(inp=>inp.onchange=()=>{ if(inp.files[0]) put(inp.dataset.k,inp.files[0]); });
+    d.querySelectorAll('[data-url]').forEach(b=>b.onclick=async()=>{
+      const u=prompt('그림 주소(https://로 시작)를 붙여 넣어 주세요.'); if(!u) return;
+      try{ const r=await fetch(u.trim()); if(!r.ok) throw 0; await put(b.dataset.url,await r.blob()); }
+      catch(e){ alert('이 주소에서는 그림을 바로 가져올 수 없어요.\n그림을 길게 눌러(또는 오른쪽 클릭) 기기에 저장한 뒤 "파일에서 고르기"로 넣어 주세요.'); }
+    });
+    d.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ delete s[b.dataset.del]; keep(); settings(); });
+    box.appendChild(d);
+  });
+  document.getElementById('exp').onclick=()=>{
+    const data={app:'worddrive',v:1,slots:slots.map(({color,pet,...m})=>m)};
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
+    a.download='한글드라이브-그림꾸러미.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+  document.getElementById('imp').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      const data=JSON.parse(await f.text()); if(data.app!=='worddrive'||!Array.isArray(data.slots)) throw 0;
+      const okImg=v=>typeof v==='string'&&/^data:image\/(png|jpeg|webp|gif);base64,/.test(v);
+      data.slots.slice(0,slots.length).forEach((m,i)=>{
+        const s=Object.assign({},DEFAULT_SLOTS[i]);
+        if(typeof m.name==='string') s.name=m.name.slice(0,12);
+        if(okImg(m.car)) s.car=m.car; if(okImg(m.pet_img)) s.pet_img=m.pet_img;
+        slots[i]=s; const {color,pet,...mine}=s; save('slot'+i,mine);
+      });
+      sfx.ok(); settings();
+    }catch(err){ alert('한글 드라이브 꾸러미 파일이 아니에요.'); }
+  };
+}
+function shrink(file,max){
+  return new Promise((res,rej)=>{
+    const img=new Image(), src=URL.createObjectURL(file);
+    img.onload=()=>{
+      const r=Math.min(1,max/Math.max(img.width,img.height)), c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(img.width*r)); c.height=Math.max(1,Math.round(img.height*r));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(src);
+      res(c.toDataURL('image/png'));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(src); rej(); };
+    img.src=src;
+  });
+}
+
+/* ---------- 게임 ---------- */
+const WHEEL_SVG=`<svg class="wheel" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="88" fill="none" stroke="#2d2f3a" stroke-width="22"/>
+  <circle cx="100" cy="100" r="88" fill="none" stroke="#4a4e60" stroke-width="8" stroke-dasharray="6 10"/>
+  <path d="M16 100 Q100 120 184 100" stroke="#2d2f3a" stroke-width="20" fill="none"/>
+  <path d="M100 118 L100 186" stroke="#2d2f3a" stroke-width="20"/>
+  <circle cx="100" cy="108" r="30" fill="#ff6b4a" stroke="#2d2f3a" stroke-width="6"/>
+  <circle cx="100" cy="108" r="12" fill="#ffd54a"/>
+  <rect x="94" y="8" width="12" height="16" rx="3" fill="#ffd54a"/>
+</svg>`;
+let game=null;
+
+function play(mode){
+  hush(); if(game) game.stop();
+  $app.innerHTML=`<div id="game">
+    <canvas id="cv"></canvas>
+    <div class="hud-top"><button class="icon-btn" id="quit">🏠</button><div class="prog"><i id="pg" style="width:0"></i><b>🏁</b></div><div class="score">⭐ <span id="sc">0</span></div></div>
+    <div class="wheel-wrap" id="ww">${WHEEL_SVG}<div class="word hide" id="word"></div></div>
+    <button class="arrow l" id="bl" aria-label="왼쪽">◀</button><button class="arrow r" id="br" aria-label="오른쪽">▶</button>
+  </div>`;
+  game=new Game(mode);
+}
+
+class Game{
+  constructor(mode){
+    this.mode=mode; this.slot=slots[opts.driver]||slots[0];
+    this.cv=document.getElementById('cv'); this.c=this.cv.getContext('2d');
+    this.$word=document.getElementById('word'); this.$wheel=document.querySelector('.wheel'); this.$ww=document.getElementById('ww');
+    this.lane=1; this.carX=1; this.tilt=0; this.t=0; this.scroll=0;
+    this.done=0; this.score=0; this.misses=0; this.got=[]; this.row=null; this.parts=[]; this.flyers=[]; this.scenery=[];
+    this.speed=[9,13,18][opts.speed]??13;
+    this.deck=shuffle(WORDS.slice()); this.target=null; this.wait=0; this.alive=true;
+    for(let i=0;i<10;i++) this.addScenery(Math.random()*60);
+    this.resize=this.resize.bind(this); window.addEventListener('resize',this.resize); this.resize();
+    this.key=e=>{
+      if(e.key==='ArrowLeft'){ e.preventDefault(); this.steer(-1); }
+      else if(e.key==='ArrowRight'){ e.preventDefault(); this.steer(1); }
+      else if(e.key===' '||e.key==='Enter'){ e.preventDefault(); this.speak(); }
+    };
+    window.addEventListener('keydown',this.key);
+    document.getElementById('bl').onpointerdown=e=>{ e.preventDefault(); this.steer(-1); };
+    document.getElementById('br').onpointerdown=e=>{ e.preventDefault(); this.steer(1); };
+    document.getElementById('quit').onclick=()=>{ sfx.pop(); this.stop(); home(); };
+    this.$word.onclick=()=>this.speak();
+    // 길 위를 밀어서도 움직임
+    let sx=null;
+    this.cv.addEventListener('pointerdown',e=>{ sx=e.clientX; });
+    this.cv.addEventListener('pointerup',e=>{
+      if(sx==null) return; const dx=e.clientX-sx; sx=null;
+      if(Math.abs(dx)>30) this.steer(dx<0?-1:1);
+      else this.steer(e.clientX<this.W/2?-1:1);
+    });
+    this.nextWord(.6);
+    this.last=performance.now(); this.raf=requestAnimationFrame(this.loop.bind(this));
+  }
+  stop(){ this.alive=false; cancelAnimationFrame(this.raf); window.removeEventListener('keydown',this.key); window.removeEventListener('resize',this.resize); hush(); game=null; }
+  resize(){
+    const dpr=Math.min(2,window.devicePixelRatio||1), W=innerWidth, H=innerHeight;
+    this.W=W; this.H=H; this.cv.width=W*dpr; this.cv.height=H*dpr; this.c.setTransform(dpr,0,0,dpr,0,0);
+    const wh=Math.min(W*.62,H*.36,340); this.$ww.style.setProperty('--wh',wh+'px'); this.wh=wh;
+    this.horizon=H*.30;
+    this.carY=H-wh*.58-Math.min(H*.22,wh*.55); // 차 바닥 위치 (운전대와 글자 위)
+    this.roadW=Math.min(W*1.05,(this.carY-this.horizon)*2.6);
+  }
+  steer(d){
+    const n=Math.max(0,Math.min(2,this.lane+d)); if(n===this.lane) return;
+    this.lane=n; sfx.move(); this.$wheel.style.transform=`rotate(${d*35}deg)`;
+    clearTimeout(this.wt); this.wt=setTimeout(()=>{ if(this.$wheel) this.$wheel.style.transform=''; },260);
+  }
+  speak(){ if(this.target) say(this.target.w); }
+
+  /* 새 제시어 */
+  nextWord(delay=0){
+    if(!this.target){
+      if(!this.deck.length) this.deck=shuffle(WORDS.slice());
+      this.target=this.deck.pop();
+    }
+    const w=this.$word;
+    setTimeout(()=>{
+      if(!this.alive) return;
+      w.innerHTML=`${this.target.w}<span class="spk">🔊</span>`; w.className='word'; void w.offsetWidth; w.className='word rise';
+      if(opts.readAloud) say(this.target.w);
+      this.spawnRow();
+    },delay*1000);
+  }
+  spawnRow(){
+    const others=shuffle(WORDS.filter(x=>x!==this.target&&x.e!==this.target.e));
+    // 어려운 모드: 글자 수가 같은 낱말을 먼저 골라 헷갈리게
+    let pick=others;
+    if(this.mode==='hard'){ const same=others.filter(x=>x.w.length===this.target.w.length); if(same.length>=2) pick=same.concat(others); }
+    const items=shuffle([this.target,pick[0],pick[1]]).map((x,i)=>({...x,lane:i}));
+    this.row={d:70,items,hit:false};
+  }
+  laneX(l,s){ return this.W/2+(l-1)*(this.roadW/3)*s; }
+  scale(d){ return 9/(d+9); }
+
+  loop(now){
+    if(!this.alive) return;
+    const dt=Math.min(.05,(now-this.last)/1000); this.last=now; this.t+=dt;
+    const v=this.row&&!this.row.hit?this.speed:this.speed*.6;
+    this.scroll=(this.scroll+v*dt)%8;
+    // 차 옆으로 부드럽게
+    const px=this.carX; this.carX+=(this.lane-this.carX)*Math.min(1,dt*10); this.tilt=(this.carX-px)/Math.max(dt,.001)*.03;
+    // 풍경
+    this.scenery.forEach(s=>s.d-=v*dt); this.scenery=this.scenery.filter(s=>s.d>-4);
+    while(this.scenery.length<12) this.addScenery(60+Math.random()*10);
+    // 물건 줄
+    const r=this.row;
+    if(r){
+      r.d-=v*dt;
+      if(!r.hit&&r.d<=0) this.judge();
+      if(r.hit&&r.d<-8) this.row=null;
+    }
+    this.flyers.forEach(f=>f.t+=dt); this.flyers=this.flyers.filter(f=>f.t<1);
+    this.parts.forEach(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=600*dt; p.life-=dt; }); this.parts=this.parts.filter(p=>p.life>0);
+    this.draw();
+    this.raf=requestAnimationFrame(this.loop.bind(this));
+  }
+  addScenery(d){
+    const side=Math.random()<.5?-1:1, kinds=['🌳','🌳','🌲','🏡','🌻','🌷','🏠','🌳'];
+    this.scenery.push({d,side,off:1.75+Math.random()*1.2,e:kinds[Math.random()*kinds.length|0]});
+  }
+  judge(){
+    const r=this.row; r.hit=true;
+    const mine=r.items.find(x=>x.lane===this.lane), good=mine.w===this.target.w;
+    const s=this.scale(0), x=this.laneX(this.lane,s), y=this.carY-40;
+    if(good){
+      mine.taken=true; this.done++; this.score++; opts.stars++; saveOpts(); this.got.push(this.target);
+      sfx.ok(); this.burst(x,y,24); this.flyers.push({e:mine.e,x,y,t:0});
+      this.$word.className='word ok';
+      say(`딩동댕! ${this.target.w}!`);
+      document.getElementById('sc').textContent=this.score;
+      document.getElementById('pg').style.width=(this.done/ROUND*100)+'%';
+      this.target=null;
+      if(this.done>=ROUND) setTimeout(()=>this.finish(),1300);
+      else this.nextWord(1.4);
+    }else{
+      this.misses++;
+      sfx.no(); this.$word.className='word no';
+      r.items.forEach(x=>{ if(x.w===this.target.w) x.glow=true; });
+      say(`이건 ${iya(mine.w)}. ${eul(this.target.w)} 다시 찾아보자!`);
+      this.nextWord(2.6);
+    }
+  }
+  burst(x,y,n){
+    const cols=['#ffd54a','#ff6b4a','#22c55e','#3b82f6','#ec4899'];
+    for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=150+Math.random()*250;
+      this.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-250,life:.9+Math.random()*.4,c:cols[i%cols.length],r:4+Math.random()*5}); }
+  }
+
+  draw(){
+    const {c,W,H,horizon:hz}=this, dark=matchMedia('(prefers-color-scheme: dark)').matches;
+    // 하늘, 언덕
+    let g=c.createLinearGradient(0,0,0,hz); g.addColorStop(0,dark?'#22305a':'#7cc8ff'); g.addColorStop(1,dark?'#4b5a8a':'#d9f1ff');
+    c.fillStyle=g; c.fillRect(0,0,W,hz+1);
+    c.fillStyle=dark?'#ffe9a8':'#fff3a0'; c.beginPath(); c.arc(W*.82,hz*.38,Math.min(W,H)*.06,0,7); c.fill();
+    c.fillStyle='rgba(255,255,255,.85)';
+    [[.15,.3],[.45,.18],[.7,.42]].forEach(([fx,fy],i)=>{ const x=((fx*W+this.t*(8+i*4))%(W+160))-80, y=hz*fy; c.beginPath(); c.arc(x,y,22,0,7); c.arc(x+24,y-8,26,0,7); c.arc(x+50,y,20,0,7); c.fill(); });
+    c.fillStyle=dark?'#2f6b3a':'#86d17a'; c.beginPath(); c.moveTo(0,hz);
+    for(let x=0;x<=W;x+=20) c.lineTo(x,hz-12-Math.sin(x/90)*10); c.lineTo(W,hz); c.fill();
+    // 땅
+    g=c.createLinearGradient(0,hz,0,H); g.addColorStop(0,dark?'#2c6a37':'#7fd36b'); g.addColorStop(1,dark?'#1f4d29':'#56b84a');
+    c.fillStyle=g; c.fillRect(0,hz,W,H-hz);
+    // 길 (원근)
+    const yAt=s=>hz+(this.carY-hz)*s, half=s=>this.roadW/2*s*1.0;
+    const far=this.scale(80), near=this.scale(-6);
+    c.fillStyle=dark?'#4a4d5c':'#6b6f80';
+    c.beginPath(); c.moveTo(W/2-half(far),yAt(far)); c.lineTo(W/2+half(far),yAt(far)); c.lineTo(W/2+half(near),yAt(near)); c.lineTo(W/2-half(near),yAt(near)); c.fill();
+    // 연석 + 차선 (움직이는 줄무늬)
+    for(let d=-6+(8-this.scroll);d<80;d+=8){
+      const s1=this.scale(d), s2=this.scale(d+4);
+      const y1=yAt(s1), y2=yAt(s2);
+      [-1,1].forEach(side=>{
+        c.fillStyle='#ef4444';
+        c.beginPath(); c.moveTo(W/2+side*half(s1),y1); c.lineTo(W/2+side*half(s1)*1.06,y1); c.lineTo(W/2+side*half(s2)*1.06,y2); c.lineTo(W/2+side*half(s2),y2); c.fill();
+      });
+      [-1/3,1/3].forEach(f=>{
+        c.fillStyle='rgba(255,255,255,.9)';
+        const w1=6*s1+1, w2=6*s2+1, x1=W/2+f*2*half(s1), x2=W/2+f*2*half(s2);
+        c.beginPath(); c.moveTo(x1-w1,y1); c.lineTo(x1+w1,y1); c.lineTo(x2+w2,y2); c.lineTo(x2-w2,y2); c.fill();
+      });
+    }
+    // 길가 풍경 + 물건을 먼 것부터
+    const things=[];
+    this.scenery.forEach(s=>things.push({d:s.d,fn:()=>{
+      const k=this.scale(s.d), x=W/2+s.side*half(k)*s.off, y=yAt(k), sz=Math.max(6,120*k*(W>600?1.1:.8));
+      emoji(c,s.e,x,y-sz*.45,sz);
+    }}));
+    const r=this.row;
+    if(r) r.items.forEach(it=>{ if(it.taken) return; things.push({d:r.d,fn:()=>this.drawItem(it,r.d)}); });
+    things.sort((a,b)=>b.d-a.d).forEach(o=>o.fn());
+    // 내 차
+    const cx=this.laneX(this.carX,this.scale(0)), cw=Math.min(this.roadW/3*.8,W*.3,190);
+    c.save(); c.translate(cx,this.carY); c.rotate(Math.max(-.25,Math.min(.25,this.tilt)));
+    drawCar(c,this.slot,0,0,cw,this.t); c.restore();
+    // 잡은 물건이 점수판으로 날아감
+    this.flyers.forEach(f=>{ const k=f.t, x=f.x+(W-60-f.x)*k*k, y=f.y+(40-f.y)*k-Math.sin(k*Math.PI)*120; emoji(c,f.e,x,y,90*(1-k*.6)); });
+    this.parts.forEach(p=>{ c.globalAlpha=Math.max(0,Math.min(1,p.life)); c.fillStyle=p.c; star(c,p.x,p.y,p.r); c.fill(); }); c.globalAlpha=1;
+  }
+  drawItem(it,d){
+    const {c}=this, k=this.scale(d), x=this.laneX(it.lane,k), y=this.horizon+(this.carY-this.horizon)*k;
+    const sz=Math.max(8,Math.min(this.roadW/3*.62,170)*k*1.0);
+    if(d<0){ if(d<-3) return; c.globalAlpha=1+d/3; }
+    // 받침대 (표지판)
+    const bw=sz*1.15, bh=sz*(this.mode==='easy'?1.45:1.12), by=y-bh-sz*.12;
+    c.fillStyle='rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(x,y,bw*.45,sz*.08,0,0,7); c.fill();
+    c.fillStyle='#8b6b4a'; c.fillRect(x-sz*.05,by+bh-2,sz*.1,sz*.14);
+    c.fillStyle=it.glow?'#fff7c2':'#ffffff'; rr(c,x-bw/2,by,bw,bh,sz*.2); c.fill();
+    c.lineWidth=Math.max(1,sz*.06); c.strokeStyle=it.glow?'#22c55e':'#ffb703'; c.stroke();
+    emoji(c,it.e,x,by+sz*.58,sz*.8);
+    if(this.mode==='easy'||it.glow){
+      const fs=sz*.3*Math.min(1,3.2/it.w.length*1.0+.2);
+      c.fillStyle='#1f2340'; c.font=`${fs}px Jua,sans-serif`; c.textAlign='center'; c.textBaseline='middle';
+      if(this.mode==='easy') c.fillText(it.w,x,by+bh-sz*.26);
+      else { c.fillStyle='#16a34a'; c.fillText(it.w,x,by-fs*.8); }
+    }
+    c.globalAlpha=1;
+  }
+  finish(){
+    if(!this.alive) return;
+    sfx.win(); say('와! 참 잘했어요! 결승선에 도착했어요!');
+    const o=document.createElement('div'); o.className='overlay';
+    o.innerHTML=`<div class="panel">
+      <div id="cheer"></div>
+      <h3>🏁 도착! 참 잘했어요!</h3>
+      <div style="font-size:30px">${'⭐'.repeat(Math.max(1,Math.min(5,Math.round(5-this.misses/3))))}</div>
+      <p class="note">오늘 찾은 낱말을 눌러서 다시 읽어 보세요.</p>
+      <div class="got">${this.got.map(x=>`<div data-say="${esc(x.w)}"><span>${x.e}</span>${esc(x.w)}</div>`).join('')}</div>
+      <div class="row" style="justify-content:center"><button class="big-btn" id="again">🚗 한 번 더</button><button class="big-btn alt" id="toHome">🏠 처음으로</button></div>
+    </div>`;
+    document.body.appendChild(o);
+    const cv=carPreview(this.slot,320,260); cv.className='cheer'; o.querySelector('#cheer').appendChild(cv);
+    o.querySelectorAll('[data-say]').forEach(d=>d.onclick=()=>say(d.dataset.say));
+    const mode=this.mode;
+    o.querySelector('#again').onclick=()=>{ o.remove(); play(mode); };
+    o.querySelector('#toHome').onclick=()=>{ o.remove(); this.stop(); home(); };
+  }
+}
+function emoji(c,e,x,y,size){
+  c.font=`${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText(e,x,y);
+}
+function star(c,x,y,r){ c.beginPath(); for(let i=0;i<10;i++){ const a=i*Math.PI/5-Math.PI/2, rr=i%2?r*.45:r; c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr); } c.closePath(); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ---------- 앱 설치 ---------- */
+let installEvt=null;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; const b=document.getElementById('installBtn'); if(b) b.hidden=false; });
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+home();
+</script>
+</body>
+</html>
