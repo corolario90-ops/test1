@@ -28,6 +28,7 @@ html,body{margin:0;height:100%}
 body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--sky1);
   background-image:linear-gradient(var(--sky1),var(--sky2));background-attachment:fixed;overflow-x:hidden;min-height:100dvh}
 button,input{font:inherit;color:inherit}
+[hidden]{display:none!important}
 .page{max-width:900px;margin:0 auto;padding:12px 16px 32px}
 
 .top{display:flex;align-items:center;gap:10px;padding:0 0 12px}
@@ -204,13 +205,16 @@ function drawCar(c,slot,cx,by,w,t=0){
   c.fillStyle='#222'; rr(c,cx-w*.48,by-h*.32,w*.18,h*.34,w*.04); c.fill(); rr(c,cx+w*.30,by-h*.32,w*.18,h*.34,w*.04); c.fill();
   // 운전자
   const py=y-h*.12;
-  if(petImg){ const ph=w*.52, pw=ph*petImg.naturalWidth/petImg.naturalHeight; c.drawImage(petImg,cx-pw/2,py-ph*.62,pw,ph); }
-  else { c.font=`${w*.42}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText(slot.pet||'🐶',cx,py); }
-  // 앞유리 틀 + 몸체
   c.fillStyle=slot.color||'#ef4444';
+  if(petImg){ // 그림 캐릭터는 지붕 없는 차에 크게 태움
+    const ph=w*.82, pw=Math.min(w*1.1,ph*petImg.naturalWidth/petImg.naturalHeight); c.drawImage(petImg,cx-pw/2,y+h*.3-ph,pw,ph);
+  } else {
+  c.font=`${w*.42}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText(slot.pet||'🐶',cx,py);
+  // 앞유리 틀
   c.beginPath(); c.moveTo(cx-w*.36,y+h*.18); c.lineTo(cx-w*.3,y-h*.32); c.lineTo(cx-w*.26,y-h*.32); c.lineTo(cx-w*.28,y+h*.18); c.fill();
   c.beginPath(); c.moveTo(cx+w*.36,y+h*.18); c.lineTo(cx+w*.3,y-h*.32); c.lineTo(cx+w*.26,y-h*.32); c.lineTo(cx+w*.28,y+h*.18); c.fill();
   rr(c,cx-w*.31,y-h*.38,w*.62,h*.1,w*.03); c.fill();
+  }
   rr(c,cx-w*.46,y+h*.1,w*.92,h*.72,w*.12); c.fill();
   c.fillStyle='rgba(255,255,255,.25)'; rr(c,cx-w*.4,y+h*.16,w*.8,h*.12,w*.05); c.fill();
   // 뒷등, 번호판
@@ -283,6 +287,11 @@ function settings(){
       · <b>캐릭터 그림</b>(선택): 기본 자동차나 빈 자동차 그림 위에 운전자로 올라가요. 캐릭터가 이미 타고 있으면 비워 두세요.<br>
       · 그림은 이 기기 안에만 저장되고 어디로도 보내지지 않아요. 저작권이 있는 그림은 가정에서 아이와 함께 쓰는 용도로만 사용해 주세요.</p>
     <div id="slots"></div>
+    <h2>퍼피구조대 그림 한 번에 받기</h2>
+    <p class="note">버튼을 누르면 이 기기가 퍼피구조대 팬 위키(pawpatrol.fandom.com)에서 체이스·마샬·스카이·러블·로키·주마 그림을 받아
+      1~6번 칸에 각자 색깔 자동차와 함께 넣어요. 인터넷이 연결되어 있어야 하고, 받은 그림은 이 기기에만 저장돼요.
+      그림의 저작권은 원저작자에게 있으니 가정에서 아이와 함께 쓰는 용도로만 사용해 주세요.</p>
+    <div class="row"><button class="big-btn" id="pupBtn">🐾 퍼피구조대 그림 받기</button><span id="pupMsg" class="note"></span></div>
     <h2>그림 꾸러미 옮기기</h2>
     <p class="note">다른 기기에서도 같은 그림을 쓰려면 꾸러미 파일로 저장한 뒤 그 기기에서 불러오세요.</p>
     <div class="row">
@@ -311,7 +320,7 @@ function settings(){
         ${s.pet_img?'<button class="big-btn small alt" data-del="pet_img">지우기</button>':''}
       </div></div>`;
     d.querySelector('.pv').appendChild(carPreview(s,240,200));
-    const keep=()=>{ const {color,pet,...mine}=s; if(!save('slot'+i,mine)){ alert('저장 공간이 부족해요. 더 작은 그림을 쓰거나 다른 칸의 그림을 지워 주세요.'); return false; } return true; };
+    const keep=()=>{ const {pet,...mine}=s; if(!save('slot'+i,mine)){ alert('저장 공간이 부족해요. 더 작은 그림을 쓰거나 다른 칸의 그림을 지워 주세요.'); return false; } return true; };
     d.querySelector('input[type=text]').onchange=e=>{ s.name=e.target.value.trim()||DEFAULT_SLOTS[i].name; keep(); };
     const put=async(k,blob)=>{
       try{ const old=s[k]; s[k]=await shrink(blob,420); if(!keep()) s[k]=old; else sfx.pop(); }
@@ -327,8 +336,14 @@ function settings(){
     d.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ delete s[b.dataset.del]; keep(); settings(); });
     box.appendChild(d);
   });
+  document.getElementById('pupBtn').onclick=async e=>{
+    if(!confirm('1~6번 칸의 이름과 그림이 퍼피구조대 친구들로 바뀌어요. 받을까요?')) return;
+    const btn=e.currentTarget, msg=document.getElementById('pupMsg'); btn.disabled=true;
+    try{ const n=await fetchPups(t=>msg.textContent=t); sfx.ok(); alert(`${n}명의 친구 그림을 받았어요!`); settings(); }
+    catch(err){ msg.textContent=''; btn.disabled=false; alert('그림을 받지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요.\n계속 안 되면 그림을 직접 저장한 뒤 "파일에서 고르기"로 넣어 주세요.'); }
+  };
   document.getElementById('exp').onclick=()=>{
-    const data={app:'worddrive',v:1,slots:slots.map(({color,pet,...m})=>m)};
+    const data={app:'worddrive',v:1,slots:slots.map(({pet,...m})=>m)};
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
     a.download='한글드라이브-그림꾸러미.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   };
@@ -336,16 +351,42 @@ function settings(){
     const f=e.target.files[0]; if(!f) return;
     try{
       const data=JSON.parse(await f.text()); if(data.app!=='worddrive'||!Array.isArray(data.slots)) throw 0;
-      const okImg=v=>typeof v==='string'&&/^data:image\/(png|jpeg|webp|gif);base64,/.test(v);
+      const okImg=v=>typeof v==='string'&&(/^data:image\/(png|jpeg|webp|gif);base64,/.test(v)||WIKI_IMG.test(v));
       data.slots.slice(0,slots.length).forEach((m,i)=>{
         const s=Object.assign({},DEFAULT_SLOTS[i]);
         if(typeof m.name==='string') s.name=m.name.slice(0,12);
         if(okImg(m.car)) s.car=m.car; if(okImg(m.pet_img)) s.pet_img=m.pet_img;
-        slots[i]=s; const {color,pet,...mine}=s; save('slot'+i,mine);
+        if(typeof m.color==='string'&&/^#[0-9a-f]{6}$/i.test(m.color)) s.color=m.color;
+        slots[i]=s; const {pet,...mine}=s; save('slot'+i,mine);
       });
       sfx.ok(); settings();
     }catch(err){ alert('한글 드라이브 꾸러미 파일이 아니에요.'); }
   };
+}
+/* 퍼피구조대 팬 위키에서 대표 그림을 기기로 받아 옴 (앱에는 그림이 들어 있지 않음) */
+const WIKI_IMG=/^https:\/\/static\.wikia\.nocookie\.net\//;
+const PUPS=[['Chase','체이스','#2563eb'],['Marshall','마샬','#dc2626'],['Skye','스카이','#ec4899'],
+  ['Rubble','러블','#eab308'],['Rocky','로키','#16a34a'],['Zuma','주마','#f97316']];
+async function fetchPups(progress){
+  progress('친구 목록을 찾는 중…');
+  const api='https://pawpatrol.fandom.com/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=500&titles='
+    +encodeURIComponent(PUPS.map(p=>p[0]).join('|'));
+  const q=(await (await fetch(api)).json()).query||{};
+  const alias={}; (q.redirects||[]).concat(q.normalized||[]).forEach(r=>alias[r.from]=r.to);
+  const src={}; Object.values(q.pages||{}).forEach(pg=>{ if(pg.thumbnail&&WIKI_IMG.test(pg.thumbnail.source)) src[pg.title]=pg.thumbnail.source; });
+  let n=0;
+  for(let i=0;i<PUPS.length;i++){
+    const [en,ko,color]=PUPS[i], url=src[alias[en]||en]; if(!url) continue;
+    progress(`${ko} 그림 받는 중… (${i+1}/${PUPS.length})`);
+    let img;
+    try{ const r=await fetch(url); if(!r.ok) throw 0; img=await shrink(await r.blob(),420); }
+    catch(e){ img=url; } // 그림 서버가 직접 읽기를 막으면 주소만 저장 (앱이 열 때 받아서 오프라인용으로 보관)
+    const s={...DEFAULT_SLOTS[i],name:ko,color,pet_img:img}; slots[i]=s;
+    const {pet,...mine}=s; if(!save('slot'+i,mine)) throw new Error('저장 공간 부족');
+    n++;
+  }
+  if(!n) throw new Error('그림 없음');
+  return n;
 }
 function shrink(file,max){
   return new Promise((res,rej)=>{
