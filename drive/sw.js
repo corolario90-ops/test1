@@ -1,5 +1,5 @@
 // 한글 드라이브: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 기기에 보관
-const CACHE = 'word-drive-9ff8d45f74';
+const CACHE = 'word-drive-94109b0dc4';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/drive-192.png", "icons/drive-512.png", "../fonts/jua.woff2"];
 // 부모님이 받은 캐릭터 그림은 앱을 새 버전으로 바꿔도 지우지 않는 따로 된 보관함에
 const ART_CACHE = 'pup-art-v1';
