@@ -41,9 +41,30 @@ header h1{font-size:22px;margin:0;flex:1;display:flex;align-items:center;gap:8px
 h2{margin:0 0 12px;font-size:20px}
 
 /* 홈 */
-.hero{text-align:center}
-.hero .pic{width:150px;height:150px;margin:0 auto}
-.hero p{margin:4px 0 0;color:var(--muted)}
+/* 파트너 */
+.partner-card{display:flex;align-items:center;gap:16px}
+.partner-card .pic{width:130px;height:130px;flex:none}
+.partner-info{flex:1;min-width:0}
+.partner-info h2{margin:0 0 4px;font-size:24px}
+.partner-info p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.lv{display:inline-block;background:var(--blue);color:#fff;border-radius:10px;padding:1px 8px;font-size:15px;margin-left:6px;vertical-align:middle}
+.expbar{height:12px;border-radius:6px;background:#efe6c8;overflow:hidden;margin-top:6px}
+.expbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5bc8f5,var(--blue));border-radius:6px;transition:width .8s ease}
+.partner-card .ghost{padding:8px 12px;font-size:15px;margin-top:10px;border-width:2px}
+.starters{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.starter{background:var(--soft);border:3px solid var(--line);border-radius:18px;padding:10px 8px;text-align:center;font-weight:800;font-size:18px}
+.starter .pic{width:100px;height:100px;margin:0 auto}
+.starter small{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-top:4px;line-height:1.4}
+.starter.sel{border-color:var(--blue);background:var(--blue-soft)}
+.mini{display:flex;align-items:center;gap:4px;font-weight:800;font-size:14px;color:var(--blue)}
+.mini .pic{width:40px;height:40px}
+.evo-box{text-align:center;border-top:3px dashed var(--line);margin-top:14px;padding-top:12px}
+.evo-box .pic{width:170px;height:170px;margin:0 auto}
+.evo-box h3{margin:6px 0;font-size:22px}
+.evo-box .row-btns{margin-top:10px}
+.evo-flash{animation:evoflash 1.2s ease-in-out}
+@keyframes evoflash{0%{filter:none}30%,70%{filter:brightness(0) invert(1) drop-shadow(0 0 18px #ffe36b);transform:scale(1.15)}100%{filter:none}}
+.levelup{color:var(--red);font-weight:900}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .mode{background:var(--soft);border:3px solid var(--line);border-radius:18px;padding:16px 10px;text-align:center;font-size:20px;font-weight:800}
 .mode small{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-top:4px}
@@ -168,10 +189,7 @@ img.pic{object-fit:contain;-webkit-user-drag:none}
 
   <!-- 홈 -->
   <section class="screen on" id="home">
-    <div class="card hero">
-      <div id="hero"></div>
-      <p>문제를 한 번에 맞히면 포켓몬을 잡을 수 있어요!</p>
-    </div>
+    <div class="card partner-card" id="partnerCard"></div>
     <div class="card">
       <h2>무엇을 할까요?</h2>
       <div class="modes" id="modes">
@@ -209,6 +227,7 @@ img.pic{object-fit:contain;-webkit-user-drag:none}
   <section class="screen" id="game">
     <div class="topbar">
       <button class="icon-btn" id="homeBtn">🏠</button>
+      <div class="mini" id="mini"></div>
       <div class="dots" id="dots"></div>
       <button class="speak" id="replayBtn">🔈 다시 듣기</button>
     </div>
@@ -228,12 +247,23 @@ img.pic{object-fit:contain;-webkit-user-drag:none}
     <div class="card">
       <div class="stars" id="stars"></div>
       <p class="result-score" id="resultScore"></p>
-      <h2 style="text-align:center">이번에 잡은 포켓몬</h2>
+      <div class="partner-card" id="expBox"></div>
+      <div class="evo-box" id="evoBox" hidden></div>
+      <h2 style="text-align:center;margin-top:14px">이번에 잡은 포켓몬</h2>
       <div class="caught-row" id="caughtRow"></div>
       <div class="row-btns">
         <button class="ghost" id="toHome">🏠 처음으로</button>
         <button class="start" id="again">한 번 더!</button>
       </div>
+    </div>
+  </section>
+
+  <!-- 파트너 고르기 -->
+  <section class="screen" id="partnerScreen">
+    <div class="card">
+      <h2>함께할 포켓몬을 골라요</h2>
+      <p class="voice-info" style="margin:0 0 12px">문제를 맞히면 경험치가 쌓여 레벨이 올라요. 레벨이 오르면 진화할 수 있어요! 포켓몬마다 레벨은 따로 기억해요.</p>
+      <div class="starters" id="starters"></div>
     </div>
   </section>
 
@@ -255,16 +285,6 @@ img.pic{object-fit:contain;-webkit-user-drag:none}
 </div>
 
 <script>
-const POKEMON = [
-  [25,'피카츄'],[1,'이상해씨'],[4,'파이리'],[7,'꼬부기'],[39,'푸린'],[52,'나옹'],
-  [54,'고라파덕'],[133,'이브이'],[143,'잠만보'],[35,'삐삐'],[16,'구구'],[19,'꼬렛'],
-  [10,'캐터피'],[129,'잉어킹'],[74,'꼬마돌'],[92,'고오스'],[94,'팬텀'],[26,'라이츄'],
-  [37,'식스테일'],[58,'가디'],[60,'발챙이'],[79,'야돈'],[81,'코일'],[113,'럭키'],
-  [131,'라프라스'],[147,'미뇽'],[132,'메타몽'],[43,'뚜벅쵸'],[50,'디그다'],[104,'탕구리'],
-  [41,'주뱃'],[27,'모래두지'],[2,'이상해풀'],[5,'리자드'],[8,'어니부기'],[3,'이상해꽃'],
-  [6,'리자몽'],[9,'거북왕'],[149,'망나뇽'],[151,'뮤']
-];
-const NAME = Object.fromEntries(POKEMON);
 // 'artifact' = Claude 링크, 'app' = 아이패드 홈 화면 앱 (build.py가 바꿔 넣어요)
 const BUILD = 'app';
 // 직접 그린 포켓몬 그림 (몬스터 한글 모험 pokemon-hangul/app-src.html 에서 그대로 가져옴)
@@ -579,6 +599,16 @@ function drawnArt(m, o = {}) {
   return `<svg class="${cls}" viewBox="0 0 120 120" role="img" aria-label="${o.shadow ? '누구일까?' : m.n}">${floor}${back.join('')}${body}${front.join('')}</svg>`;
 }
 const MON_NO = Object.fromEntries(MON.map(m => [m.no, m]));
+const NAME = Object.fromEntries(MON.map(m => [m.no, m.n]));
+// 문제와 잡기에 나오는 포켓몬 (전설·환상 포켓몬은 가끔만 잡혀요)
+const POKEMON = MON.filter(m => !m.rare).map(m => [m.no, m.n]);
+const RARE = MON.filter(m => m.rare).map(m => [m.no, m.n]);
+
+// 파트너와 진화: [진화 레벨, 진화한 모습]
+const STARTERS = [447, 63, 4, 54, 25, 1, 7];
+const EVO = {447:[10,448], 63:[8,64], 64:[20,65], 4:[8,5], 5:[20,6], 54:[12,55], 25:[12,26], 1:[8,2], 2:[20,3], 7:[8,8], 8:[20,9]};
+const EXP_FIRST = 10, EXP_RETRY = 4;   // 한 번에 맞히면 10, 다시 맞히면 4
+const needExp = lv => 20 + lv*5;      // 다음 레벨까지 필요한 경험치
 // 공식 이미지: 앱 버전에서 부모님이 켰을 때만. 그림은 저장소에 넣지 않고, 아이패드가 PokeAPI 공개 저장소에서 직접 받아 기기에만 보관
 const ART = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 const ROUND = 10;
@@ -608,6 +638,25 @@ function load(key, fallback){ try{ const v = localStorage.getItem(key); return v
 function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch{} }
 let caught = load('pkmath.caught', {});   // { id: 잡은 횟수 }
 let officialArt = load('pkmath.officialArt', false);
+let partners = load('pkmath.partners', {});   // { 처음 고른 포켓몬 번호: {id: 지금 모습, lv, exp} }
+let active = load('pkmath.active', null);
+const P = () => active && partners[active];
+function savePartners(){ save('pkmath.partners', partners); save('pkmath.active', active); }
+function gainExp(n){
+  const p = P(); if(!p) return 0;
+  p.exp += n;
+  let ups = 0;
+  while(p.exp >= needExp(p.lv) && p.lv < 100){ p.exp -= needExp(p.lv); p.lv++; ups++; }
+  savePartners();
+  return ups;
+}
+const evoReady = () => { const p = P(); const e = p && EVO[p.id]; return e && p.lv >= e[0] ? e[1] : null; };
+// 진화 단계 설명: 파이리 → 리자드 (Lv.8) → 리자몽 (Lv.20)
+function evoLine(start){
+  let id = start, out = NAME[id];
+  while(EVO[id]){ out += ` → ${NAME[EVO[id][1]]} (Lv.${EVO[id][0]})`; id = EVO[id][1]; }
+  return out;
+}
 const officialOn = () => BUILD === 'app' && officialArt;
 let soundOn = load('pkmath.sound', true);
 
@@ -1033,7 +1082,66 @@ const MAKERS = {two: qTwo, mul: qMul, clock: qClock, unit: qUnit};
 const makeQuestion = () => MAKERS[mode === 'mix' ? pick(Object.keys(MAKERS)) : mode]();
 
 // ---------- 홈 ----------
-function renderHero(){ $('hero').replaceChildren(pic(25)); }
+// 파트너 카드 (홈 화면, 결과 화면)
+function partnerCard(box, {gained = 0, ups = 0, home = false} = {}){
+  const p = P(); box.innerHTML = '';
+  if(!p){
+    box.appendChild(pic(25));
+    const info = div('partner-info');
+    info.innerHTML = '<h2>함께할 포켓몬을 골라요</h2><p>문제를 맞히면 파트너의 레벨이 오르고, 진화할 수 있어요!</p>';
+    const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '파트너 고르기';
+    b.onclick = showPartners; info.appendChild(b);
+    box.appendChild(info);
+    return;
+  }
+  box.appendChild(pic(p.id));
+  const info = div('partner-info');
+  const h = document.createElement('h2'); h.textContent = NAME[p.id];
+  const lv = document.createElement('span'); lv.className = 'lv'; lv.textContent = `Lv.${p.lv}`; h.appendChild(lv);
+  const bar = div('expbar'); const fill = document.createElement('i'); bar.appendChild(fill);
+  const t = document.createElement('p');
+  const e = EVO[p.id];
+  if(gained){
+    t.innerHTML = `경험치 +${gained}` + (ups ? ` · <span class="levelup">레벨 업! Lv.${p.lv}</span>` : '');
+  } else {
+    t.textContent = e ? (p.lv >= e[0] ? `${euro(NAME[e[1]])} 진화할 수 있어요!` : `Lv.${e[0]}${hasBatchim(sino(e[0])) ? '이' : '가'} 되면 ${euro(NAME[e[1]])} 진화해요!`) : '마지막 모습까지 진화했어요!';
+  }
+  info.append(h, bar, t);
+  if(home){ const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '파트너 바꾸기'; b.onclick = showPartners; info.appendChild(b); }
+  box.appendChild(info);
+  requestAnimationFrame(() => requestAnimationFrame(() => fill.style.width = `${Math.round(p.exp / needExp(p.lv) * 100)}%`));
+}
+function renderHero(){ partnerCard($('partnerCard'), {home: true}); }
+function renderMini(){
+  const p = P(), m = $('mini'); m.innerHTML = '';
+  if(!p) return;
+  m.appendChild(pic(p.id));
+  const s = document.createElement('span'); s.textContent = `Lv.${p.lv}`; m.appendChild(s);
+}
+let afterPartner = null;
+function showPartners(){
+  const box = $('starters'); box.innerHTML = '';
+  STARTERS.forEach(no => {
+    const mine = partners[no];
+    const b = document.createElement('button');
+    b.className = 'starter' + (String(no) === String(active) ? ' sel' : '');
+    b.appendChild(pic(mine ? mine.id : no));
+    b.appendChild(document.createTextNode(mine ? `${NAME[mine.id]} Lv.${mine.lv}` : NAME[no]));
+    const sm = document.createElement('small'); sm.textContent = evoLine(no); b.appendChild(sm);
+    b.onclick = () => {
+      if(!partners[no]) partners[no] = {id: no, lv: 1, exp: 0};
+      if(!caught[no]){ caught[no] = 1; save('pkmath.caught', caught); }
+      active = no; savePartners(); sfx.catch();
+      speak(`${NAME[partners[no].id]}, 너로 정했다!`);
+      renderHero();
+      const go = afterPartner; afterPartner = null;
+      go ? go() : show('home');
+    };
+    box.appendChild(b);
+  });
+  show('partnerScreen');
+  speak('함께할 포켓몬을 골라 보세요.');
+}
 renderHero();
 
 // 그림 설정 (공식 이미지는 앱 버전에서만)
@@ -1060,9 +1168,9 @@ function renderArtBox(){
   $('artFetch').onclick = async () => {
     let done = 0, fail = 0;
     $('artFetch').disabled = true;
-    for(const [id] of POKEMON){
+    for(const {no: id} of MON){
       try{ const r = await fetch(ART(id), {mode:'cors'}); if(!r.ok) throw 0; await r.blob(); done++; }catch{ fail++; }
-      $('artMsg').textContent = `받는 중… ${done + fail}/${POKEMON.length}`;
+      $('artMsg').textContent = `받는 중… ${done + fail}/${MON.length}`;
     }
     $('artMsg').textContent = fail ? `${done}개를 받았어요. ${fail}개는 인터넷이 될 때 다시 눌러 주세요.` : `${done}개를 모두 받았어요. 이제 인터넷 없이도 보여요.`;
     $('artFetch').disabled = false;
@@ -1080,10 +1188,12 @@ $('soundBtn').textContent = soundOn ? '🔊' : '🔇';
 $('soundBtn').onclick = () => { soundOn = !soundOn; save('pkmath.sound', soundOn); $('soundBtn').textContent = soundOn ? '🔊' : '🔇'; if(!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
 
 // ---------- 게임 ----------
-let qi = 0, results = [], current = null, newlyCaught = [], locked = false;
+let qi = 0, results = [], current = null, newlyCaught = [], locked = false, roundExp = 0, roundUps = 0;
 
 function startRound(){
-  qi = 0; results = []; newlyCaught = [];
+  if(!P()){ afterPartner = startRound; showPartners(); return; }
+  qi = 0; results = []; newlyCaught = []; roundExp = 0; roundUps = 0;
+  renderMini();
   show('game');
   nextQuestion();
 }
@@ -1156,11 +1266,21 @@ function showReward(firstTry){
   const p = document.createElement('p'); p.textContent = q.done;
   card.append(h, p);
   let say = `정답! ${q.answerSay}.`;
+  // 파트너 경험치
+  const gained = firstTry ? EXP_FIRST : EXP_RETRY;
+  const ups = gainExp(gained);
+  roundExp += gained; roundUps += ups;
+  renderMini();
+  const ex = document.createElement('p');
+  ex.innerHTML = `${NAME[P().id]} 경험치 +${gained}` + (ups ? ` · <span class="levelup">레벨 업! Lv.${P().lv}</span>` : '');
+  card.appendChild(ex);
+  if(ups) say += ` ${NAME[P().id]}의 레벨이 올랐어요!`;
 
   if(firstTry){
     // 아직 못 잡은 포켓몬을 먼저 만나게
-    const notYet = POKEMON.filter(([id]) => !caught[id]);
-    const [id, name] = pick(notYet.length ? notYet : POKEMON);
+    const pool = Math.random() < 0.06 ? RARE : POKEMON;
+    const notYet = pool.filter(([id]) => !caught[id]);
+    const [id, name] = pick(notYet.length ? notYet : pool);
     const isNew = !caught[id];
     caught[id] = (caught[id]||0) + 1; save('pkmath.caught', caught);
     newlyCaught.push(id);
@@ -1189,11 +1309,48 @@ function showResult(){
   const stars = score >= 9 ? 3 : score >= 6 ? 2 : 1;
   $('stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
   $('resultScore').textContent = `${ROUND}문제 중 ${score}문제를 한 번에 맞혔어요!`;
+  // 끝까지 풀면 별만큼 보너스 경험치
+  const bonus = stars * 10;
+  roundUps += gainExp(bonus); roundExp += bonus;
+  partnerCard($('expBox'), {gained: roundExp, ups: roundUps});
+  renderEvo();
   const row = $('caughtRow'); row.innerHTML = '';
   if(!newlyCaught.length) row.textContent = '다음엔 꼭 잡아 보자!';
   newlyCaught.forEach(id => row.appendChild(pic(id)));
   show('result');
-  speak(stars === 3 ? '최고예요! 포켓몬 마스터!' : stars === 2 ? '잘했어요!' : '수고했어요! 또 해 볼까요?');
+  if(!evoReady()) speak(stars === 3 ? '최고예요! 포켓몬 마스터!' : stars === 2 ? '잘했어요!' : '수고했어요! 또 해 볼까요?');
+}
+
+// 진화: 레벨이 되면 결과 화면에서 진화시킬지 골라요
+function renderEvo(){
+  const box = $('evoBox'), to = evoReady();
+  box.hidden = !to; box.innerHTML = '';
+  if(!to) return;
+  const p = P(), from = p.id;
+  const pc = div('evo-pic'); pc.appendChild(pic(from));
+  const h = document.createElement('h3'); h.textContent = `어라…? ${NAME[from]}의 모습이…!`;
+  const t = document.createElement('p'); t.textContent = `${euro(NAME[to])} 진화할 수 있어요!`;
+  const row = div('row-btns');
+  const yes = document.createElement('button'); yes.className = 'start'; yes.textContent = '진화시키기!';
+  const no = document.createElement('button'); no.className = 'ghost'; no.textContent = '지금 모습이 좋아';
+  row.append(no, yes);
+  box.append(pc, h, t, row);
+  speak(`어라? ${NAME[from]}의 모습이!`);
+  no.onclick = () => { box.hidden = true; };
+  yes.onclick = () => {
+    row.remove(); sfx.catch();
+    pc.classList.add('evo-flash');
+    setTimeout(() => pc.replaceChildren(pic(to)), 600);
+    setTimeout(() => {
+      p.id = to; savePartners();
+      caught[to] = (caught[to]||0) + 1; save('pkmath.caught', caught);
+      h.textContent = `축하해요! ${eunneun(NAME[from])} ${euro(NAME[to])} 진화했어요!`;
+      t.textContent = '도감에도 새로 등록됐어요!';
+      speak(`축하해요! ${euro(NAME[to])} 진화했어요!`);
+      partnerCard($('expBox'));
+      renderHero();
+    }, 1250);
+  };
 }
 
 // ---------- 도감 ----------
@@ -1202,9 +1359,10 @@ function showDex(){
   const now = document.querySelector('.screen.on').id;
   if(now !== 'dexScreen') dexReturn = now;
   const dex = $('dex'); dex.innerHTML = '';
-  const have = POKEMON.filter(([id]) => caught[id]).length;
-  $('dexTitle').textContent = `포켓몬 도감 ${have}/${POKEMON.length}`;
-  POKEMON.forEach(([id, name]) => {
+  const all = [...MON].sort((a,b) => a.no - b.no).map(m => [m.no, m.n]);
+  const have = all.filter(([id]) => caught[id]).length;
+  $('dexTitle').textContent = `포켓몬 도감 ${have}/${all.length}`;
+  all.forEach(([id, name]) => {
     const d = div('dex-item' + (caught[id] ? '' : ' no'));
     d.appendChild(pic(id));
     const s = document.createElement('span'); s.textContent = caught[id] ? name : '???';
@@ -1232,8 +1390,8 @@ twoTap($('resetDex'), '정말 비울까요? 한 번 더 누르세요', () => { c
 // ---------- 버튼 ----------
 $('startBtn').onclick = () => { sfx.tap(); startRound(); };
 $('again').onclick = startRound;
-$('toHome').onclick = () => show('home');
-twoTap($('homeBtn'), '🏠 그만할까요?', () => { if('speechSynthesis' in window) speechSynthesis.cancel(); show('home'); });
+$('toHome').onclick = () => { renderHero(); show('home'); };
+twoTap($('homeBtn'), '🏠 그만할까요?', () => { if('speechSynthesis' in window) speechSynthesis.cancel(); renderHero(); show('home'); });
 $('hintBtn').onclick = showHint;
 $('replayBtn').onclick = () => current && speak(current.say);
 // 홈 화면 앱: 한 번 열면 인터넷 없이도 열리게
