@@ -1,5 +1,5 @@
 // 몬스터 숫자 놀이: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 아이패드에 보관
-const CACHE = 'pokemon-math-8ebeb0de67';
+const CACHE = 'pokemon-math-9dac0b460f';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"];
 // 공식 이미지는 앱을 새 버전으로 바꿔도 지우지 않는 따로 된 보관함에
 const ART_CACHE = 'pokemon-art-v1';

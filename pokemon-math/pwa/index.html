@@ -141,7 +141,7 @@ img.pic{object-fit:contain;-webkit-user-drag:none}
 .overlay.on{display:flex}
 .pop-card{background:var(--card);border-radius:26px;padding:22px 20px;text-align:center;width:min(360px,100%);animation:pop .35s ease-out}
 .pop-card h3{margin:0;font-size:30px;color:var(--green)}
-.pop-card p{margin:6px 0;font-size:18px}
+.pop-card p{margin:6px 0;font-size:18px;text-wrap:balance}
 .pop-card .pic{width:160px;height:160px;margin:0 auto;animation:wiggle 1s ease-in-out}
 .pop-card .new{display:inline-block;background:var(--red);color:#fff;border-radius:10px;padding:2px 8px;font-size:13px;font-weight:800;margin-left:4px;vertical-align:middle}
 .next{margin-top:12px;background:var(--blue);color:#fff;font-size:20px;font-weight:800;padding:12px 28px;border-radius:16px;box-shadow:0 4px 0 #24318f}
@@ -157,7 +157,10 @@ img.pic{object-fit:contain;-webkit-user-drag:none}
 
 /* 도감 */
 .dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
-.dex-item{background:var(--soft);border-radius:14px;padding:6px 4px;text-align:center;font-size:13px;font-weight:700}
+.dex-item{background:var(--soft);border-radius:14px;padding:6px 4px;text-align:center;font-size:13px;font-weight:700;cursor:pointer}
+.pop-card.big .pic{width:min(300px,70vw);height:min(300px,70vw)}
+.pop-card.big.no .pic{filter:brightness(0);opacity:.3}
+.pop-card .dexno{display:inline-block;background:var(--soft);border-radius:10px;padding:2px 10px;font-size:14px;font-weight:700;color:var(--muted)}
 .dex-item .pic{width:72px;height:72px;margin:0 auto}
 .dex-item span{display:block}
 .dex-item.no .pic{filter:brightness(0);opacity:.25}
@@ -1261,7 +1264,7 @@ function choose(key, btn){
 
 function showReward(firstTry){
   const q = current;
-  const card = $('popCard'); card.innerHTML = '';
+  const card = $('popCard'); card.innerHTML = ''; card.className = 'pop-card';
   const h = document.createElement('h3'); h.textContent = firstTry ? '정답이에요! 🎉' : '맞았어요! 👏';
   const p = document.createElement('p'); p.textContent = q.done;
   card.append(h, p);
@@ -1367,11 +1370,38 @@ function showDex(){
     d.appendChild(pic(id));
     const s = document.createElement('span'); s.textContent = caught[id] ? name : '???';
     d.appendChild(s);
-    if(caught[id]){ const c = document.createElement('span'); c.className = 'cnt'; c.textContent = `${caught[id]}번 잡음`; d.appendChild(c); d.onclick = () => speak(name); }
+    if(caught[id]){ const c = document.createElement('span'); c.className = 'cnt'; c.textContent = `${caught[id]}번 잡음`; d.appendChild(c); }
+    d.onclick = () => showMon(id);
     dex.appendChild(d);
   });
   show('dexScreen');
 }
+// 도감에서 누른 포켓몬을 크게 보여 줘요 (바깥을 눌러도 닫혀요)
+function showMon(id){
+  const have = caught[id], name = NAME[id];
+  const card = $('popCard'); card.innerHTML = '';
+  card.className = 'pop-card big' + (have ? '' : ' no');
+  const no = document.createElement('span'); no.className = 'dexno'; no.textContent = `No.${String(id).padStart(3, '0')}`;
+  const h = document.createElement('h3'); h.textContent = have ? name : '???';
+  const t = document.createElement('p');
+  const mine = Object.values(partners).some(p => p.id === id);
+  t.textContent = !have ? '아직 못 만났어요. 문제를 맞혀서 찾아보자!'
+    : mine ? `내 파트너예요! ${have}번 만났어요.` : `${have}번 잡았어요${MON_NO[id].rare ? ' · 희귀 포켓몬!' : ''}`;
+  const close = document.createElement('button'); close.className = 'next'; close.textContent = '닫기';
+  close.onclick = closeMon;
+  card.append(no, pic(id), h, t, close);
+  $('overlay').classList.add('on');
+  $('overlay').dataset.closable = '1';
+  sfx.tap();
+  speak(have ? name : '누구일까?');
+}
+function closeMon(){
+  $('overlay').classList.remove('on');
+  delete $('overlay').dataset.closable;
+  $('popCard').className = 'pop-card';
+}
+$('overlay').addEventListener('click', e => { if(e.target === $('overlay') && $('overlay').dataset.closable) closeMon(); });
+
 // 확인 창 대신 같은 버튼을 한 번 더 누르게 해요
 function twoTap(btn, ask, action){
   const label = btn.textContent;
