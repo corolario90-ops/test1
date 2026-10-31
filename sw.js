@@ -1,7 +1,8 @@
-// 도형놀이·한글 드라이브 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
-const CACHE = 'kidsplay-v2';
+// 도형놀이·한글 드라이브·색칠놀이 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
+const CACHE = 'kidsplay-v3';
 const SHELL = ['./shape-play.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png',
-  './word-drive.html', './word-drive.webmanifest', './icons/drive-192.png', './icons/drive-512.png'];
+  './word-drive.html', './word-drive.webmanifest', './icons/drive-192.png', './icons/drive-512.png',
+  './coloring.html', './coloring.webmanifest', './icons/color-192.png', './icons/color-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
