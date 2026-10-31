@@ -47,6 +47,9 @@ h2{font-weight:normal;font-size:22px;margin:18px 0 10px}
 .driver{border:4px solid transparent;background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:10px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:6px;font-size:19px}
 .driver.on{border-color:var(--accent)}
+.langs{display:flex;justify-content:center;gap:10px;margin:12px 0 0}
+.langs button{border:4px solid transparent;background:var(--card);border-radius:20px;padding:8px 18px;font-size:22px;box-shadow:var(--shadow);cursor:pointer}
+.langs button.on{border-color:var(--accent);background:#fff3cf;color:#3a2a00}
 .driver canvas{width:110px;height:90px}
 
 .modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:6px}
@@ -106,6 +109,7 @@ h2{font-weight:normal;font-size:22px;margin:18px 0 10px}
 .got{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0}
 .got div{background:var(--soft);border-radius:16px;padding:6px 10px;font-size:20px;cursor:pointer}
 .got div span{font-size:30px;display:block}
+.got div small{display:block;font-size:14px;opacity:.7}
 .cheer{width:160px;height:130px}
 </style>
 </head>
@@ -125,6 +129,15 @@ const WORDS=[
   ['코끼리','🐘'],['오리','🦆'],['물고기','🐟'],['나비','🦋'],['거북이','🐢'],['원숭이','🐵'],['펭귄','🐧'],['닭','🐔'],
   ['말','🐴'],['소','🐮'],['뱀','🐍'],['공룡','🦖'],['문어','🐙'],['개구리','🐸']
 ].map(([w,e])=>({w,e}));
+/* 영어 편: 다섯 살이 처음 배우는 3~5글자 쉬운 낱말만 */
+const WORDS_EN=[
+  ['cat','🐱','고양이'],['dog','🐶','강아지'],['pig','🐷','돼지'],['cow','🐮','소'],['hen','🐔','닭'],['fox','🦊','여우'],
+  ['bee','🐝','벌'],['ant','🐜','개미'],['owl','🦉','부엉이'],['duck','🦆','오리'],['fish','🐟','물고기'],['frog','🐸','개구리'],
+  ['bear','🐻','곰'],['lion','🦁','사자'],['egg','🥚','달걀'],['milk','🥛','우유'],['cake','🎂','케이크'],['corn','🌽','옥수수'],
+  ['apple','🍎','사과'],['sun','☀️','해'],['moon','🌙','달'],['star','⭐','별'],['tree','🌳','나무'],['car','🚗','자동차'],
+  ['bus','🚌','버스'],['bike','🚲','자전거'],['boat','⛵','배'],['ball','⚽','공'],['cap','🧢','모자'],['bag','🎒','가방'],
+  ['key','🔑','열쇠'],['book','📕','책'],['bed','🛏️','침대'],['box','📦','상자'],['sock','🧦','양말'],['shoe','👟','신발']
+].map(([w,e,ko])=>({w,e,ko}));
 const ROUND=10;
 
 /* ---------- 저장 ---------- */
@@ -141,7 +154,7 @@ const DEFAULT_SLOTS=[
   {name:'보라 자동차',color:'#8b5cf6',pet:'🦊'}
 ];
 let slots=DEFAULT_SLOTS.map((d,i)=>Object.assign({},d,load('slot'+i,{})));
-let opts=Object.assign({driver:0,speed:1,readAloud:true,stars:0},load('opts',{}));
+let opts=Object.assign({driver:0,speed:1,readAloud:true,stars:0,lang:'ko'},load('opts',{}));
 const saveOpts=()=>save('opts',opts);
 
 /* 저장된 그림을 Image로 미리 만들어 둠 */
@@ -169,13 +182,18 @@ const sfx={
   no:()=>{tone(300,.18,'square',.08);tone(220,.25,'square',.08,.15)},
   win:()=>[523,659,784,659,784,1047].forEach((f,i)=>tone(f,.22,'triangle',.2,i*.13))
 };
-let koVoice=null;
-function pickVoice(){ try{ koVoice=speechSynthesis.getVoices().find(v=>/^ko/i.test(v.lang))||null; }catch(e){} }
+let koVoice=null, enVoice=null;
+function pickVoice(){ try{ const v=speechSynthesis.getVoices(); koVoice=v.find(x=>/^ko/i.test(x.lang))||null; enVoice=v.find(x=>/^en-US/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null; }catch(e){} }
 if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
-function say(t){
+/* 한국어 문장과 {en:'cat'} 영어 낱말을 차례로 읽어 줌 */
+function say(...parts){
   try{
-    speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t);
-    u.lang='ko-KR'; if(koVoice) u.voice=koVoice; u.rate=.85; u.pitch=1.15; speechSynthesis.speak(u);
+    speechSynthesis.cancel();
+    parts.forEach(p=>{
+      const en=typeof p==='object', u=new SpeechSynthesisUtterance(en?p.en:p);
+      u.lang=en?'en-US':'ko-KR'; const v=en?enVoice:koVoice; if(v) u.voice=v;
+      u.rate=en?.7:.85; u.pitch=1.15; speechSynthesis.speak(u);
+    });
   }catch(e){}
 }
 const hush=()=>{ try{ speechSynthesis.cancel(); }catch(e){} };
@@ -234,16 +252,17 @@ function carPreview(slot,w=220,h=180){
 const $app=document.getElementById('app');
 const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function home(){
-  hush();
+  hush(); const en=opts.lang==='en';
   $app.innerHTML=`<div class="page">
-    <h1 class="logo"><span>한</span><span>글</span> <span>드</span><span>라</span><span>이</span><span>브</span></h1>
-    <p class="sub">운전대에 나온 글자를 읽고, 맞는 그림 쪽으로 달려가요! ⭐ ${opts.stars}</p>
+    <h1 class="logo">${en?'<span>A</span><span>B</span><span>C</span> <span>드</span><span>라</span><span>이</span><span>브</span>':'<span>한</span><span>글</span> <span>드</span><span>라</span><span>이</span><span>브</span>'}</h1>
+    <div class="langs"><button class="${en?'':'on'}" data-lang="ko">가나다 한글</button><button class="${en?'on':''}" data-lang="en">ABC 영어</button></div>
+    <p class="sub">${en?'운전대에 나온 영어 낱말을 읽고, 맞는 그림 쪽으로 달려가요!':'운전대에 나온 글자를 읽고, 맞는 그림 쪽으로 달려가요!'} ⭐ ${opts.stars}</p>
     <h2>누가 운전할까?</h2>
     <div class="drivers" id="drivers"></div>
     <h2>어떻게 놀까?</h2>
     <div class="modes">
-      <button class="mode" style="background:#22c55e" data-mode="easy"><span class="em">🍎<small style="font-size:22px">사과</small></span>그림과 글자<small>글자 모양을 찾아요</small></button>
-      <button class="mode" style="background:#f97316" data-mode="hard"><span class="em">🍎🍌🍇</span>그림만 보기<small>글자를 읽고 그림을 찾아요</small></button>
+      <button class="mode" style="background:#22c55e" data-mode="easy"><span class="em">🍎<small style="font-size:22px">${en?'apple':'사과'}</small></span>그림과 글자<small>${en?'똑같은 영어 낱말을 찾아요':'글자 모양을 찾아요'}</small></button>
+      <button class="mode" style="background:#f97316" data-mode="hard"><span class="em">${en?'🐱🐶🐷':'🍎🍌🍇'}</span>그림만 보기<small>${en?'영어 낱말을 읽고 그림을 찾아요':'글자를 읽고 그림을 찾아요'}</small></button>
     </div>
     <div class="parent">
       <button class="big-btn alt small" id="setBtn">👨‍👩‍👧 보호자 설정 · 그림 바꾸기</button>
@@ -259,6 +278,7 @@ function home(){
     b.onclick=()=>{ opts.driver=i; saveOpts(); sfx.pop(); box.querySelectorAll('.driver').forEach((d,j)=>d.classList.toggle('on',j===i)); };
     box.appendChild(b);
   });
+  $app.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{ opts.lang=b.dataset.lang; saveOpts(); sfx.pop(); home(); });
   $app.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ sfx.pop(); play(b.dataset.mode); });
   document.getElementById('setBtn').onclick=()=>{ sfx.pop(); settings(); };
   const ib=document.getElementById('installBtn'); ib.hidden=!installEvt;
@@ -433,7 +453,7 @@ class Game{
     this.lane=1; this.carX=1; this.tilt=0; this.t=0; this.scroll=0;
     this.done=0; this.score=0; this.misses=0; this.got=[]; this.row=null; this.parts=[]; this.flyers=[]; this.scenery=[];
     this.speed=[9,13,18][opts.speed]??13;
-    this.deck=shuffle(WORDS.slice()); this.target=null; this.wait=0; this.alive=true;
+    this.en=opts.lang==='en'; this.words=this.en?WORDS_EN:WORDS; this.deck=shuffle(this.words.slice()); this.target=null; this.wait=0; this.alive=true;
     for(let i=0;i<10;i++) this.addScenery(Math.random()*60);
     this.resize=this.resize.bind(this); window.addEventListener('resize',this.resize); this.resize();
     this.key=e=>{
@@ -471,24 +491,25 @@ class Game{
     this.lane=n; sfx.move(); this.$wheel.style.transform=`rotate(${d*35}deg)`;
     clearTimeout(this.wt); this.wt=setTimeout(()=>{ if(this.$wheel) this.$wheel.style.transform=''; },260);
   }
-  speak(){ if(this.target) say(this.target.w); }
+  speak(){ if(this.target) say(this.word(this.target)); }
+  word(x){ return this.en?{en:x.w}:x.w; }
 
   /* 새 제시어 */
   nextWord(delay=0){
     if(!this.target){
-      if(!this.deck.length) this.deck=shuffle(WORDS.slice());
+      if(!this.deck.length) this.deck=shuffle(this.words.slice());
       this.target=this.deck.pop();
     }
     const w=this.$word;
     setTimeout(()=>{
       if(!this.alive) return;
       w.innerHTML=`${this.target.w}<span class="spk">🔊</span>`; w.className='word'; void w.offsetWidth; w.className='word rise';
-      if(opts.readAloud) say(this.target.w);
+      if(opts.readAloud) say(this.word(this.target));
       this.spawnRow();
     },delay*1000);
   }
   spawnRow(){
-    const others=shuffle(WORDS.filter(x=>x!==this.target&&x.e!==this.target.e));
+    const others=shuffle(this.words.filter(x=>x!==this.target&&x.e!==this.target.e));
     // 어려운 모드: 글자 수가 같은 낱말을 먼저 골라 헷갈리게
     let pick=others;
     if(this.mode==='hard'){ const same=others.filter(x=>x.w.length===this.target.w.length); if(same.length>=2) pick=same.concat(others); }
@@ -532,7 +553,7 @@ class Game{
       mine.taken=true; this.done++; this.score++; opts.stars++; saveOpts(); this.got.push(this.target);
       sfx.ok(); this.burst(x,y,24); this.flyers.push({e:mine.e,x,y,t:0});
       this.$word.className='word ok';
-      say(`딩동댕! ${this.target.w}!`);
+      if(this.en) say('딩동댕!',{en:this.target.w},this.target.ko+'!'); else say(`딩동댕! ${this.target.w}!`);
       document.getElementById('sc').textContent=this.score;
       document.getElementById('pg').style.width=(this.done/ROUND*100)+'%';
       this.target=null;
@@ -542,7 +563,7 @@ class Game{
       this.misses++;
       sfx.no(); this.$word.className='word no';
       r.items.forEach(x=>{ if(x.w===this.target.w) x.glow=true; });
-      say(`이건 ${iya(mine.w)}. ${eul(this.target.w)} 다시 찾아보자!`);
+      if(this.en) say('앗!',{en:mine.w},'말고',{en:this.target.w},'찾아보자!'); else say(`이건 ${iya(mine.w)}. ${eul(this.target.w)} 다시 찾아보자!`);
       this.nextWord(2.6);
     }
   }
@@ -629,12 +650,12 @@ class Game{
       <h3>🏁 도착! 참 잘했어요!</h3>
       <div style="font-size:30px">${'⭐'.repeat(Math.max(1,Math.min(5,Math.round(5-this.misses/3))))}</div>
       <p class="note">오늘 찾은 낱말을 눌러서 다시 읽어 보세요.</p>
-      <div class="got">${this.got.map(x=>`<div data-say="${esc(x.w)}"><span>${x.e}</span>${esc(x.w)}</div>`).join('')}</div>
+      <div class="got">${this.got.map(x=>`<div data-say="${esc(x.w)}"><span>${x.e}</span>${esc(x.w)}${x.ko?`<small>${esc(x.ko)}</small>`:''}</div>`).join('')}</div>
       <div class="row" style="justify-content:center"><button class="big-btn" id="again">🚗 한 번 더</button><button class="big-btn alt" id="toHome">🏠 처음으로</button></div>
     </div>`;
     document.body.appendChild(o);
     const cv=carPreview(this.slot,320,260); cv.className='cheer'; o.querySelector('#cheer').appendChild(cv);
-    o.querySelectorAll('[data-say]').forEach(d=>d.onclick=()=>say(d.dataset.say));
+    o.querySelectorAll('[data-say]').forEach(d=>d.onclick=()=>say(this.en?{en:d.dataset.say}:d.dataset.say));
     const mode=this.mode;
     o.querySelector('#again').onclick=()=>{ o.remove(); play(mode); };
     o.querySelector('#toHome').onclick=()=>{ o.remove(); this.stop(); home(); };
