@@ -1,6 +1,6 @@
 // 알록달록 색칠놀이: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 기기에 보관
 // (받은 도안과 칠한 그림은 앱 안의 저장소(IndexedDB)에 따로 있어서 여기서 다루지 않음)
-const CACHE = 'coloring-6d25680796';
+const CACHE = 'coloring-ece04a758e';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/color-192.png", "icons/color-512.png", "../fonts/jua.woff2"];
 
 self.addEventListener('install', e => {
