@@ -1,8 +1,9 @@
-// 도형놀이·한글 드라이브·색칠놀이 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
-const CACHE = 'kidsplay-v3';
+// 도형놀이·한글 드라이브·색칠놀이·주사위 모험 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
+const CACHE = 'kidsplay-v4';
 const SHELL = ['./shape-play.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png',
   './word-drive.html', './word-drive.webmanifest', './icons/drive-192.png', './icons/drive-512.png',
-  './coloring.html', './coloring.webmanifest', './icons/color-192.png', './icons/color-512.png'];
+  './coloring.html', './coloring.webmanifest', './icons/color-192.png', './icons/color-512.png',
+  './poke-board.html', './poke-board.webmanifest', './icons/board-192.png', './icons/board-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -14,6 +15,8 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // 캐릭터 그림은 앱이 IndexedDB에 따로 저장하므로 여기서는 두 번 담지 않음
+  if (/^https:\/\/raw\.githubusercontent\.com\//.test(e.request.url)) return;
   e.respondWith(
     fetch(e.request).then(res => {
       if (res.ok || res.type === 'opaque') {
