@@ -1,0 +1,16 @@
+{
+  "id": "./license-test.html",
+  "name": "운전면허 모의시험",
+  "short_name": "면허 모의시험",
+  "start_url": "./license-test.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef2f8",
+  "theme_color": "#1f4fa8",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/license-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/license-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
