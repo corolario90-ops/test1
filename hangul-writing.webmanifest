@@ -1,0 +1,16 @@
+{
+  "id": "./hangul-writing.html",
+  "name": "포켓몬 한글 쓰기",
+  "short_name": "한글 쓰기",
+  "start_url": "./hangul-writing.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff3b0",
+  "theme_color": "#ffe066",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/write-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/write-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
