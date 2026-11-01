@@ -69,6 +69,7 @@ h2{font-weight:normal;font-size:22px;margin:22px 0 10px}
 img.art{object-fit:contain;display:block}
 img.art.ph{opacity:.55}
 img.shadow{filter:brightness(0);opacity:.28}
+img.shadow.ph{filter:grayscale(1);opacity:.35}
 
 /* ---------- 첫 화면 ---------- */
 .home{display:grid;gap:16px;grid-template-columns:1fr}
@@ -107,6 +108,12 @@ img.shadow{filter:brightness(0);opacity:.28}
 .card small{font-size:13px;opacity:.6}
 .card .st{position:absolute;top:6px;right:8px;font-size:15px}
 .card.done{outline:4px solid #86efac}
+.card.locked{cursor:default;background:var(--soft);box-shadow:0 4px 0 rgba(0,0,0,.08)}
+.card.locked .thumb{background:transparent}
+.card.locked b{opacity:.45}
+.card.today{outline:5px solid #ef4444;animation:glow 1.4s ease-in-out infinite alternate}
+.card .badge{position:absolute;top:4px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;border-radius:12px;padding:2px 10px;font-size:14px;white-space:nowrap;z-index:1}
+@keyframes glow{from{box-shadow:0 6px 0 rgba(0,0,0,.14)}to{box-shadow:0 0 0 8px rgba(239,68,68,.25),0 6px 0 rgba(0,0,0,.14)}}
 
 /* ---------- 쓰기 화면 ---------- */
 .ws{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
@@ -156,7 +163,8 @@ img.shadow{filter:brightness(0);opacity:.28}
 @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 @keyframes popin{from{transform:scale(0)}to{transform:scale(1)}}
 .wrow .side{display:flex;flex-direction:column;gap:6px;flex:none}
-.wrow .side button{border:none;border-radius:14px;width:52px;height:52px;font-size:24px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25);background:#fff}
+.wrow .side button{border:none;border-radius:14px;width:84px;height:46px;font-size:22px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25);background:#fff}
+.wrow .side .chk{height:auto;min-height:62px;font-size:19px;line-height:1.15;padding:6px 4px}
 .wrow .side .chk{background:var(--ok);color:#fff}
 .wrow.done .boxes{box-shadow:inset 0 0 0 4px #4ade80}
 .wrow.done .side .chk{background:#fff;color:var(--ok)}
@@ -290,6 +298,7 @@ function ordered(){
 }
 let ORDER=ordered();
 const nextPage=()=>!st.words&&!st.done.s7?BY_KEY.s7:ORDER.find(p=>!st.done[p.key])||ORDER.slice().sort((a,b)=>st.done[a.key].n-st.done[b.key].n)[0];
+const isOpen=p=>!!st.done[p.key]||p===nextPage();   // 쓴 단어와 오늘의 단어만 열림
 const partner=()=>st.level?STAGES[Math.min(st.level,STAGES.length)-1]:null;
 
 /* ---------- 저장소: 그림은 IndexedDB ---------- */
@@ -427,25 +436,30 @@ function list(){
     <div class="top"><button class="icon-btn" id="back">🏠</button><h2 class="title">📖 포켓몬 고르기</h2><div class="spacer"></div></div>
     <div class="tabs" id="inis">${INIS.map(k=>`<button class="tab ${listState.ini===k?'on':''}" data-k="${k}">${k}</button>`).join('')}</div>
     <div class="filters" id="lens">${[[0,'모두'],[2,'2글자'],[3,'3글자'],[4,'4글자'],[5,'5글자+']].map(([n,t])=>`<button class="tab ${listState.len===n?'on':''}" data-n="${n}">${t}</button>`).join('')}
-      <button class="tab ${listState.todo?'on':''}" id="todo">안 쓴 것만</button>
+      <button class="tab ${listState.todo?'on':''}" id="todo">내가 쓴 것만</button>
       <input type="search" id="q" placeholder="🔍 이름 찾기" value="${esc(listState.q)}"></div>
     <div class="grid" id="grid"></div>
   </div>`);
   $('#back').onclick=()=>{ sfx.pop(); home(); };
+  const today=nextPage();
   const draw=()=>{
     const L=ORDER.filter(p=>(listState.ini==='전체'||p.ini===listState.ini)&&(!listState.len||(listState.len===5?p.len>=5:p.len===listState.len))
-      &&(!listState.todo||!st.done[p.key])&&(!listState.q||p.name.includes(listState.q)));
+      &&(!listState.todo||st.done[p.key])&&(!listState.q||(isOpen(p)&&p.name.includes(listState.q))));
+    const ti=L.indexOf(today); if(ti>0){ L.splice(ti,1); L.unshift(today); }   // 오늘의 단어를 맨 앞에
     const g=$('#grid');
     g.innerHTML=L.length?L.map(p=>{ const d=st.done[p.key];
-      return `<button class="card ${d?'done':''}" data-k="${p.key}">${d?`<span class="st">${'⭐'.repeat(d.s||1)}</span>`:''}<div class="thumb">${imgTag(p.pid)}</div><b>${esc(p.name)}</b><small>No.${String(p.sp).padStart(3,'0')}</small></button>`; }).join('')
-      :'<p style="font-size:20px">찾는 포켓몬이 없어요.</p>';
+      if(p===today) return `<button class="card today" data-k="${p.key}"><span class="badge">✏️ 오늘의 단어</span><div class="thumb">${imgTag(p.pid)}</div><b>${esc(p.name)}</b><small>No.${String(p.sp).padStart(3,'0')}</small></button>`;
+      if(!d) return `<button class="card locked" data-lock="1"><div class="thumb">${imgTag(p.pid,'shadow')}</div><b>???</b><small>🔒</small></button>`;
+      return `<button class="card done" data-k="${p.key}"><span class="st">${'⭐'.repeat(d.s||1)}</span><div class="thumb">${imgTag(p.pid)}</div><b>${esc(p.name)}</b><small>No.${String(p.sp).padStart(3,'0')}</small></button>`; }).join('')
+      :`<p style="font-size:20px">${listState.todo?'아직 쓴 포켓몬이 없어요. 오늘의 단어부터 써 볼까요?':'찾는 포켓몬이 없어요.'}</p>`;
     lazyHydrate(g);
   };
   $('#inis').onclick=e=>{ const b=e.target.closest('[data-k]'); if(!b) return; listState.ini=b.dataset.k; $('#inis').querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b)); draw(); };
   $('#lens').onclick=e=>{ const b=e.target.closest('[data-n]'); if(!b) return; listState.len=+b.dataset.n; $('#lens').querySelectorAll('[data-n]').forEach(x=>x.classList.toggle('on',x===b)); draw(); };
   $('#todo').onclick=()=>{ listState.todo=!listState.todo; $('#todo').classList.toggle('on',listState.todo); draw(); };
   $('#q').oninput=e=>{ listState.q=e.target.value.trim(); draw(); };
-  $('#grid').onclick=e=>{ const b=e.target.closest('[data-k]'); if(!b) return; sfx.pop(); writePage(BY_KEY[b.dataset.k]); };
+  $('#grid').onclick=e=>{ if(e.target.closest('[data-lock]')){ sfx.no(); toast('오늘의 단어를 쓰면 하나씩 열려요!'); return; }
+    const b=e.target.closest('[data-k]'); if(!b) return; sfx.pop(); writePage(BY_KEY[b.dataset.k]); };
   draw();
 }
 
@@ -498,7 +512,7 @@ function judge(box){
   const cov=gc/g, prec=ic/ink, much=ink/g;   // much: 글자보다 잉크가 지나치게 많으면(마구 칠하기) 통과 안 함
   return {cov,prec,much,q:Math.sqrt(cov*prec)};
 }
-const PASS_AUTO=r=>r.cov>=.72&&r.prec>=.62&&r.much<2.2, PASS_HAND=r=>r.cov>=.4&&r.prec>=.55&&r.much<2.6,
+const PASS_HAND=r=>r.cov>=.4&&r.prec>=.55&&r.much<2.6,
   PASS_TRIED=r=>!r.empty&&r.prec>=.35&&r.much<3;   // 두 번 넘게 애쓴 칸은 이 정도면 통과
 
 /* ======================================================================
@@ -507,7 +521,7 @@ const PASS_AUTO=r=>r.cov>=.72&&r.prec>=.62&&r.much<2.2, PASS_HAND=r=>r.cov>=.4&&
 const PENS=[['#1f2937','검정'],['#2563eb','파랑'],['#dc2626','빨강'],['#16a34a','초록']];
 let penSeen=false;
 async function writePage(p){
-  const idx=ORDER.indexOf(p), prev=ORDER[idx-1], next=ORDER[idx+1];
+  const OPEN=ORDER.filter(isOpen), idx=OPEN.indexOf(p), prev=idx>0?OPEN[idx-1]:null, next=idx>=0?OPEN[idx+1]:null;
   const pt=partner(), chars=[...p.name], modes=[[0],[0,2],[0,1,2]][Math.max(1,Math.min(3,opts.rows))-1];
   const ROWTAG=['따라 쓰기','흐린 글씨','혼자 쓰기'];
   const d=st.done[p.key];
@@ -538,7 +552,7 @@ async function writePage(p){
           <button class="tbtn" id="undo">↶ 되돌리기</button></div>
         <div class="jamo" id="jamo">${chars.map(c=>isHan(c)?esc(c)+' = '+split(c).filter(Boolean).join(' + '):'').filter(Boolean).join('   ·   ')}</div>
         <div class="rows" id="rows">${modes.map((m,ri)=>`<div class="wrow" data-r="${ri}"><span class="tag">${ROWTAG[m]}</span><div class="boxes"></div>
-          <div class="side"><button class="chk" title="다 썼어요">✔</button><button class="clr" title="이 줄 지우기">🧽</button></div></div>`).join('')}</div>
+          <div class="side"><button class="chk">다 썼어요<br>✔</button><button class="clr" title="이 줄 지우기">🧽</button></div></div>`).join('')}</div>
       </div>
     </div>
   </div>`);
@@ -555,7 +569,7 @@ async function writePage(p){
   const rows=modes.map((mode,ri)=>{
     const el=$app.querySelector(`.wrow[data-r="${ri}"]`), wrap=el.querySelector('.boxes');
     const boxes=chars.map(ch=>{
-      const b={ch,mode,han:isHan(ch),strokes:[],done:!isHan(ch),fails:0,timer:0,row:null};
+      const b={ch,mode,han:isHan(ch),strokes:[],done:!isHan(ch),fails:0,row:null};
       b.el=document.createElement('div'); b.el.className='box'+(b.han?'':' static');
       b.g=mkCanvas(1,1); b.g.className='g'; b.k=mkCanvas(1,1); b.el.append(b.g,b.k); wrap.appendChild(b.el);
       if(b.han) bindInk(b);
@@ -573,7 +587,7 @@ async function writePage(p){
 
   function layout(){
     const rowsEl=$('#rows'); if(!rowsEl) return;
-    const W=rowsEl.clientWidth-(28+60+16+12+16), H=rowsEl.clientHeight;
+    const W=rowsEl.clientWidth-(28+92+16+12+16), H=rowsEl.clientHeight;
     S=Math.floor(Math.max(56,Math.min(210,W/chars.length,(H-rows.length*8)/rows.length-14)));
     const dpr=Math.min(3,window.devicePixelRatio||1);
     all.forEach(b=>{ b.el.style.width=b.el.style.height=S+'px';
@@ -598,7 +612,7 @@ async function writePage(p){
       if(opts.palm&&penSeen&&e.pointerType==='touch') return;   // 펜슬을 쓰는 동안 손바닥·손가락은 무시
       if(activeId!==null||finished) return;
       e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){}
-      activeId=e.pointerId; clearTimeout(b.timer);
+      activeId=e.pointerId;
       const s=[pt(e)]; s.col=PENS[opts.pen][0]; b.strokes.push(s); b.cur=s; hist.push(b);
       seg(cv.getContext('2d'),s[0],s[0],s.col);
     });
@@ -607,13 +621,13 @@ async function writePage(p){
       const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e], x=cv.getContext('2d');
       (evs.length?evs:[e]).forEach(ev=>{ const q=pt(ev), l=b.cur[b.cur.length-1]; if(Math.abs(q.x-l.x)+Math.abs(q.y-l.y)<.004) return; b.cur.push(q); seg(x,l,q,b.cur.col); });
     });
-    const end=e=>{ if(e.pointerId!==activeId) return; activeId=null; b.cur=null; clearTimeout(b.timer); b.timer=setTimeout(()=>autoCheck(b),700); };
+    const end=e=>{ if(e.pointerId!==activeId) return; activeId=null; b.cur=null; };
     cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
   }
-  function markDone(b){ b.done=true; b.el.classList.add('ok'); sfx.ding(); if(opts.syll&&!b.row.boxes.every(x=>x.done)) say(b.ch); }
-  function autoCheck(b){ if(b.done||finished) return; if(PASS_AUTO(judge(b))){ markDone(b); rowCheck(b.row); } }
+  function markDone(b){ b.done=true; b.el.classList.add('ok'); }
   function checkRow(row,byHand){
     if(finished) return;
+    if(row.done){ say(sayWord(p.name)); return; }
     let miss=null;
     row.boxes.forEach(b=>{ if(b.done) return; const r=judge(b);
       if(PASS_HAND(r)||(b.fails>=2&&PASS_TRIED(r))) markDone(b); else { b.fails++; miss=miss||b; } });
@@ -646,7 +660,7 @@ async function finishPage(p,boxes){
   const ov=document.createElement('div'); ov.className='ov'; ov.innerHTML='<div class="panel"></div>'; document.body.appendChild(ov);
   const panel=ov.querySelector('.panel');
   const nx=STAGES[st.level], left=opts.per-st.since, idx=ORDER.indexOf(p);
-  const next=ORDER.slice(idx+1).find(x=>!st.done[x.key])||ORDER[idx+1]||nextPage();
+  const next=nextPage();
   const buttons=`<div class="row" style="justify-content:center;margin-top:14px">
       <button class="big-btn alt" id="rAgain">🔁 다시 쓰기</button><button class="big-btn alt" id="rHome">🏠 처음으로</button>
       <button class="big-btn go" id="rNext">다음 단어 ▶<br><small>${esc(next.name)}</small></button></div>`;
@@ -769,10 +783,9 @@ function parent(){
       <label>단어 순서 <select id="oOrder"><option value="easy">짧고 쉬운 이름부터</option><option value="abc">가나다 순 (책의 리스트 순서)</option><option value="dex">도감 번호 순</option></select></label>
       <label><input type="checkbox" id="oPalm" ${opts.palm?'checked':''}> ✏️ 애플펜슬을 쓰면 손바닥·손가락 터치는 무시</label>
       <label><input type="checkbox" id="oSound" ${opts.sound?'checked':''}> 🔊 소리와 읽어 주기</label>
-      <label><input type="checkbox" id="oSyll" ${opts.syll?'checked':''}> 한 글자 쓸 때마다 그 글자도 읽어 주기</label>
       <label>읽는 빠르기 <select id="oRate"><option value=".7">천천히</option><option value=".85">보통</option><option value="1">빠르게</option></select>
         <button class="big-btn small alt" id="tts">🔊 들어 보기</button></label>
-      <p class="note">채점은 넉넉해요. 칸마다 글자 모양을 대부분 덮으면 저절로 ✔가 붙고, ✔ 버튼을 누르면 더 너그럽게 봐 줘요(두 번 넘게 틀리면 통과).
+      <p class="note">채점은 넉넉해요. 아이가 한 줄을 다 쓰고 ‘다 썼어요’ 버튼을 누를 때만 칸마다 글자 모양과 비교해 ✔를 붙여요. 같은 칸을 두 번 넘게 다시 써도 안 되면 통과시켜 줘요.
         ‘혼자 쓰기’ 줄은 글자 크기·위치가 달라도 모양만 비슷하면 돼요. 한 쪽을 다 쓰면 단어 1개로 셉니다.</p>
     </div>
 
@@ -783,7 +796,7 @@ function parent(){
   $('#back').onclick=()=>{ sfx.pop(); dlCancel=true; home(); };
   $('#oRows').value=String(opts.rows); $('#oPer').value=String(opts.per); $('#oOrder').value=opts.order; $('#oRate').value=String(opts.rate);
   const bindC=(id,k)=>{ $(id).onchange=e=>{ opts[k]=e.target.checked; saveOpts(); }; };
-  bindC('#oAuto','auto'); bindC('#oPalm','palm'); bindC('#oSound','sound'); bindC('#oSyll','syll');
+  bindC('#oAuto','auto'); bindC('#oPalm','palm'); bindC('#oSound','sound');
   $('#oRows').onchange=e=>{ opts.rows=+e.target.value; saveOpts(); };
   $('#oPer').onchange=e=>{ opts.per=+e.target.value; if(st.since>=opts.per) st.since=opts.per-1; saveOpts(); saveSt(); };
   $('#oOrder').onchange=e=>{ opts.order=e.target.value; saveOpts(); ORDER=ordered(); };
