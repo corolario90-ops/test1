@@ -1,0 +1,16 @@
+{
+  "id": "./farm-shop.html",
+  "name": "꼬마 농장 가게",
+  "short_name": "농장 가게",
+  "start_url": "./farm-shop.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#c9f2c7",
+  "theme_color": "#c9f2c7",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/farm-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/farm-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
