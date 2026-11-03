@@ -362,6 +362,11 @@ function sheet(html){
   bg.addEventListener('click',e=>{ if(e.target===bg) close(); });
   return {el:bg.firstChild, close, q:s=>bg.querySelector(s)};
 }
+function ask(msg,yes='네',no='아니요'){ // 확인 창 (confirm 대신, 아이패드에서도 크게 보임)
+  return new Promise(res=>{ const sh=sheet(`<h3>${esc(msg)}</h3><div class="row end"><button class="big alt" id="aNo">${no}</button><button class="big go" id="aYes">${yes}</button></div>`);
+    const done=v=>{ sh.close(); res(v); }; sh.q('#aNo').onclick=()=>done(false); sh.q('#aYes').onclick=()=>done(true);
+    sh.el.parentNode.addEventListener('click',e=>{ if(e.target===sh.el.parentNode) res(false); }); });
+}
 function pickBg(title,cur,onPick){
   const sh=sheet(`<h3>${title}</h3><div class="picks">${BGS.map(b=>`<button class="pick${b[0]===cur?' on':''}" data-k="${b[0]}"><canvas width="160" height="120"></canvas>${b[1]}</button>`).join('')}</div>`);
   sh.el.querySelectorAll('.pick').forEach(p=>{ drawBg(p.querySelector('canvas').getContext('2d'),160,120,p.dataset.k);
@@ -392,7 +397,7 @@ async function home(){
     const dt=new Date(r.updated);
     d.innerHTML=`<img alt="" src="${u}"><div class="when">${dt.getMonth()+1}월 ${dt.getDate()}일 ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}</div><button class="del" aria-label="지우기">🗑️</button>`;
     d.onclick=e=>{ if(e.target.closest('.del')) return; openEditor(r); };
-    d.querySelector('.del').onclick=async()=>{ if(!confirm('이 그림을 지울까요? 지우면 되돌릴 수 없어요.')) return; await db.del(r.id); home(); };
+    d.querySelector('.del').onclick=async()=>{ if(!await ask('이 그림을 지울까요? 지우면 되돌릴 수 없어요.','🗑️ 지우기','그만두기')) return; await db.del(r.id); home(); };
     grid.appendChild(d);
   }
   $('#hNew').onclick=()=>pickBg('✏️ 어떤 종이에 그릴까요?',null,bg=>{ if(darkBg(bg)&&lum(st.color)<140){ st.color='#ffffff'; saveSt(); } openEditor(newRec(bg)); });
@@ -868,7 +873,7 @@ async function openEditor(rec,init={}){
 
   // ---------- 위쪽 단추 ----------
   $('#eUndo').onclick=undo; $('#eRedo').onclick=redo;
-  $('#eClear').onclick=()=>{ if(!confirm(rec.line?'칠한 것을 모두 지울까요? (도안 선은 남아요)':'그림을 모두 지울까요?')) return; dropFloat(); pctx.clearRect(0,0,W,H); const b=box(); grow(b,0,0,W,H,0); commit(b); };
+  $('#eClear').onclick=async()=>{ if(!await ask(rec.line?'칠한 것을 모두 지울까요? (도안 선은 남아요)':'그림을 모두 지울까요?','🗑️ 모두 지우기','그만두기')) return; dropFloat(); pctx.clearRect(0,0,W,H); const b=box(); grow(b,0,0,W,H,0); commit(b); };
   $('#eBg').onclick=()=>pickBg('📄 종이 바꾸기',rec.bg,bg=>{ rec.bg=bg; drawBg(bctx,W,H,bg); if(darkBg(bg)&&lum(st.color)<140){ st.color='#ffffff'; saveSt(); renderTools(); } dirty=true; changed(); });
   $('#eHome').onclick=async()=>{ if(flt) placeFloatOnPaper(); const d=dirty?busy('저장하는 중… 💾'):null; await save(); d&&d(); home(); };
   $('#eSave').onclick=async()=>{
@@ -886,7 +891,7 @@ async function openEditor(rec,init={}){
     sh.q('#sGo').onclick=async()=>{
       try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); close(); return; } }
       catch(e){ if(e.name==='AbortError') return; }
-      const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); toast('그림 파일을 내려받았어요');
+      const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); toast('저장이 안 되면 그림을 꾹 눌러 ‘사진에 저장’을 골라 주세요',3600);
     };
   };
 
