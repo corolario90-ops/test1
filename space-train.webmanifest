@@ -1,0 +1,16 @@
+{
+  "id": "./space-train.html",
+  "name": "우주 택배 기차",
+  "short_name": "택배 기차",
+  "start_url": "./space-train.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1030",
+  "theme_color": "#0b1030",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/train-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/train-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
