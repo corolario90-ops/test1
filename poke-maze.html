@@ -295,9 +295,12 @@ const sfx={
    ====================================================================== */
 const SKEY='pokemaze-v1';
 function fresh(){ return {partner:null,stages:{},eevee:null,stars:0,cleared:0,seen:[],maze:null,
-  set:{diff:1,auto:true,sound:true,slide:true,topics:{num:true,ko:true,en:true}},adj:1,good:0,hard:0}; }
-let S=Object.assign(fresh(),store.get(SKEY,{}));
+  set:{diff:1,auto:true,sound:true,slide:false,ver:2,topics:{num:true,ko:true,en:true}},adj:1,good:0,hard:0}; }
+const SAVED=store.get(SKEY,{});
+let S=Object.assign(fresh(),SAVED);
 S.set=Object.assign(fresh().set,S.set||{}); S.set.topics=Object.assign({num:true,ko:true,en:true},S.set.topics||{});
+if((SAVED.set||{}).ver!==2){ S.set.slide=false; S.set.ver=2; }   // 예전 기본값(길 따라 쭉)을 한 칸씩으로
+if(S.maze&&!S.maze.v2) S.maze=null;   // 예전의 작은 정사각형 미로는 새 미로로
 if(S.adj==null||S.adj>S.set.diff) S.adj=S.set.diff;
 const save=()=>store.set(SKEY,S);
 const effD=()=>S.set.auto?Math.min(S.adj,S.set.diff):S.set.diff;
@@ -306,15 +309,16 @@ function adapt(good,hard){
   if(good){ S.good++; S.hard=0; if(S.good>=4&&S.adj<S.set.diff){ S.adj++; S.good=0; } }
   else { S.good=0; if(hard){ S.hard++; if(S.hard>=2&&S.adj>0){ S.adj--; S.hard=0; } } }
 }
-// size: 미로 한 변 (처음 → 탈출할 때마다 조금씩 커짐) · traps: 길 위 함정 수 · ch: 보기 수
+// rows: 미로 줄 수 (처음 → 탈출할 때마다 조금씩 커짐, 가로는 화면 비율에 맞춤) · traps: 길 위 함정 수
+// loops: 막다른 길 일부를 뚫어 돌아가는 길을 만드는 비율 · key: 🔑 열쇠로 🔒 문 열기 · ch: 보기 수
 const DIFF=[
-  {e:'🐣',name:'아주 쉬움',desc:'작은 미로 · 똑같은 것 찾기 · 보기 2개',size:[4,5],traps:1,ch:2,
+  {e:'🐣',name:'아주 쉬움',desc:'똑같은 것 찾기 · 보기 2개',rows:[6,8],traps:2,loops:.1,key:false,ch:2,
     q:{num:['count'],ko:['ko-same'],en:['en-same']}},
-  {e:'🐥',name:'쉬움',desc:'10까지 세기 · 듣고 찾기 · 보기 3개',size:[5,7],traps:1,ch:3,
+  {e:'🐥',name:'쉬움',desc:'10까지 세기 · 듣고 찾기 · 🔑 열쇠 찾기',rows:[8,10],traps:2,loops:.15,key:true,ch:3,
     q:{num:['count'],ko:['ko-same','ko-hear'],en:['en-hear','en-word']}},
-  {e:'🐔',name:'보통',desc:'10까지 더하기 · 낱말 읽기 · 소문자',size:[6,8],traps:2,ch:3,
+  {e:'🐔',name:'보통',desc:'10까지 더하기 · 낱말 읽기 · 큰 미로',rows:[9,12],traps:3,loops:.2,key:true,ch:3,
     q:{num:['add','count'],ko:['ko-read','ko-hear'],en:['en-word','en-case']}},
-  {e:'🦅',name:'어려움',desc:'20까지 더하기·빼기 · 첫 글자 · 보기 4개',size:[7,10],traps:3,ch:4,
+  {e:'🦅',name:'어려움',desc:'20까지 더하기·빼기 · 첫 글자 · 아주 큰 미로',rows:[11,14],traps:4,loops:.2,key:true,ch:4,
     q:{num:['add','sub'],ko:['ko-read','ko-initial'],en:['en-read','en-initial']}},
 ];
 const pIdx=()=>S.partner??0;
@@ -445,12 +449,18 @@ function quiz(icon,title,sub){
    ====================================================================== */
 const DIRS={up:[0,-1,1,4],right:[1,0,2,8],down:[0,1,4,1],left:[-1,0,8,2]};
 const TRAPS=[['🕸️','거미줄'],['🌀','소용돌이'],['🪨','떨어진 바위'],['🧊','미끌미끌 얼음'],['💤','잠 가루']];
-function carve(n){
-  const w=n,h=n,cells=new Array(w*h).fill(15),seen=new Array(w*h).fill(false),st=[0]; seen[0]=true;
-  while(st.length){ const c=st[st.length-1], x=c%w, y=Math.floor(c/w);
-    const can=Object.values(DIRS).filter(([dx,dy])=>{ const nx=x+dx, ny=y+dy; return nx>=0&&ny>=0&&nx<w&&ny<h&&!seen[ny*w+nx]; });
-    if(!can.length){ st.pop(); continue; }
-    const [dx,dy,b,o]=pick(can), nc=(y+dy)*w+x+dx; cells[c]&=~b; cells[nc]&=~o; seen[nc]=true; st.push(nc); }
+// 갈림길이 많이 생기도록 ‘가장 최근 칸’과 ‘아무 칸’을 반씩 섞어서 파 나감
+function carve(w,h,loops){
+  const cells=new Array(w*h).fill(15),seen=new Array(w*h).fill(false),list=[0]; seen[0]=true;
+  const open=(c,[dx,dy,b,o])=>{ const nc=c+dy*w+dx; cells[c]&=~b; cells[nc]&=~o; return nc; };
+  const inside=(c,[dx,dy])=>{ const x=c%w+dx, y=Math.floor(c/w)+dy; return x>=0&&y>=0&&x<w&&y<h; };
+  while(list.length){ const i=Math.random()<.55?list.length-1:rnd(list.length), c=list[i];
+    const can=Object.values(DIRS).filter(d=>inside(c,d)&&!seen[c+d[1]*w+d[0]]);
+    if(!can.length){ list.splice(i,1); continue; }
+    const nc=open(c,pick(can)); seen[nc]=true; list.push(nc); }
+  // 막다른 길 몇 곳은 옆길과 이어서 빙 돌아가는 길을 만듦
+  for(let c=1;c<w*h;c++){ const shut=Object.values(DIRS).filter(d=>inside(c,d)&&(cells[c]&d[2]));
+    if(shut.length===3&&Math.random()<loops) open(c,pick(shut)); }
   return {w,h,cells};
 }
 function nbrs(M,c){ const x=c%M.w, y=Math.floor(c/M.w), out=[]; for(const [dx,dy,b] of Object.values(DIRS)) if(!(M.cells[c]&b)) out.push((y+dy)*M.w+x+dx); return out; }
@@ -458,20 +468,35 @@ function bfs(M,from){ const N=M.w*M.h, dist=new Array(N).fill(-1), par=new Array
   while(q.length){ const c=q.shift(); for(const n of nbrs(M,c)) if(dist[n]<0){ dist[n]=dist[c]+1; par[n]=c; q.push(n); } } return {dist,par}; }
 function pathTo(M,from,to){ const {par}=bfs(M,from), p=[to]; while(p[0]!==from&&par[p[0]]>=0) p.unshift(par[p[0]]); return p; }
 function newMaze(){
-  const E=effD(), d=DIFF[E], n=Math.min(d.size[1],d.size[0]+Math.floor(S.cleared/2));
-  const M=carve(n); M.start=0;
+  const E=effD(), d=DIFF[E], rows=Math.min(d.rows[1],d.rows[0]+Math.floor(S.cleared/2));
+  // 미로가 들어갈 자리의 가로세로 비율 (가로 화면은 오른쪽에 방향 버튼, 세로 화면은 아래에 방향 버튼)
+  const wrap=$('#mzwrap'), land=innerWidth>innerHeight;
+  const ratio=wrap&&wrap.clientHeight?wrap.clientWidth/wrap.clientHeight:land?(innerWidth-300)/Math.max(1,innerHeight-100):(innerWidth-30)/Math.max(1,innerHeight-370);
+  const h=rows, w=Math.max(5,Math.min(Math.round(rows*1.7),Math.round(rows*Math.max(.6,ratio))));
+  const M=carve(w,h,d.loops); M.v2=true; M.start=0;
   const {dist}=bfs(M,0); M.exit=dist.indexOf(Math.max(...dist));
-  const path=pathTo(M,0,M.exit);
-  // 막다른 길마다 풀숲: 가장 먼 곳에 진화의 돌, 나머지는 별·열매
-  const deads=range(0,n*n-1).filter(c=>c!==0&&c!==M.exit&&nbrs(M,c).length===1).sort((a,b)=>dist[b]-dist[a]);
+  const path=pathTo(M,0,M.exit), onPath=new Set(path);
+  // 🔒 문: 깃발 바로 앞 칸 · 🔑 열쇠: 탈출 길에서 가장 멀리 떨어진 막다른 길
+  M.door=d.key&&path.length>4?path[path.length-2]:-1; M.key=-1; M.hasKey=false;
+  let deads=range(0,w*h-1).filter(c=>c!==0&&c!==M.exit&&nbrs(M,c).length===1);
+  if(M.door>=0&&deads.length){
+    const far=new Array(w*h).fill(-1), q=[...onPath]; q.forEach(c=>far[c]=0);
+    while(q.length){ const c=q.shift(); for(const n of nbrs(M,c)) if(far[n]<0){ far[n]=far[c]+1; q.push(n); } }
+    M.key=deads.reduce((a,b)=>far[b]>far[a]?b:a); deads=deads.filter(c=>c!==M.key);
+  } else M.door=-1;
+  // 풀숲: 가장 먼 막다른 길에 진화의 돌, 나머지는 별·열매
+  deads.sort((a,b)=>dist[b]-dist[a]);
   const evo=stageOf(pIdx())<maxStage(pIdx());
-  M.items={}; deads.forEach((c,i)=>M.items[c]={k:i===0&&evo?'stone':pick(['star','star','berry']),open:false});
+  // 막다른 길이 많으니 절반쯤만 풀숲(나머지는 그냥 막다른 길)으로 두어 화면이 빽빽하지 않게
+  const keep=Math.max(3,Math.ceil(deads.length*.45)), bush=[deads[0],...shuffle(deads.slice(1)).slice(0,keep-1)].filter(c=>c!=null);
+  M.items={}; bush.forEach(c=>M.items[c]={k:c===deads[0]&&evo?'stone':pick(['star','star','berry']),open:false});
   // 탈출 길 위의 함정 (피해 갈 수 없음)
-  M.traps={}; const cand=path.slice(2,-1), k=Math.min(d.traps,cand.length);
-  for(let j=1;j<=k;j++){ const c=cand[Math.floor(cand.length*j/(k+1))]; M.traps[c]=rnd(TRAPS.length); }
+  M.traps={}; const cand=path.slice(2,-2), k=Math.min(d.traps,cand.length);
+  for(let j=1;j<=k;j++){ const c=cand[Math.floor(cand.length*j/(k+1))]; if(c!==M.door) M.traps[c]=rnd(TRAPS.length); }
   Object.assign(M,{pos:0,last:0,visited:[0],hint:[]});
   S.maze=M; save();
 }
+const goal=M=>M.door>=0&&!M.hasKey?M.key:M.exit;
 
 /* ======================================================================
    화면: 처음
@@ -531,7 +556,7 @@ function cellHTML(M,c){
   if(b&1) cls.push('n'); if(b&2) cls.push('e'); if(b&4) cls.push('s'); if(b&8) cls.push('w');
   if(M.hint.includes(c)) cls.push('h'); else if(M.visited.includes(c)) cls.push('v');
   const it=M.items[c];
-  const inner=c===M.exit?'🚩':M.traps[c]!=null?TRAPS[M.traps[c]][0]:it&&!it.open?'<span class="bush">🌿</span>':M.hint.includes(c)?'✨':'';
+  const inner=c===M.exit?'🚩':c===M.key&&!M.hasKey?'<span class="bush">🔑</span>':c===M.door?(M.hasKey?'🔓':'🔒'):M.traps[c]!=null?TRAPS[M.traps[c]][0]:it&&!it.open?'<span class="bush">🌿</span>':M.hint.includes(c)?'✨':'';
   return `<div class="${cls.join(' ')}" id="c${c}" style="left:${(c%M.w)*CS}px;top:${Math.floor(c/M.w)*CS}px">${inner}</div>`;
 }
 function layoutMaze(){
@@ -551,13 +576,15 @@ function bindSwipe(){
     if(Math.max(Math.abs(dx),Math.abs(dy))<28) return; move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')); });
 }
 let moving=false;
-const isStop=(M,c)=>c===M.exit||M.traps[c]!=null||(M.items[c]&&!M.items[c].open)||nbrs(M,c).length!==2;
+const isStop=(M,c)=>c===M.exit||c===M.key||c===M.door||M.traps[c]!=null||(M.items[c]&&!M.items[c].open)||nbrs(M,c).length!==2;
 async function move(dir){
   const M=S.maze; if(!M||moving||quizOpen||!$('#modal').hidden) return;
   const [dx,dy,b]=DIRS[dir];
   if(M.cells[M.pos]&b){ sfx.bump(); const me=$('#me'); me.classList.remove('bump'); void me.offsetWidth; me.classList.add('bump'); return; }
-  moving=true;
-  let prev=M.pos, c=M.pos+dy*M.w+dx; await stepTo(c);
+  let prev=M.pos, c=M.pos+dy*M.w+dx;
+  if(c===M.door&&!M.hasKey){ sfx.bump(); const me=$('#me'); me.classList.remove('bump'); void me.offsetWidth; me.classList.add('bump');
+    say('문이 잠겨 있어요! 🔑 열쇠를 찾아 와요.'); toast('🔒 잠긴 문 → 🔑 열쇠를 찾아요'); return; }
+  moving=true; await stepTo(c);
   // 길 따라 쭉: 갈림길·막다른 길·함정·풀숲·출구 앞에서 멈춤
   while(S.set.slide&&!isStop(M,c)){ const nx=nbrs(M,c).filter(x=>x!==prev); if(nx.length!==1) break; prev=c; c=nx[0]; await stepTo(c); }
   moving=false; save(); arrive(c);
@@ -573,6 +600,9 @@ async function stepTo(c){
 async function arrive(c){
   const M=S.maze;
   if(c===M.exit) return escape();
+  if(c===M.key&&!M.hasKey){ M.hasKey=true; save(); sfx.sparkle(); confetti(12); redrawCell(c); redrawCell(M.door);
+    say('열쇠를 찾았어요! 이제 잠긴 문을 열 수 있어요!'); toast('🔑 열쇠를 찾았어요! 🔒 문으로 가요'); return; }
+  if(c===M.door){ sfx.zap(); say('철컥! 문이 열렸어요!'); return; }
   if(M.traps[c]!=null){
     const [e,nm]=TRAPS[M.traps[c]]; sfx.trap();
     $('#me').insertAdjacentHTML('beforeend',`<div class="trap">${e}</div>`);
@@ -605,7 +635,7 @@ async function backToJunction(){
   say('갈림길로 휘리릭!'); sfx.zap();
   const old=M.pos; M.pos=M.last; redrawCell(old);
   const me=$('#me'); me.classList.remove('zap'); placeMe(true); void me.offsetWidth; me.classList.add('zap');
-  const p=pathTo(M,M.pos,M.exit); M.hint=p.slice(1,5).filter(c=>c!==M.exit); save();
+  const p=pathTo(M,M.pos,goal(M)); M.hint=p.slice(1,5).filter(c=>c!==M.exit&&c!==M.key); save();
   M.hint.forEach(redrawCell);
 }
 async function evolve(){
@@ -638,7 +668,7 @@ function startMaze(){
   markSeen(curId());
   if(!S.maze) newMaze();
   renderMaze();
-  sayList([K(S.maze.visited.length>1?'다시 미로 속으로!':'미로에 들어왔어요! 깃발까지 가 볼까요?'),K('막다른 길의 풀숲에는 보물이 숨어 있어요.')]);
+  sayList([K(S.maze.visited.length>1?'다시 미로 속으로!':S.maze.door>=0?'미로에 들어왔어요! 🔑 열쇠를 찾아서 잠긴 문을 열고 깃발까지 가요!':'미로에 들어왔어요! 깃발까지 가 볼까요?'),K('막다른 길의 풀숲에는 보물이 숨어 있어요.')]);
 }
 
 /* ======================================================================
@@ -658,8 +688,8 @@ function settings(){
     <h3>자동 맞춤</h3>${seg('auto',[[true,'켜기'],[false,'끄기']])}
     <p class="note">켜 두면 아이가 연달아 헤맬 때 몰래 한 단계 쉬워지고, 잘하면 위에서 고른 난이도까지 다시 올라가요. 미로 크기는 다음 미로부터 바뀌어요.${S.set.auto&&E<S.set.diff?` 지금은 ${DIFF[E].e} ${DIFF[E].name}로 하고 있어요.`:''}</p>
     <h3>문제 종류</h3><div class="seg">${[['num','🔢 숫자'],['ko','가 한글'],['en','🔤 ABC']].map(([k,t])=>`<button data-topic="${k}" class="${S.set.topics[k]?'on':''}">${t}</button>`).join('')}</div>
-    <h3>움직이기</h3>${seg('slide',[[true,'길 따라 쭉'],[false,'한 칸씩']])}
-    <p class="note">‘길 따라 쭉’은 한 번 누르면 갈림길이나 풀숲·함정 앞까지 알아서 걸어가요.</p>
+    <h3>움직이기</h3>${seg('slide',[[false,'한 칸씩'],[true,'길 따라 쭉']])}
+    <p class="note">‘한 칸씩’은 한 번 누를 때 한 칸 움직여요. ‘길 따라 쭉’은 한 번 누르면 갈림길이나 풀숲·함정 앞까지 알아서 걸어가요.</p>
     <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}
     <p class="note">⏱️ 시간 제한은 없어요. 함정과 막다른 길의 문제는 맞힐 때까지 기다리고, 틀려도 별이 줄지 않아요. 💡 도와줘요를 누르면 틀린 보기가 흐려지고, 한 번 더 누르면 정답이 반짝여요.</p>
     <div class="row" style="margin-top:18px"><button class="big-btn small alt" data-m="newmaze">새 미로로 바꾸기</button><button class="big-btn small alt" data-m="reset">처음부터 다시</button><button class="big-btn small" data-close>닫기</button></div></div>`,sh=>{
