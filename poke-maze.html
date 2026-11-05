@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>포켓몬 미로 탐험</title>
+<meta name="theme-color" content="#bfeccd">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="미로 탐험">
+<link rel="manifest" href="poke-maze.webmanifest">
+<link rel="apple-touch-icon" href="icons/maze-192.png">
+<link rel="icon" href="icons/maze-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#bfeccd; --bg2:#fff4cf; --ink:#25303a; --card:#ffffff; --soft:#eef6f0; --line:rgba(0,0,0,.1);
+  --accent:#ff6b4a; --good:#22c55e; --gold:#ffcf33; --shadow:0 6px 0 rgba(0,0,0,.14);
+  --floor:#fff8e6; --seen:#ffe9a8; --hint:#b8f5c8; --wall:#2f6b3a; --mazebg:#7cc48a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg1:#16302a; --bg2:#2a2440; --ink:#eef4f0; --card:#2c3a36; --soft:#24302c; --line:rgba(255,255,255,.14);
+    --floor:#3a4a42; --seen:#5b5532; --hint:#2f6b45; --wall:#9be3a8; --mazebg:#1f3d2c; }
+}
+:root[data-theme="dark"]{ --bg1:#16302a; --bg2:#2a2440; --ink:#eef4f0; --card:#2c3a36; --soft:#24302c; --line:rgba(255,255,255,.14);
+  --floor:#3a4a42; --seen:#5b5532; --hint:#2f6b45; --wall:#9be3a8; --mazebg:#1f3d2c; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%}
+body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--bg1);background-image:linear-gradient(var(--bg1),var(--bg2));overflow:hidden;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+h1,h2,h3{font-weight:normal;margin:0}
+#app{height:100dvh;display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.big-btn{font-size:24px;padding:12px 24px;border:none;border-radius:20px;background:var(--accent);color:#fff;box-shadow:var(--shadow);min-height:60px}
+.big-btn.alt{background:var(--card);color:var(--ink)}
+.big-btn.small{font-size:19px;padding:8px 16px;min-height:48px}
+.big-btn:disabled{opacity:.45}
+.big-btn.pulse{animation:pulse 1s ease-in-out infinite}
+.big-btn:active:not(:disabled),.icon-btn:active,.pad button:active,.qc:active,.pcard:active{transform:translateY(3px)}
+.icon-btn{font-size:26px;width:56px;height:56px;border:none;border-radius:18px;background:var(--card);box-shadow:var(--shadow);position:relative;overflow:hidden;flex:none}
+.icon-btn.holding::after{content:"";position:absolute;left:0;bottom:0;height:6px;background:var(--accent);animation:hold 1s linear forwards}
+.pill{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:999px;padding:4px 16px 4px 10px;font-size:24px;min-height:52px;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+.bar{display:flex;align-items:center;gap:10px}
+.sp{flex:1}
+@keyframes hold{from{width:0}to{width:100%}}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@keyframes flash{0%,100%{filter:brightness(1)}50%{filter:brightness(0) invert(1)}}
+@keyframes glowc{50%{box-shadow:inset 0 0 0 999px rgba(120,255,160,.55)}}
+
+/* ---------- 포켓몬 그림 ---------- */
+.pic{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;pointer-events:none}
+.pic.sil{filter:brightness(0);opacity:.3}
+.noimg{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--c,#f59e0b);color:#fff;font-size:calc(var(--sz,80px)*.42);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.18);text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.noimg.sil{background:#888;opacity:.3}
+
+/* ---------- 처음 화면 ---------- */
+.home{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.home h1{font-size:clamp(38px,7.5vw,68px);text-shadow:0 4px 0 rgba(0,0,0,.08)}
+.partner{width:clamp(150px,28vmin,250px);aspect-ratio:1;--sz:clamp(150px,28vmin,250px);animation:bob 1.8s ease-in-out infinite;position:relative}
+.pname{font-size:26px}
+.pname small{display:block;font-size:17px;opacity:.65}
+.menu{display:grid;gap:12px;width:min(440px,100%)}
+.menu .big-btn{font-size:28px;min-height:76px}
+.banner{background:#fff3c4;color:#5b4500;border-radius:18px;padding:12px 16px;max-width:560px;font-size:18px;line-height:1.5}
+
+/* ---------- 짝꿍 고르기 · 도감 ---------- */
+.list{flex:1;overflow-y:auto}
+.list h2{font-size:28px;margin:6px 0 12px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.pcard{border:4px solid transparent;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:20px}
+.pcard .im{width:90px;height:90px;--sz:90px}
+.pcard small{font-size:14px;opacity:.6}
+.pcard.on{border-color:var(--accent)}
+
+/* ---------- 미로 ---------- */
+.mz{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0}
+.mz .who{display:flex;align-items:center;gap:8px;font-size:22px;min-width:0}
+.mz .who .im{width:46px;height:46px;--sz:46px;flex:none}
+.mzbody{flex:1;min-height:0;display:flex;gap:14px;align-items:center;justify-content:center}
+@media (max-aspect-ratio:1/1){ .mzbody{flex-direction:column} }
+.mzwrap{flex:1;min-width:0;min-height:0;align-self:stretch;display:grid;place-items:center;touch-action:none}
+.maze{position:relative;background:var(--mazebg);border-radius:16px;box-shadow:0 0 0 6px var(--wall),var(--shadow)}
+.cell{position:absolute;width:var(--cs);height:var(--cs);background:var(--floor);border:3px solid transparent;display:grid;place-items:center;font-size:calc(var(--cs)*.56);line-height:1}
+.cell.v{background:var(--seen)}
+.cell.h{background:var(--hint);animation:glowc 1.2s ease-in-out infinite}
+.cell.n{border-top-color:var(--wall)} .cell.e{border-right-color:var(--wall)} .cell.s{border-bottom-color:var(--wall)} .cell.w{border-left-color:var(--wall)}
+.cell .bush{animation:bob 2s ease-in-out infinite}
+.me{position:absolute;width:var(--cs);height:var(--cs);padding:calc(var(--cs)*.04);transition:left .13s linear,top .13s linear;z-index:2;--sz:var(--cs)}
+.me.bump{animation:shake .35s}
+.me.zap{transition:none;animation:pop .5s}
+.me .trap{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--cs)*.8);opacity:.85}
+.pad{display:grid;grid-template-columns:repeat(3,clamp(62px,9vmin,86px));grid-template-rows:repeat(3,clamp(62px,9vmin,86px));gap:6px;flex:none}
+.pad button{border:none;border-radius:20px;background:var(--card);box-shadow:var(--shadow);font-size:clamp(30px,4.5vmin,42px)}
+.pad .u{grid-area:1/2} .pad .l{grid-area:2/1} .pad .r{grid-area:2/3} .pad .d{grid-area:3/2}
+.pad .mid{grid-area:2/2;display:grid;place-items:center;font-size:28px;opacity:.5}
+
+/* ---------- 창 (문제 · 진화) ---------- */
+#modal{position:fixed;inset:0;background:rgba(15,25,30,.5);display:grid;place-items:center;z-index:50;padding:14px}
+.sheet{background:var(--card);border-radius:28px;padding:18px;max-width:680px;width:100%;max-height:92dvh;overflow:auto;box-shadow:0 10px 0 rgba(0,0,0,.2);text-align:center;animation:pop .25s}
+.sheet h2{font-size:30px;margin-bottom:10px}
+.sheet p{font-size:20px;line-height:1.5;margin:8px 0}
+.qhead{font-size:26px;display:flex;align-items:center;justify-content:center;gap:8px}
+.qhead .qi{font-size:44px}
+.qsub{font-size:18px;opacity:.65;margin:2px 0 8px}
+.qq{min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--soft);border-radius:22px;padding:12px;margin-bottom:12px}
+.qq .big{font-size:clamp(70px,13vmin,110px);line-height:1}
+.qq .pic2{font-size:clamp(80px,14vmin,120px);line-height:1}
+.qq .eq{font-size:clamp(48px,9vmin,80px);line-height:1}
+.qq .note{font-size:18px;opacity:.6}
+.cnt{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:330px;font-size:clamp(34px,6vmin,48px);line-height:1.1}
+.cnt span.x{opacity:.3;position:relative}
+.cnt span.x::after{content:'✕';position:absolute;inset:0;color:#ef4444;display:grid;place-items:center}
+.grp{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.grp b{font-weight:normal;font-size:40px}
+.qch{display:grid;gap:10px;grid-template-columns:repeat(2,1fr);margin-bottom:12px}
+.qch.c3{grid-template-columns:repeat(3,1fr)}
+.qc{border:4px solid transparent;background:#fff6dc;color:#3a2d10;border-radius:22px;min-height:96px;box-shadow:var(--shadow);display:grid;place-items:center;padding:6px}
+.qc .cn{font-size:52px} .qc .cl{font-size:56px} .qc .cw{font-size:clamp(24px,4.4vmin,34px)}
+.qc.dim{opacity:.25;filter:grayscale(1)}
+.qc.glow{border-color:var(--gold);box-shadow:0 0 0 4px var(--gold),0 0 24px var(--gold);animation:pulse 1s ease-in-out infinite}
+.qc.ok{background:#c9f5d6;border-color:var(--good)}
+.qc.shake{animation:shake .45s}
+.evo{width:clamp(160px,34vmin,260px);aspect-ratio:1;margin:8px auto;--sz:clamp(160px,34vmin,260px)}
+.evo.flash{animation:flash .35s linear infinite}
+.reward{font-size:90px;line-height:1.1}
+.set{text-align:left}
+.set h3{font-size:21px;margin:16px 0 6px}
+.seg{display:flex;background:var(--soft);border-radius:16px;padding:4px;gap:4px}
+.seg button{flex:1;border:none;background:none;border-radius:12px;padding:10px 6px;font-size:19px}
+.seg button.on{background:var(--accent);color:#fff}
+.set .note{font-size:15px;opacity:.7;margin:4px 2px;line-height:1.5}
+.diffs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.diffs button{border:3px solid transparent;background:var(--soft);border-radius:16px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.diffs .e{font-size:34px;line-height:1.1} .diffs b{font-weight:normal;font-size:20px} .diffs small{font-size:14px;opacity:.7}
+.diffs button.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--soft))}
+.dlbar{height:14px;background:var(--soft);border-radius:8px;overflow:hidden;margin:8px 0}
+.dlbar i{display:block;height:100%;width:0;background:var(--good);transition:width .2s}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti{position:fixed;top:-60px;font-size:34px;animation:fall 1.8s linear forwards}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:var(--card);font-size:22px;padding:12px 20px;border-radius:18px;z-index:70;max-width:90vw;text-align:center;animation:pop .2s}
+@media (max-width:600px){ .pill{font-size:20px;min-height:46px} .icon-btn{width:48px;height:48px;font-size:22px} .mz .who span{display:none} .qc{min-height:80px} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" hidden></div>
+<div id="fx"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const range=(a,b)=>Array.from({length:Math.max(0,b-a+1)},(_,i)=>a+i);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+
+/* ======================================================================
+   포켓몬 (그림은 앱에 들어 있지 않음: 어른 설정에서 기기로 받음)
+   ====================================================================== */
+const PARTNERS=[
+  {ids:[1,2,3],ko:['이상해씨','이상해풀','이상해꽃'],c:'#4ade80'},
+  {ids:[4,5,6],ko:['파이리','리자드','리자몽'],c:'#fb923c'},
+  {ids:[7,8,9],ko:['꼬부기','어니부기','거북왕'],c:'#60a5fa'},
+  {ids:[172,25,26],ko:['피츄','피카츄','라이츄'],c:'#facc15'},
+  {ids:[133],ko:['이브이'],c:'#c99a6b',eevee:true},
+  {ids:[152,153,154],ko:['치코리타','베이리프','메가니움'],c:'#86efac'},
+  {ids:[155,156,157],ko:['브케인','마그케인','블레이범'],c:'#f97316'},
+  {ids:[158,159,160],ko:['리아코','엘리게이','장크로다일'],c:'#38bdf8'},
+  {ids:[387,388,389],ko:['모부기','수풀부기','토대부기'],c:'#65a30d'},
+  {ids:[390,391,392],ko:['불꽃숭이','파이숭이','초염몽'],c:'#ef4444'},
+  {ids:[393,394,395],ko:['팽도리','팽태자','엠페르트'],c:'#3b82f6'},
+  {ids:[147,148,149],ko:['미뇽','신뇽','망나뇽'],c:'#a5b4fc'},
+  {ids:[10,11,12],ko:['캐터피','단데기','버터플'],c:'#a3e635'},
+];
+const EEVEE=[[134,'샤미드'],[135,'쥬피썬더'],[136,'부스터'],[196,'에브이'],[197,'블래키'],[470,'리피아'],[471,'글레이시아'],[700,'님피아']];
+const NAME={}, COLOR={};
+PARTNERS.forEach(p=>p.ids.forEach((id,i)=>{ NAME[id]=p.ko[i]; COLOR[id]=p.c; }));
+EEVEE.forEach(([id,n])=>{ NAME[id]=n; COLOR[id]='#c99a6b'; });
+const ALL_IDS=[...PARTNERS.flatMap(p=>p.ids),...EEVEE.map(e=>e[0])];
+const maxStage=i=>PARTNERS[i].eevee?1:PARTNERS[i].ids.length-1;
+
+const idb=(()=>{
+  let p;
+  const open=()=>p||(p=new Promise((res,rej)=>{ const r=indexedDB.open('pokemaze',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('img'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }));
+  const tx=async(mode,fn)=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('img',mode), r=fn(t.objectStore('img'));
+    t.oncomplete=()=>res(r&&r.result); t.onerror=t.onabort=()=>rej(t.error); }); };
+  return {
+    put:(k,v)=>tx('readwrite',o=>o.put(v,k)),
+    clear:()=>tx('readwrite',o=>o.clear()),
+    all:async()=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('img'), out=[], c=t.objectStore('img').openCursor();
+      c.onsuccess=()=>{ const cur=c.result; if(cur){ out.push([cur.key,cur.value]); cur.continue(); } };
+      t.oncomplete=()=>res(out); t.onerror=()=>rej(t.error); }); },
+  };
+})();
+const IMG=new Map();
+async function loadImages(){ try{ for(const [k,b] of await idb.all()) if(!IMG.has(k)&&b) IMG.set(k,URL.createObjectURL(b)); }catch(e){} }
+const ART=id=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+async function shrink(blob){ // 기기에 저장하기 전에 256px로 줄이기
+  const u=URL.createObjectURL(blob);
+  try{ const im=new Image(); im.src=u; await im.decode();
+    const Z=256, c=document.createElement('canvas'); c.width=c.height=Z;
+    const k=Math.min(Z/im.naturalWidth,Z/im.naturalHeight), w=im.naturalWidth*k, h=im.naturalHeight*k;
+    c.getContext('2d').drawImage(im,(Z-w)/2,(Z-h)/2,w,h);
+    return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('toBlob')),'image/png'));
+  } finally{ URL.revokeObjectURL(u); }
+}
+async function downloadImages(progress){
+  const jobs=ALL_IDS.filter(id=>!IMG.has('n'+id)), total=jobs.length; let done=0, fail=0;
+  const worker=async()=>{ while(jobs.length){ const id=jobs.shift();
+    try{ const r=await fetch(ART(id)); if(!r.ok) throw new Error(r.status); const b=await shrink(await r.blob()); await idb.put('n'+id,b); IMG.set('n'+id,URL.createObjectURL(b)); }
+    catch(e){ fail++; }
+    progress(++done,total); } };
+  await Promise.all([worker(),worker(),worker(),worker()]);
+  return {total,fail};
+}
+const haveImages=()=>ALL_IDS.some(id=>IMG.has('n'+id));
+// 그림이 없으면 이름 첫 글자를 넣은 동그라미
+function art(id,cls=''){
+  const u=IMG.get('n'+id);
+  if(u) return `<img class="pic ${cls}" src="${u}" alt="" draggable="false">`;
+  return `<div class="noimg ${cls}" style="--c:${COLOR[id]||'#f59e0b'}">${cls==='sil'?'?':(NAME[id]||'?')[0]}</div>`;
+}
+
+/* ======================================================================
+   글자 · 낱말 자료
+   ====================================================================== */
+const KO_UNIT=['','하나','둘','셋','넷','다섯','여섯','일곱','여덟','아홉'];
+const KO_TEN=['','열','스물','서른','마흔','쉰','예순','일흔','여든','아흔'];
+const koNum=n=>(n<=0||n>=100)?String(n):KO_TEN[Math.floor(n/10)]+KO_UNIT[n%10];
+const koCnt=n=>n===20?'스무':koNum(n).replace(/하나$/,'한').replace(/둘$/,'두').replace(/셋$/,'세').replace(/넷$/,'네');
+const jong=w=>{ const c=w.charCodeAt(w.length-1); return c>=0xAC00&&c<=0xD7A3?(c-0xAC00)%28:0; };
+const jo=(w,a,b)=>w+(jong(w)?a:b);
+const ro=w=>w+(jong(w)&&jong(w)!==8?'으로':'로');
+const CONS=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const CNAME={'ㄱ':'기역','ㄴ':'니은','ㄷ':'디귿','ㄹ':'리을','ㅁ':'미음','ㅂ':'비읍','ㅅ':'시옷','ㅇ':'이응','ㅈ':'지읒','ㅊ':'치읓','ㅋ':'키읔','ㅌ':'티읕','ㅍ':'피읖','ㅎ':'히읗'};
+const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const choOf=w=>CHO[Math.floor((w.charCodeAt(0)-0xAC00)/588)];
+const KO_WORDS=[['곰','🐻'],['개','🐶'],['소','🐮'],['말','🐴'],['배','🍐'],['귤','🍊'],['달','🌙'],['별','⭐'],['꽃','🌸'],['공','⚽'],
+  ['차','🚗'],['집','🏠'],['새','🐦'],['게','🦀'],['책','📖'],['컵','🥤'],['양','🐑'],['우유','🥛'],['사과','🍎'],['포도','🍇'],['오리','🦆'],
+  ['토끼','🐰'],['기차','🚂'],['나무','🌳'],['나비','🦋'],['사자','🦁'],['우산','☂️'],['모자','🧢'],['하마','🦛'],['피자','🍕'],['고래','🐳'],
+  ['돼지','🐷'],['라면','🍜'],['로봇','🤖'],['시계','⏰'],['수박','🍉'],['지구','🌍'],['장갑','🧤'],['치즈','🧀'],['토마토','🍅'],['펭귄','🐧'],
+  ['피아노','🎹'],['호랑이','🐯'],['코끼리','🐘'],['카메라','📷'],['바나나','🍌'],['비행기','✈️'],['낙타','🐫'],['다람쥐','🐿️'],['라디오','📻']]
+  .map(([w,e])=>({w,e,i:choOf(w)}));
+const EN_WORDS=[['ant','🐜'],['apple','🍎'],['bear','🐻'],['bus','🚌'],['bee','🐝'],['cat','🐱'],['cake','🍰'],['cow','🐮'],['dog','🐶'],['duck','🦆'],
+  ['egg','🥚'],['fish','🐟'],['fox','🦊'],['frog','🐸'],['goat','🐐'],['hat','🎩'],['ice','🧊'],['juice','🧃'],['key','🔑'],['lion','🦁'],['moon','🌙'],
+  ['milk','🥛'],['nose','👃'],['owl','🦉'],['pig','🐷'],['queen','👸'],['rabbit','🐰'],['ring','💍'],['sun','☀️'],['star','⭐'],['tree','🌳'],
+  ['train','🚂'],['umbrella','☂️'],['van','🚐'],['whale','🐳'],['yo-yo','🪀'],['zebra','🦓'],['ball','⚽'],['book','📖'],['car','🚗']]
+  .map(([w,e])=>({w,e,i:w[0].toUpperCase()}));
+const ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const FRUITS=['🍓','🍎','⭐','🍬','🎈','🍩','🍒','🌰'];
+
+/* ======================================================================
+   말 · 소리
+   ====================================================================== */
+let koV=null,enV=null;
+function pickVoices(){ try{ const vs=speechSynthesis.getVoices(); koV=vs.find(v=>/^ko/i.test(v.lang))||null;
+  enV=vs.find(v=>/^en[-_]US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null; }catch(e){} }
+if('speechSynthesis' in window){ pickVoices(); speechSynthesis.onvoiceschanged=pickVoices; }
+function utter(t,lang,rate){ const u=new SpeechSynthesisUtterance(t); u.lang=lang==='en'?'en-US':'ko-KR'; const v=lang==='en'?enV:koV; if(v) u.voice=v; u.rate=rate; u.pitch=1.1; return u; }
+function sayList(list,rate=.95){ if(!S.set.sound||!('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel(); list.forEach(([t,l])=>speechSynthesis.speak(utter(t,l||'ko',l==='en'?rate*.9:rate))); }catch(e){} }
+const say=(t,lang='ko',rate)=>sayList([[t,lang]],rate);
+const K=t=>[t,'ko'], N=t=>[t,'en'];
+let AC=null;
+function tone(f,d=.12,type='sine',vol=.14,when=0){
+  if(!S.set.sound) return;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+    const t=AC.currentTime+when, o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d+.02); }catch(e){} }
+const sfx={
+  step:()=>tone(520+rnd(80),.05,'triangle',.06), bump:()=>tone(160,.12,'sine',.12),
+  pop:()=>tone(700,.08,'triangle'),
+  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,'triangle',.13,i*.1)),
+  no:()=>{ tone(587,.12,'sine',.07); tone(494,.2,'sine',.07,.11); },     // 혼내는 느낌 없는 부드러운 '음?'
+  trap:()=>{ tone(400,.2,'sine',.1); tone(300,.3,'sine',.1,.15); },
+  zap:()=>[1200,900,1500].forEach((f,i)=>tone(f,.1,'sine',.08,i*.06)),
+  sparkle:()=>[1568,1760,2093,2349,2637].forEach((f,i)=>tone(f,.14,'sine',.07,i*.07)),
+  win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.25,'triangle',.12,i*.12)),
+};
+
+/* ======================================================================
+   상태 · 난이도
+   ====================================================================== */
+const SKEY='pokemaze-v1';
+function fresh(){ return {partner:null,stages:{},eevee:null,stars:0,cleared:0,seen:[],maze:null,
+  set:{diff:1,auto:true,sound:true,slide:true,topics:{num:true,ko:true,en:true}},adj:1,good:0,hard:0}; }
+let S=Object.assign(fresh(),store.get(SKEY,{}));
+S.set=Object.assign(fresh().set,S.set||{}); S.set.topics=Object.assign({num:true,ko:true,en:true},S.set.topics||{});
+if(S.adj==null||S.adj>S.set.diff) S.adj=S.set.diff;
+const save=()=>store.set(SKEY,S);
+const effD=()=>S.set.auto?Math.min(S.adj,S.set.diff):S.set.diff;
+function adapt(good,hard){
+  if(!S.set.auto) return;
+  if(good){ S.good++; S.hard=0; if(S.good>=4&&S.adj<S.set.diff){ S.adj++; S.good=0; } }
+  else { S.good=0; if(hard){ S.hard++; if(S.hard>=2&&S.adj>0){ S.adj--; S.hard=0; } } }
+}
+// size: 미로 한 변 (처음 → 탈출할 때마다 조금씩 커짐) · traps: 길 위 함정 수 · ch: 보기 수
+const DIFF=[
+  {e:'🐣',name:'아주 쉬움',desc:'작은 미로 · 똑같은 것 찾기 · 보기 2개',size:[4,5],traps:1,ch:2,
+    q:{num:['count'],ko:['ko-same'],en:['en-same']}},
+  {e:'🐥',name:'쉬움',desc:'10까지 세기 · 듣고 찾기 · 보기 3개',size:[5,7],traps:1,ch:3,
+    q:{num:['count'],ko:['ko-same','ko-hear'],en:['en-hear','en-word']}},
+  {e:'🐔',name:'보통',desc:'10까지 더하기 · 낱말 읽기 · 소문자',size:[6,8],traps:2,ch:3,
+    q:{num:['add','count'],ko:['ko-read','ko-hear'],en:['en-word','en-case']}},
+  {e:'🦅',name:'어려움',desc:'20까지 더하기·빼기 · 첫 글자 · 보기 4개',size:[7,10],traps:3,ch:4,
+    q:{num:['add','sub'],ko:['ko-read','ko-initial'],en:['en-read','en-initial']}},
+];
+const pIdx=()=>S.partner??0;
+const stageOf=i=>S.stages[i]||0;
+function curId(i=pIdx()){ const P=PARTNERS[i], s=stageOf(i); return P.eevee&&s>0?(S.eevee||134):P.ids[Math.min(s,P.ids.length-1)]; }
+const curName=(i=pIdx())=>NAME[curId(i)];
+function markSeen(id){ if(!S.seen.includes(id)) S.seen.push(id); }
+
+/* ======================================================================
+   공통
+   ====================================================================== */
+function toast(t,ms=2200){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),ms); }
+let onModalClose=null;
+function modal(html,setup,{backdrop=true}={}){
+  const m=$('#modal'); m.innerHTML=`<div class="sheet">${html}</div>`; m.hidden=false;
+  m.onclick=e=>{ if(backdrop&&e.target===m) closeModal(); };
+  m.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal());
+  if(setup) setup(m.querySelector('.sheet'));
+}
+function closeModal(){ $('#modal').hidden=true; $('#modal').innerHTML=''; const f=onModalClose; onModalClose=null; if(f) f(); }
+function confetti(n=26){ for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='confetti'; d.textContent=pick(['⭐','✨','🌟','🎉','💖','🎈']);
+  d.style.left=rnd(100)+'vw'; d.style.animationDelay=(Math.random()*.5)+'s'; $('#fx').appendChild(d); setTimeout(()=>d.remove(),2500); } }
+function holdBtn(b,fn){ let t; const stop=()=>{ clearTimeout(t); b.classList.remove('holding'); };
+  b.addEventListener('pointerdown',()=>{ b.classList.add('holding'); t=setTimeout(()=>{ stop(); fn(); },1000); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));
+  b.addEventListener('click',()=>{ if($('#modal').hidden) toast('어른 설정은 꾹 눌러 주세요'); }); }
+
+/* ======================================================================
+   문제 (시간 제한 없음 · 틀려도 잃는 것 없음)
+   ====================================================================== */
+function opts(ans,pool,n,key=v=>v){ const out=[ans]; for(const v of shuffle(pool)){ if(out.length>=n) break; if(!out.some(o=>key(o)===key(v))) out.push(v); } return shuffle(out); }
+function numOpts(ans,n,lo,hi){ const s=new Set([ans]); for(const v of shuffle([1,-1,2,-2,3,-3]).map(d=>ans+d)){ if(s.size>=n) break; if(v>=lo&&v<=hi) s.add(v); }
+  for(let v=lo;s.size<n&&v<=hi+5;v++) s.add(v); return shuffle([...s]); }
+const rowOf=(e,k,cross=0)=>`<div class="cnt">${Array.from({length:k},(_,i)=>`<span${i>=k-cross?' class="x"':''}>${e}</span>`).join('')}</div>`;
+const cN=v=>`<b class="cn">${v}</b>`, cL=v=>`<b class="cl">${v}</b>`, cW=v=>`<b class="cw">${v}</b>`;
+const numChoices=(ans,list)=>list.map(v=>({h:cN(v),ok:v===ans,read:[K(String(v))]}));
+const QB={
+  count:(E,n)=>{ const max=E===0?5:10, k=1+rnd(max), e=pick(FRUITS);
+    return {q:rowOf(e,k),say:[K('몇 개일까요? 하나씩 세어 봐요!')],choices:numChoices(k,numOpts(k,n,1,max)),
+      name:[K(`${koCnt(k)} 개!`)],hint:[K('같이 세어 볼까요?'),K(range(1,k).map(koNum).join(', '))]}; },
+  add:(E,n)=>{ const max=E>=3?20:10, a=1+rnd(max-1), b=1+rnd(max-a), e=pick(FRUITS), s=a+b;
+    return {q:`<div class="eq">${a} + ${b} = ?</div>${s<=10?`<div class="grp">${rowOf(e,a)}<b>+</b>${rowOf(e,b)}</div>`:''}`,
+      say:[K(`${a} 더하기 ${b}는 얼마일까요?`)],choices:numChoices(s,numOpts(s,n,2,max)),name:[K(`${a} 더하기 ${b}는 ${s}!`)],
+      hint:s<=10?[K('그림을 모두 세어 봐요!')]:[K(`${a}에서 ${b}번 더 세어 봐요.`),K(range(a+1,s).join(', '))]}; },
+  sub:(E,n)=>{ const a=4+rnd(17), b=1+rnd(Math.min(9,a-1)), d=a-b, e=pick(FRUITS);
+    return {q:`<div class="eq">${a} − ${b} = ?</div>${a<=10?rowOf(e,a,b):''}`,say:[K(`${a} 빼기 ${b}는 얼마일까요?`)],
+      choices:numChoices(d,numOpts(d,n,0,20)),name:[K(`${a} 빼기 ${b}는 ${d}!`)],
+      hint:a<=10?[K('지워진 것 말고 남은 걸 세어 봐요!')]:[K(`${a}에서 거꾸로 ${b}번 세어 봐요.`),K(range(d,a-1).reverse().join(', '))]}; },
+  'ko-same':(E,n)=>{ const pool=CONS.slice(0,E?14:6), c=pick(pool);
+    return {q:`<span class="big">${c}</span><span class="note">똑같은 글자는?</span>`,say:[K(`${CNAME[c]}! 똑같은 글자를 찾아요.`)],
+      choices:opts(c,pool,n).map(x=>({h:cL(x),ok:x===c,read:[K(CNAME[x])]})),name:[K(`${CNAME[c]}!`)]}; },
+  'ko-hear':(E,n)=>{ const pool=KO_WORDS.filter(o=>o.w.length<=2), o=pick(pool);
+    return {q:`<span class="pic2">${o.e}</span>`,say:[K(`${o.w}! ${o.w} 글자를 찾아요.`)],
+      choices:opts(o,pool,n,x=>x.w).map(x=>({h:cW(x.w),ok:x===o,read:[K(x.w)]})),name:[K(`${o.w}!`)]}; },
+  'ko-read':(E,n)=>{ const o=pick(KO_WORDS);
+    return {q:`<span class="pic2">${o.e}</span>`,say:[K('그림에 맞는 낱말을 골라요!')],hint:[K(o.w)],
+      choices:opts(o,KO_WORDS,n,x=>x.w).map(x=>({h:cW(x.w),ok:x===o,read:[K(x.w)]})),name:[K(`${o.w}!`)]}; },
+  'ko-initial':(E,n)=>{ const o=pick(KO_WORDS.filter(x=>CONS.includes(x.i)));
+    return {q:`<span class="pic2">${o.e}</span><span class="note">어떤 글자로 시작할까요?</span>`,say:[K(`${o.w}! ${jo(o.w,'은','는')} 어떤 글자로 시작할까요?`)],
+      hint:[K(o.w),K(o.w[0])],choices:opts(o.i,CONS,n).map(x=>({h:cL(x),ok:x===o.i,read:[K(CNAME[x])]})),
+      name:[K(`${jo(o.w,'은','는')} ${ro(CNAME[o.i])} 시작해요!`)]}; },
+  'en-same':(E,n)=>{ const pool=ABC.slice(0,E?26:6), c=pick(pool);
+    return {q:`<span class="big">${c}</span><span class="note">똑같은 글자는?</span>`,say:[N(`Find ${c}!`)],
+      choices:opts(c,pool,n).map(x=>({h:cL(x),ok:x===c,read:[N(x)]})),name:[N(`${c}!`)]}; },
+  'en-hear':(E,n)=>{ const pool=ABC.slice(0,E<=1?12:26), c=pick(pool);
+    return {q:'<span class="big">🔊</span><span class="note">잘 들어 봐요</span>',say:[N(`Letter ${c}!`)],
+      choices:opts(c,pool,n).map(x=>({h:cL(x),ok:x===c,read:[N(x)]})),name:[N(`${c}!`)]}; },
+  'en-word':(E,n)=>{ const o=pick(EN_WORDS);
+    return {q:`<span class="pic2">${o.e}</span>`,say:[N(`${o.w}!`)],
+      choices:opts(o,EN_WORDS,n,x=>x.w).map(x=>({h:cW(x.w),ok:x===o,read:[N(x.w)]})),name:[N(`${o.w}!`)]}; },
+  'en-case':(E,n)=>{ const c=pick(ABC);
+    return {q:`<span class="big">${c}</span><span class="note">작은 글자는?</span>`,say:[N(`Big ${c}.`),K('작은 글자는 어떤 걸까요?')],
+      choices:opts(c,ABC,n).map(x=>({h:cL(x.toLowerCase()),ok:x===c,read:[N(x)]})),name:[N(`Big ${c}, little ${c.toLowerCase()}!`)]}; },
+  'en-read':(E,n)=>{ const o=pick(EN_WORDS);
+    return {q:`<span class="pic2">${o.e}</span>`,say:[K('그림에 맞는 영어 낱말을 골라요!')],hint:[N(o.w)],
+      choices:opts(o,EN_WORDS,n,x=>x.w).map(x=>({h:cW(x.w),ok:x===o,read:[N(x.w)]})),name:[N(`${o.w}!`)]}; },
+  'en-initial':(E,n)=>{ const o=pick(EN_WORDS);
+    return {q:`<span class="pic2">${o.e}</span><span class="note">어떤 글자로 시작할까요?</span>`,say:[N(`${o.w}!`),K('어떤 글자로 시작할까요?')],
+      choices:opts(o.i,ABC,n).map(x=>({h:cL(x),ok:x===o.i,read:[N(x)]})),name:[N(`${o.w} starts with ${o.i}!`)]}; },
+};
+function makeQ(){
+  const E=effD(), d=DIFF[E], topics=['num','ko','en'].filter(t=>S.set.topics[t]);
+  const kind=pick(d.q[pick(topics.length?topics:['num'])]);
+  return Object.assign(QB[kind](E,d.ch),{kind,miss:0,help:0});
+}
+let quizOpen=false;
+// 문제 창: 맞힐 때까지 열려 있고, 틀린 보기는 흐려지기만 함
+function quiz(icon,title,sub){
+  return new Promise(res=>{
+    quizOpen=true; const Q=makeQ(); let done=false;
+    const draw=()=>{
+      const n=Q.choices.length;
+      modal(`<div class="qhead"><span class="qi">${icon}</span>${title}</div><div class="qsub">${sub}</div>
+        <div class="qq">${Q.q}</div>
+        <div class="qch${n===3?' c3':''}">${Q.choices.map((c,i)=>`<button class="qc${c.dim?' dim':''}${c.glow?' glow':''}${c.okd?' ok':''}" data-c="${i}">${c.h}</button>`).join('')}</div>
+        <div class="row"><button class="icon-btn" data-q="hear" aria-label="다시 듣기">🔊</button>
+          <button class="big-btn alt small${Q.miss>=2&&!Q.help?' pulse':''}" data-q="help">${Q.help?'🤝 정답 보기':'💡 도와줘요'}</button></div>`,sh=>{
+        sh.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>choose(+b.dataset.c,b));
+        sh.querySelector('[data-q="hear"]').onclick=()=>sayList(Q.say);
+        sh.querySelector('[data-q="help"]').onclick=help;
+      },{backdrop:false});
+    };
+    const choose=(i,b)=>{
+      if(done) return; const c=Q.choices[i];
+      if(c.ok){
+        done=true; c.okd=true; draw(); sfx.ok(); confetti(12);
+        adapt(!Q.miss&&!Q.help,Q.miss>=2||Q.help>=2); save();
+        sayList([K('맞았어요!'),...Q.name]);
+        setTimeout(()=>{ closeModal(); quizOpen=false; res(); },1500);
+        return;
+      }
+      Q.miss++; c.dim=true; sfx.no(); draw();
+      sayList([K('음, 이건'),...c.read,K(Q.miss>=2?'괜찮아요! 다시 골라 봐요. 도와줘요를 눌러도 돼요.':'다시 골라 봐요!')]);
+    };
+    const help=()=>{
+      if(done) return; Q.help++;
+      if(Q.help===1){ const wrong=shuffle(Q.choices.filter(c=>!c.ok&&!c.dim)); wrong.slice(0,Math.max(1,Math.floor(wrong.length/2))).forEach(c=>c.dim=true);
+        draw(); sayList([...Q.say,...(Q.hint||[])],.85); }
+      else { Q.choices.forEach(c=>{ if(c.ok) c.glow=true; }); draw(); sayList([...Q.name,K('반짝이는 걸 눌러요!')],.85); }
+    };
+    draw(); setTimeout(()=>sayList([K(title.replace(/<[^>]+>/g,'')),...Q.say]),250);
+  });
+}
+
+/* ======================================================================
+   미로 만들기
+   벽 비트: 위 1 · 오른쪽 2 · 아래 4 · 왼쪽 8
+   ====================================================================== */
+const DIRS={up:[0,-1,1,4],right:[1,0,2,8],down:[0,1,4,1],left:[-1,0,8,2]};
+const TRAPS=[['🕸️','거미줄'],['🌀','소용돌이'],['🪨','떨어진 바위'],['🧊','미끌미끌 얼음'],['💤','잠 가루']];
+function carve(n){
+  const w=n,h=n,cells=new Array(w*h).fill(15),seen=new Array(w*h).fill(false),st=[0]; seen[0]=true;
+  while(st.length){ const c=st[st.length-1], x=c%w, y=Math.floor(c/w);
+    const can=Object.values(DIRS).filter(([dx,dy])=>{ const nx=x+dx, ny=y+dy; return nx>=0&&ny>=0&&nx<w&&ny<h&&!seen[ny*w+nx]; });
+    if(!can.length){ st.pop(); continue; }
+    const [dx,dy,b,o]=pick(can), nc=(y+dy)*w+x+dx; cells[c]&=~b; cells[nc]&=~o; seen[nc]=true; st.push(nc); }
+  return {w,h,cells};
+}
+function nbrs(M,c){ const x=c%M.w, y=Math.floor(c/M.w), out=[]; for(const [dx,dy,b] of Object.values(DIRS)) if(!(M.cells[c]&b)) out.push((y+dy)*M.w+x+dx); return out; }
+function bfs(M,from){ const N=M.w*M.h, dist=new Array(N).fill(-1), par=new Array(N).fill(-1), q=[from]; dist[from]=0;
+  while(q.length){ const c=q.shift(); for(const n of nbrs(M,c)) if(dist[n]<0){ dist[n]=dist[c]+1; par[n]=c; q.push(n); } } return {dist,par}; }
+function pathTo(M,from,to){ const {par}=bfs(M,from), p=[to]; while(p[0]!==from&&par[p[0]]>=0) p.unshift(par[p[0]]); return p; }
+function newMaze(){
+  const E=effD(), d=DIFF[E], n=Math.min(d.size[1],d.size[0]+Math.floor(S.cleared/2));
+  const M=carve(n); M.start=0;
+  const {dist}=bfs(M,0); M.exit=dist.indexOf(Math.max(...dist));
+  const path=pathTo(M,0,M.exit);
+  // 막다른 길마다 풀숲: 가장 먼 곳에 진화의 돌, 나머지는 별·열매
+  const deads=range(0,n*n-1).filter(c=>c!==0&&c!==M.exit&&nbrs(M,c).length===1).sort((a,b)=>dist[b]-dist[a]);
+  const evo=stageOf(pIdx())<maxStage(pIdx());
+  M.items={}; deads.forEach((c,i)=>M.items[c]={k:i===0&&evo?'stone':pick(['star','star','berry']),open:false});
+  // 탈출 길 위의 함정 (피해 갈 수 없음)
+  M.traps={}; const cand=path.slice(2,-1), k=Math.min(d.traps,cand.length);
+  for(let j=1;j<=k;j++){ const c=cand[Math.floor(cand.length*j/(k+1))]; M.traps[c]=rnd(TRAPS.length); }
+  Object.assign(M,{pos:0,last:0,visited:[0],hint:[]});
+  S.maze=M; save();
+}
+
+/* ======================================================================
+   화면: 처음
+   ====================================================================== */
+let screen='home';
+function renderHome(){
+  screen='home';
+  const has=S.partner!=null;
+  $('#app').innerHTML=`<div class="home">
+    <div class="bar" style="width:100%"><div class="pill">⭐ ${S.stars}</div><div class="pill">🏁 ${S.cleared}</div><div class="sp"></div>
+      <button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <h1>포켓몬 미로 탐험</h1>
+    ${has?`<div class="partner">${art(curId())}</div><div class="pname">짝꿍 ${curName()}<small>${stageOf(pIdx())<maxStage(pIdx())?'미로 속 💎 진화의 돌을 찾으면 진화해요!':'다 자랐어요! ⭐를 모아 봐요'}</small></div>`
+      :'<div class="partner" style="font-size:120px;display:grid;place-items:center">🗺️</div><div class="pname">함께 갈 짝꿍을 골라요!</div>'}
+    ${haveImages()?'':'<div class="banner">🖼️ 포켓몬 그림이 아직 없어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 해 주세요. 그림 없이도 놀 수 있어요.</div>'}
+    <div class="menu">
+      <button class="big-btn" data-act="play">${S.maze?'🗺️ 미로 이어서 하기':'🗺️ 미로 출발!'}</button>
+      <button class="big-btn alt" data-act="pick">🔄 짝꿍 ${has?'바꾸기':'고르기'}</button>
+      <button class="big-btn alt" data-act="dex">📖 진화 도감</button>
+    </div></div>`;
+  holdBtn($('#setBtn'),settings);
+}
+function renderPick(){
+  screen='pick';
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
+    <h2>함께 미로를 탐험할 짝꿍은?</h2>
+    <div class="grid">${PARTNERS.map((P,i)=>`<button class="pcard${S.partner===i?' on':''}" data-pick="${i}"><div class="im">${art(curId(i))}</div>${curName(i)}
+      <small>${P.eevee?'진화 1번 · 여러 갈래':`진화 ${P.ids.length-1}번`}${stageOf(i)?` · ${stageOf(i)}번 진화함`:''}</small></button>`).join('')}</div></div>`;
+}
+function renderDex(){
+  screen='dex';
+  const got=ALL_IDS.filter(id=>S.seen.includes(id)).length;
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
+    <h2>📖 진화 도감 ${got} / ${ALL_IDS.length}</h2>
+    <div class="grid">${ALL_IDS.map(id=>S.seen.includes(id)?`<button class="pcard" data-say="${NAME[id]}"><div class="im">${art(id)}</div>${NAME[id]}</button>`
+      :`<button class="pcard" data-say="미로에서 진화하면 만날 수 있어요"><div class="im">${art(id,'sil')}</div>???</button>`).join('')}</div></div>`;
+}
+
+/* ======================================================================
+   화면: 미로
+   ====================================================================== */
+function renderMaze(){
+  screen='maze';
+  $('#app').innerHTML=`<div class="mz">
+    <div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button>
+      <div class="who"><div class="im">${art(curId())}</div><span>${curName()}</span></div><div class="sp"></div>
+      <div class="pill">⭐ <span id="starN">${S.stars}</span></div><button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <div class="mzbody"><div class="mzwrap" id="mzwrap"><div class="maze" id="maze"></div></div>
+      <div class="pad"><button class="u" data-dir="up" aria-label="위">⬆️</button><button class="l" data-dir="left" aria-label="왼쪽">⬅️</button>
+        <span class="mid">🧭</span><button class="r" data-dir="right" aria-label="오른쪽">➡️</button><button class="d" data-dir="down" aria-label="아래">⬇️</button></div></div></div>`;
+  holdBtn($('#setBtn'),settings);
+  layoutMaze(); bindSwipe();
+}
+let CS=40;
+function cellHTML(M,c){
+  const b=M.cells[c], cls=['cell'];
+  if(b&1) cls.push('n'); if(b&2) cls.push('e'); if(b&4) cls.push('s'); if(b&8) cls.push('w');
+  if(M.hint.includes(c)) cls.push('h'); else if(M.visited.includes(c)) cls.push('v');
+  const it=M.items[c];
+  const inner=c===M.exit?'🚩':M.traps[c]!=null?TRAPS[M.traps[c]][0]:it&&!it.open?'<span class="bush">🌿</span>':M.hint.includes(c)?'✨':'';
+  return `<div class="${cls.join(' ')}" id="c${c}" style="left:${(c%M.w)*CS}px;top:${Math.floor(c/M.w)*CS}px">${inner}</div>`;
+}
+function layoutMaze(){
+  const M=S.maze, wrap=$('#mzwrap'); if(!M||!wrap) return;
+  CS=Math.max(24,Math.floor(Math.min((wrap.clientWidth-16)/M.w,(wrap.clientHeight-16)/M.h)));
+  const mz=$('#maze'); mz.style.cssText=`width:${CS*M.w}px;height:${CS*M.h}px;--cs:${CS}px`;
+  mz.innerHTML=range(0,M.w*M.h-1).map(c=>cellHTML(M,c)).join('')+`<div class="me" id="me">${art(curId())}</div>`;
+  placeMe(true);
+}
+function redrawCell(c){ const el=$('#c'+c); if(el) el.outerHTML=cellHTML(S.maze,c); }
+function placeMe(instant){ const M=S.maze, me=$('#me'); if(!me) return; if(instant) me.style.transition='none';
+  me.style.left=(M.pos%M.w)*CS+'px'; me.style.top=Math.floor(M.pos/M.w)*CS+'px'; if(instant){ void me.offsetWidth; me.style.transition=''; } }
+function bindSwipe(){
+  const w=$('#mzwrap'); let sx=0,sy=0,on=false;
+  w.addEventListener('pointerdown',e=>{ on=true; sx=e.clientX; sy=e.clientY; });
+  w.addEventListener('pointerup',e=>{ if(!on) return; on=false; const dx=e.clientX-sx, dy=e.clientY-sy;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<28) return; move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')); });
+}
+let moving=false;
+const isStop=(M,c)=>c===M.exit||M.traps[c]!=null||(M.items[c]&&!M.items[c].open)||nbrs(M,c).length!==2;
+async function move(dir){
+  const M=S.maze; if(!M||moving||quizOpen||!$('#modal').hidden) return;
+  const [dx,dy,b]=DIRS[dir];
+  if(M.cells[M.pos]&b){ sfx.bump(); const me=$('#me'); me.classList.remove('bump'); void me.offsetWidth; me.classList.add('bump'); return; }
+  moving=true;
+  let prev=M.pos, c=M.pos+dy*M.w+dx; await stepTo(c);
+  // 길 따라 쭉: 갈림길·막다른 길·함정·풀숲·출구 앞에서 멈춤
+  while(S.set.slide&&!isStop(M,c)){ const nx=nbrs(M,c).filter(x=>x!==prev); if(nx.length!==1) break; prev=c; c=nx[0]; await stepTo(c); }
+  moving=false; save(); arrive(c);
+}
+async function stepTo(c){
+  const M=S.maze, old=M.pos; M.pos=c;
+  if(!M.visited.includes(c)) M.visited.push(c);
+  if(nbrs(M,c).length>=3) M.last=c;
+  if(M.hint.length){ if(M.hint.includes(c)) M.hint=M.hint.filter(x=>x!==c); else { const h=M.hint; M.hint=[]; h.forEach(redrawCell); } }
+  redrawCell(old); redrawCell(c); placeMe(); sfx.step();
+  await sleep(140);
+}
+async function arrive(c){
+  const M=S.maze;
+  if(c===M.exit) return escape();
+  if(M.traps[c]!=null){
+    const [e,nm]=TRAPS[M.traps[c]]; sfx.trap();
+    $('#me').insertAdjacentHTML('beforeend',`<div class="trap">${e}</div>`);
+    await quiz(e,`${nm}에 걸렸어요!`,'문제를 풀면 빠져나올 수 있어요');
+    delete M.traps[c]; save(); layoutMaze(); sfx.zap(); say('빠져나왔어요! 계속 가 볼까요?');
+    return;
+  }
+  const it=M.items[c];
+  if(it&&!it.open){
+    await quiz('🌿','막다른 길이에요!','문제를 풀면 풀숲을 헤쳐 볼 수 있어요');
+    it.open=true; save(); redrawCell(c);
+    await reward(it.k);
+    await backToJunction();
+  }
+}
+async function reward(k){
+  if(k==='stone') return evolve();
+  const n=k==='star'?2:1; S.stars+=n; save();
+  sfx.sparkle(); confetti(10);
+  await new Promise(res=>{ onModalClose=res;
+    modal(`<div class="reward">${k==='star'?'⭐⭐':'🍓'}</div><h2>${k==='star'?'반짝 별 두 개를 찾았어요!':'맛있는 열매! 별 하나!'}</h2>
+      <div class="row"><button class="big-btn" data-close>좋아요!</button></div>`,null,{backdrop:false});
+    say(k==='star'?'반짝 별 두 개를 찾았어요!':`맛있는 열매! ${curName()}${jong(curName())?'이':'가'} 좋아해요!`);
+  });
+  const s=$('#starN'); if(s) s.textContent=S.stars;
+}
+// 막다른 길을 해결하면 마지막 갈림길로 돌아가고, 출구 쪽으로 몇 칸 반짝이는 길을 보여 줌
+async function backToJunction(){
+  const M=S.maze; if(!M||M.pos===M.last) return;
+  say('갈림길로 휘리릭!'); sfx.zap();
+  const old=M.pos; M.pos=M.last; redrawCell(old);
+  const me=$('#me'); me.classList.remove('zap'); placeMe(true); void me.offsetWidth; me.classList.add('zap');
+  const p=pathTo(M,M.pos,M.exit); M.hint=p.slice(1,5).filter(c=>c!==M.exit); save();
+  M.hint.forEach(redrawCell);
+}
+async function evolve(){
+  const i=pIdx(), P=PARTNERS[i], from=curId(), fromName=curName();
+  S.stages[i]=stageOf(i)+1; if(P.eevee) S.eevee=pick(EEVEE)[0];
+  const to=curId(), toName=curName(); markSeen(to); save();
+  await new Promise(res=>{
+    modal(`<div class="reward">💎</div><h2 id="evh">진화의 돌을 찾았어요! 어? ${fromName}의 모습이…!</h2><div class="evo" id="evo">${art(from)}</div>
+      <div class="row"><button class="big-btn" id="evb" hidden>계속하기</button></div>`,sh=>{ sh.querySelector('#evb').onclick=()=>{ closeModal(); res(); }; },{backdrop:false});
+    say(`진화의 돌을 찾았어요! 어? ${fromName}의 모습이...`);
+    sfx.sparkle();
+    setTimeout(()=>{ const ev=$('#evo'); if(ev) ev.classList.add('flash'); },1800);
+    setTimeout(()=>{ const ev=$('#evo'); if(!ev) return; ev.classList.remove('flash'); ev.innerHTML=art(to);
+      $('#evh').textContent=`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`; $('#evb').hidden=false;
+      sfx.win(); confetti(); say(`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`); },3600);
+  });
+  layoutMaze(); const w=document.querySelector('.who'); if(w) w.innerHTML=`<div class="im">${art(curId())}</div><span>${curName()}</span>`;
+}
+function escape(){
+  S.stars+=3; S.cleared++; S.maze=null; save(); sfx.win(); confetti(40);
+  modal(`<h2>탈출 성공! 🎉</h2><div class="evo">${art(curId())}</div><p style="font-size:26px">⭐ 3개를 받았어요!</p>
+    <div class="row"><button class="big-btn" data-m="next">🗺️ 다음 미로</button><button class="big-btn alt" data-m="home">🏠 처음으로</button></div>`,sh=>{
+    sh.querySelector('[data-m="next"]').onclick=()=>{ closeModal(); startMaze(); };
+    sh.querySelector('[data-m="home"]').onclick=()=>{ closeModal(); renderHome(); };
+  },{backdrop:false});
+  say(`탈출 성공! ${curName()}${jong(curName())?'이랑':'랑'} 함께 해냈어요!`);
+}
+function startMaze(){
+  if(S.partner==null) return renderPick();
+  markSeen(curId());
+  if(!S.maze) newMaze();
+  renderMaze();
+  sayList([K(S.maze.visited.length>1?'다시 미로 속으로!':'미로에 들어왔어요! 깃발까지 가 볼까요?'),K('막다른 길의 풀숲에는 보물이 숨어 있어요.')]);
+}
+
+/* ======================================================================
+   어른 설정 (꾹 누르기)
+   ====================================================================== */
+function settings(){
+  const E=effD(), seg=(k,opts)=>`<div class="seg">${opts.map(([v,t])=>`<button data-k="${k}" data-v="${v}" class="${S.set[k]===v?'on':''}">${t}</button>`).join('')}</div>`;
+  const imgN=()=>ALL_IDS.filter(id=>IMG.has('n'+id)).length;
+  onModalClose=()=>{ ({home:renderHome,pick:renderPick,dex:renderDex,maze:renderMaze})[screen](); };
+  modal(`<h2>어른 설정</h2><div class="set">
+    <h3>🖼️ 포켓몬 그림 받기</h3>
+    <p class="note">이 앱에는 포켓몬 그림이 들어 있지 않아요. 버튼을 누르면 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)의 공식 일러스트 ${ALL_IDS.length}장을 받아
+      작게 줄인 뒤 <b>기기 안에만</b> 저장해요. 한 번 받으면 인터넷 없이도 보여요. 그림의 저작권은 Nintendo·Creatures·GAME FREAK에 있으니 가정에서만 써 주세요.</p>
+    <p class="note" id="imgHave">받은 그림 ${imgN()} / ${ALL_IDS.length}장</p><div class="dlbar"><i id="dlbar"></i></div>
+    <div class="row" style="justify-content:flex-start"><button class="big-btn small" id="dl">⬇️ 그림 받기</button><button class="big-btn small alt" id="clr">🗑️ 받은 그림 지우기</button></div>
+    <h3>난이도</h3><div class="diffs">${DIFF.map((d,i)=>`<button data-diff="${i}" class="${S.set.diff===i?'on':''}"><span class="e">${d.e}</span><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
+    <h3>자동 맞춤</h3>${seg('auto',[[true,'켜기'],[false,'끄기']])}
+    <p class="note">켜 두면 아이가 연달아 헤맬 때 몰래 한 단계 쉬워지고, 잘하면 위에서 고른 난이도까지 다시 올라가요. 미로 크기는 다음 미로부터 바뀌어요.${S.set.auto&&E<S.set.diff?` 지금은 ${DIFF[E].e} ${DIFF[E].name}로 하고 있어요.`:''}</p>
+    <h3>문제 종류</h3><div class="seg">${[['num','🔢 숫자'],['ko','가 한글'],['en','🔤 ABC']].map(([k,t])=>`<button data-topic="${k}" class="${S.set.topics[k]?'on':''}">${t}</button>`).join('')}</div>
+    <h3>움직이기</h3>${seg('slide',[[true,'길 따라 쭉'],[false,'한 칸씩']])}
+    <p class="note">‘길 따라 쭉’은 한 번 누르면 갈림길이나 풀숲·함정 앞까지 알아서 걸어가요.</p>
+    <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}
+    <p class="note">⏱️ 시간 제한은 없어요. 함정과 막다른 길의 문제는 맞힐 때까지 기다리고, 틀려도 별이 줄지 않아요. 💡 도와줘요를 누르면 틀린 보기가 흐려지고, 한 번 더 누르면 정답이 반짝여요.</p>
+    <div class="row" style="margin-top:18px"><button class="big-btn small alt" data-m="newmaze">새 미로로 바꾸기</button><button class="big-btn small alt" data-m="reset">처음부터 다시</button><button class="big-btn small" data-close>닫기</button></div></div>`,sh=>{
+    sh.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{ S.set.diff=+b.dataset.diff; S.adj=S.set.diff; S.good=S.hard=0; save(); settings(); });
+    sh.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ const k=b.dataset.k; S.set[k]=b.dataset.v==='true';
+      if(k==='auto'){ S.adj=S.set.diff; S.good=S.hard=0; } save(); b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
+    sh.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{ const k=b.dataset.topic, t=S.set.topics;
+      if(t[k]&&Object.values(t).filter(Boolean).length===1){ toast('하나는 켜 두어야 해요'); return; }
+      t[k]=!t[k]; save(); b.classList.toggle('on',t[k]); });
+    sh.querySelector('#dl').onclick=async()=>{
+      if(ALL_IDS.every(id=>IMG.has('n'+id))){ toast('이미 다 받았어요!'); return; }
+      try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+      const dl=sh.querySelector('#dl'); dl.disabled=true;
+      const r=await downloadImages((d,t)=>{ const b=$('#dlbar'), m=$('#imgHave'); if(b) b.style.width=(d/t*100)+'%'; if(m) m.textContent=`받는 중… ${d} / ${t}`; });
+      const m=$('#imgHave'); if(m) m.textContent=r.fail?`${r.total-r.fail}장 받았어요. ${r.fail}장은 받지 못했어요. 인터넷을 확인하고 한 번 더 눌러 주세요.`:`모두 받았어요! 🎉 (${imgN()} / ${ALL_IDS.length}장)`;
+      dl.disabled=false;
+    };
+    sh.querySelector('#clr').onclick=()=>modal(`<h2>받은 그림을 지울까요?</h2><p>포켓몬 그림만 지워지고, 별과 진화 기록은 그대로예요.</p>
+      <div class="row"><button class="big-btn" data-m="yes">지울래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
+      s2.querySelector('[data-m]').onclick=async()=>{ try{ await idb.clear(); }catch(e){} IMG.forEach(u=>URL.revokeObjectURL(u)); IMG.clear(); closeModal(); toast('그림을 지웠어요'); };
+    });
+    sh.querySelector('[data-m="newmaze"]').onclick=()=>{ S.maze=null; save(); onModalClose=null; closeModal(); if(screen==='maze') startMaze(); else renderHome(); toast('새 미로를 만들었어요'); };
+    sh.querySelector('[data-m="reset"]').onclick=()=>modal(`<h2>처음부터 다시 할까요?</h2><p>짝꿍, 진화, 별, 도감이 모두 처음으로 돌아가요.<br>설정과 받은 그림은 그대로 남아요.</p>
+      <div class="row"><button class="big-btn" data-m="yes">네, 다시 할래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
+      s2.querySelector('[data-m]').onclick=()=>{ const set=S.set; S=fresh(); S.set=set; S.adj=set.diff; save(); onModalClose=null; closeModal(); renderHome(); };
+    });
+  });
+}
+
+/* ======================================================================
+   눌렀을 때
+   ====================================================================== */
+$('#app').addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  const d=t.dataset;
+  if(d.dir) return move(d.dir);
+  if(d.pick!==undefined){ S.partner=+d.pick; markSeen(curId()); save(); sfx.pop(); say(`${curName()}! 같이 가자!`); return renderHome(); }
+  if(d.say){ sfx.pop(); return say(d.say); }
+  switch(d.act){
+    case 'home': sfx.pop(); return renderHome();
+    case 'play': sfx.pop(); return startMaze();
+    case 'pick': sfx.pop(); renderPick(); return say('함께 갈 짝꿍을 골라요!');
+    case 'dex': sfx.pop(); renderDex(); return say('진화 도감이에요!');
+  }
+});
+document.addEventListener('keydown',e=>{
+  const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];
+  if(m&&screen==='maze'){ e.preventDefault(); move(m); }
+});
+let rz; addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ if(screen==='maze') layoutMaze(); },150); });
+
+(async function boot(){ await loadImages(); renderHome(); })();
+if('serviceWorker' in navigator&&location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
