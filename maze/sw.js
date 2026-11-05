@@ -1,6 +1,6 @@
 // 포켓몬 미로 탐험: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 기기에 보관
 // (진행 상황은 localStorage, 받은 포켓몬 그림은 IndexedDB에 따로 있어서 여기서 다루지 않음)
-const CACHE = 'maze-a66f4c59a5';
+const CACHE = 'maze-472b17158f';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/maze-192.png", "icons/maze-512.png", "../fonts/jua.woff2"];
 
 self.addEventListener('install', e => {
