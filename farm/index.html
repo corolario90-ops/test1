@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>꼬마 농장 가게</title>
+<meta name="theme-color" content="#c9f2c7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="농장 가게">
+<meta name="robots" content="noindex, nofollow, noimageindex, noarchive">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/farm-192.png">
+<link rel="icon" href="icons/farm-192.png">
+<style>
+@font-face{font-family:"Jua";font-weight:400;font-style:normal;font-display:swap;src:url("../fonts/jua.woff2") format("woff2")}
+:root{
+  --bg1:#c9f2c7; --bg2:#fff4cf; --ink:#2b2b3a; --card:#ffffff; --soft:#f3f7ee; --line:rgba(0,0,0,.10);
+  --accent:#ff7a45; --good:#22c55e; --shadow:0 6px 0 rgba(0,0,0,.14);
+  --soil:#b07a52; --soil2:#97633f; --sky:#bfe6ff; --pen:#eaf7d6; --tray:#f6e3c4; --trayline:#c8a06a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg1:#1b2a24; --bg2:#2a2440; --ink:#f1f5ef; --card:#2e3a35; --soft:#25302c; --line:rgba(255,255,255,.14);
+    --sky:#35507c; --pen:#2f4630; --tray:#4a3d2c; --trayline:#9b7a4e; }
+}
+:root[data-theme="dark"]{ --bg1:#1b2a24; --bg2:#2a2440; --ink:#f1f5ef; --card:#2e3a35; --soft:#25302c; --line:rgba(255,255,255,.14);
+  --sky:#35507c; --pen:#2f4630; --tray:#4a3d2c; --trayline:#9b7a4e; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%}
+body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--bg1);
+  background-image:linear-gradient(var(--bg1),var(--bg2));overflow:hidden;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+h2,h3{font-weight:normal;margin:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+
+.big-btn{font-size:24px;padding:12px 24px;border:none;border-radius:20px;background:var(--accent);color:#fff;box-shadow:var(--shadow);min-height:60px}
+.big-btn.alt{background:var(--soft);color:var(--ink)}
+.big-btn.good{background:var(--good)}
+.big-btn.small{font-size:19px;padding:8px 16px;min-height:48px}
+.big-btn:disabled{opacity:.4}
+.big-btn.pulse{animation:pulse 1s ease-in-out infinite}
+.big-btn:active:not(:disabled),.icon-btn:active,.tabs button:active,.card:active,.stock button:active,.plot:active,.pen:active{transform:translateY(3px)}
+.icon-btn{font-size:26px;width:56px;height:56px;border:none;border-radius:18px;background:var(--card);box-shadow:var(--shadow);position:relative;overflow:hidden;flex:none}
+.icon-btn.holding::after{content:"";position:absolute;left:0;bottom:0;height:6px;background:var(--accent);animation:hold 1s linear forwards}
+.link{border:none;background:none;font-size:18px;opacity:.7;text-decoration:underline;padding:10px}
+@keyframes hold{from{width:0}to{width:100%}}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bob{50%{transform:translateY(-8px) scale(1.06)}}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+@keyframes arrive{from{transform:translateX(-80px) rotate(-10deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes floatUp{to{transform:translate(-50%,-90px);opacity:0}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+
+/* ---------- 틀 ---------- */
+#app{height:100dvh;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left))}
+.pill{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:999px;padding:4px 16px 4px 8px;box-shadow:0 4px 0 rgba(0,0,0,.12);font-size:26px;min-height:52px}
+.pill .em{font-size:30px}
+.pill .bar{width:clamp(50px,10vw,100px);height:12px;background:var(--soft);border-radius:8px;overflow:hidden}
+.pill .bar i{display:block;height:100%;background:var(--good);border-radius:8px;transition:width .4s}
+.pill.bump{animation:pulse .3s}
+.sp{flex:1}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px max(14px,env(safe-area-inset-right)) 24px max(14px,env(safe-area-inset-left))}
+.wrap{max-width:1000px;margin:0 auto}
+.sec{font-size:24px;margin:16px 4px 8px}
+.sec small{font-size:16px;opacity:.6;margin-left:6px}
+.hint{text-align:center;font-size:20px;opacity:.75;margin:6px 0 10px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px max(14px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+  background:color-mix(in srgb,var(--card) 60%,transparent)}
+.tabs button{position:relative;border:none;background:var(--card);border-radius:20px;font-size:24px;min-height:64px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;gap:8px}
+.tabs button.on{background:var(--accent);color:#fff}
+.tabs .em{font-size:32px}
+.badge{position:absolute;top:-8px;right:-4px;background:#ef4444;color:#fff;border-radius:999px;min-width:32px;height:32px;font-size:18px;display:grid;place-items:center;padding:0 7px;border:3px solid var(--card)}
+.badge:empty{display:none}
+
+/* ---------- 처음 화면 ---------- */
+.splash{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:20px;
+  background-color:var(--bg1);background-image:linear-gradient(var(--bg1),var(--bg2))}
+.splash h1{font-weight:normal;font-size:clamp(44px,9vw,80px);margin:0;text-shadow:0 4px 0 rgba(0,0,0,.08)}
+.splash .pics{font-size:clamp(48px,9vw,84px);letter-spacing:6px}
+.splash .pics span{display:inline-block;animation:bob 1.6s ease-in-out infinite}
+.splash .pics span:nth-child(2n){animation-delay:.4s}
+.splash .big-btn{font-size:32px;min-height:84px;padding:14px 40px}
+.splash p{font-size:20px;opacity:.75;margin:0}
+
+/* ---------- 농장 ---------- */
+.village{position:relative;border-radius:26px;background:linear-gradient(var(--sky) 0 62%,#86cf6f 62%);min-height:130px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;
+  gap:0 8px;padding:40px 12px 8px;box-shadow:var(--shadow);font-size:clamp(38px,6vw,56px);overflow:hidden;line-height:1.15}
+.village .sun{position:absolute;top:6px;left:12px;font-size:38px}
+.village .cloud{position:absolute;top:8px;right:16px;font-size:36px;opacity:.9}
+.village span[data-say]{cursor:pointer}
+.village .vhint{font-size:18px;background:rgba(255,255,255,.85);color:#2b2b3a;border-radius:12px;padding:4px 10px;align-self:center}
+.memo{display:flex;align-items:center;gap:10px;justify-content:center;width:100%;max-width:640px;margin:12px auto 0;border:3px solid #ffd76a;background:#fffbe8;color:#2b2b3a;
+  border-radius:20px;padding:8px 14px;font-size:22px}
+.memo .w{font-size:34px}
+.memo b{font-weight:normal;color:var(--accent);margin-left:auto}
+.plots{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,1.6vw,16px);max-width:760px;margin:0 auto}
+.plot{position:relative;aspect-ratio:1.2;border:none;border-radius:22px;color:#fff;overflow:hidden;
+  background:repeating-linear-gradient(0deg,var(--soil) 0 16px,var(--soil2) 16px 21px);box-shadow:inset 0 -6px 0 rgba(0,0,0,.18),var(--shadow);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px}
+.plot .big{font-size:clamp(46px,8.5vw,80px);line-height:1}
+.plot .plus{width:clamp(54px,9vw,78px);aspect-ratio:1;border-radius:50%;border:4px dashed rgba(255,255,255,.75);display:grid;place-items:center;font-size:clamp(30px,5vw,44px);line-height:1}
+.plot small{font-size:clamp(15px,2.4vw,20px);background:rgba(0,0,0,.25);border-radius:10px;padding:1px 8px}
+.plot .bar,.pen .bar{width:72%;height:12px;background:rgba(0,0,0,.28);border-radius:8px;overflow:hidden}
+.plot .bar i,.pen .bar i{display:block;height:100%;background:#7ee36d;border-radius:8px}
+.plot .drops,.pen .drops{position:absolute;top:6px;right:8px;font-size:clamp(14px,2.2vw,20px);letter-spacing:-2px}
+.plot.ready .big,.pen.ready .prod{animation:bob 1s ease-in-out infinite}
+.plot.ready::after,.pen.ready::after{content:'✨';position:absolute;top:6px;left:8px;font-size:26px}
+.plot.ready{background:repeating-linear-gradient(0deg,#c58a5e 0 16px,#a8714b 16px 21px)}
+.pens{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;max-width:760px;margin:0 auto}
+.pen{position:relative;border:none;border-radius:22px;background:var(--pen);box-shadow:inset 0 -10px 0 #c9a27a,var(--shadow);min-height:150px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 6px 16px}
+.pen .ae{font-size:58px;line-height:1}
+.pen .prod{font-size:40px;position:absolute;top:8px;right:10px}
+.pen small{font-size:18px}
+
+/* ---------- 가게 ---------- */
+.shop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:18px;max-width:1100px;margin:0 auto;align-items:start}
+@media (max-aspect-ratio:1/1){ .shop{grid-template-columns:1fr} }
+.counter{background:var(--card);border-radius:28px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px}
+.who{font-size:clamp(90px,14vw,140px);line-height:1;animation:arrive .6s;border:none;background:none;padding:0}
+.who.happy{animation:bob .8s ease-in-out 3}
+.cname{font-size:22px;opacity:.8}
+.bubble{position:relative;background:#fffbe8;color:#2b2b3a;border-radius:24px;padding:12px 14px;border:3px solid #ffd76a;width:100%}
+.bubble::before{content:"";position:absolute;top:-16px;left:50%;margin-left:-14px;border:14px solid transparent;border-top:0;border-bottom:16px solid #ffd76a}
+.bubble .hello{font-size:22px;color:#6b55c7;text-align:center}
+.ol{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:16px}
+.ol+.ol{border-top:2px dashed #f1dca0}
+.ol .oe{font-size:clamp(44px,6vw,58px);line-height:1}
+.ol .ow{font-size:clamp(26px,4vw,36px);flex:1;line-height:1.1}
+.ol .on{font-size:clamp(38px,5vw,50px);color:var(--accent);min-width:44px;text-align:center}
+.ol .dots{display:grid;grid-template-columns:repeat(5,15px);gap:4px}
+.ol .dots i{width:15px;height:15px;border-radius:50%;background:var(--accent)}
+.ol .dots i.off{background:transparent;box-shadow:inset 0 0 0 3px var(--accent)}
+.ol .dots i.over{background:#a78bfa}
+.ol .ck{font-size:34px;width:40px;text-align:center}
+.ol.shake{animation:shake .5s;background:#ffe0e0}
+.brow{display:flex;gap:10px;justify-content:center;margin-top:8px}
+.paybox{text-align:center;width:100%}
+.paybox p{font-size:20px;margin:4px 0}
+.coins{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:70px;margin:8px 0}
+.coins button{font-size:52px;border:none;background:none;padding:0 2px;animation:pop .3s}
+.paycount{font-size:40px;color:var(--accent);margin:6px 0}
+.tray{min-height:120px;background:var(--tray);border-radius:22px;border:4px dashed var(--trayline);display:flex;flex-wrap:wrap;gap:8px 14px;padding:10px;align-content:flex-start}
+.tray .tg{display:flex;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.55);border-radius:16px;padding:2px 6px}
+.tray .tg.shake{animation:shake .5s;background:#ffd0d0}
+.tray button{font-size:46px;border:none;background:none;padding:0 1px;line-height:1.1;animation:pop .2s}
+.tray .tn{font-size:26px;color:#2b2b3a;background:#fff;border-radius:999px;min-width:38px;height:38px;display:grid;place-items:center;margin-left:4px}
+.tray .hint{width:100%;align-self:center}
+.give-row{margin:12px 0 4px}
+.stock{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px}
+.stock button{position:relative;border:none;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;font-size:19px}
+.stock .e{font-size:48px;line-height:1.1}
+.stock .cnt{position:absolute;top:-8px;right:-6px;background:var(--good);color:#fff;border-radius:999px;min-width:34px;height:34px;display:grid;place-items:center;font-size:20px;padding:0 6px}
+.stock button.zero{opacity:.45}
+.stock button.zero .cnt{background:#9ca3af}
+.stock button.glow{box-shadow:0 0 0 5px #ffd400,var(--shadow);animation:pulse 1.1s ease-in-out infinite}
+.diffs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.diffs button{border:3px solid transparent;background:var(--soft);border-radius:16px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.diffs .e{font-size:34px;line-height:1.1} .diffs b{font-weight:normal;font-size:20px} .diffs small{font-size:14px;opacity:.7}
+.diffs button.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--soft))}
+
+/* ---------- 시장 · 단어 ---------- */
+.coinsay{text-align:center;font-size:22px;margin:4px 0 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.card{position:relative;border:none;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:21px}
+.card .e{font-size:56px;line-height:1.1}
+.card .en{font-size:15px;opacity:.6}
+.card .price{background:#fff1b8;color:#6b4e00;border-radius:999px;padding:2px 12px;font-size:20px;margin-top:2px}
+.card.owned{opacity:.6}
+.card.owned .price{background:#c9f5d6;color:#11602e}
+.card.locked .e{filter:grayscale(1);opacity:.45}
+.card.locked .price{background:var(--soft);color:inherit}
+.card.cant .price{background:#ffe1e1;color:#8a1c1c}
+.wcard{border:none;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.wcard .e{font-size:54px;line-height:1.1}
+.wcard b{font-weight:normal;font-size:26px}
+.wcard i{font-style:normal;font-size:19px;color:#6b55c7}
+.wcard.no{opacity:.4}
+
+/* ---------- 창 ---------- */
+#modal{position:fixed;inset:0;background:rgba(20,20,40,.45);display:grid;place-items:center;z-index:50;padding:16px}
+.sheet{background:var(--card);border-radius:28px;padding:20px;max-width:640px;width:100%;max-height:90dvh;overflow:auto;box-shadow:0 10px 0 rgba(0,0,0,.2);text-align:center;animation:pop .25s}
+.sheet h2{font-size:30px;margin-bottom:12px}
+.sheet .huge{font-size:96px;line-height:1.1}
+.sheet .math{font-size:44px;margin:10px 0}
+.sheet .math b{font-weight:normal;color:var(--accent)}
+.sheet p{font-size:21px;line-height:1.5;margin:8px 0}
+.seeds{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+.seeds button{position:relative;border:none;background:var(--soft);border-radius:20px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;font-size:22px}
+.seeds .e{font-size:54px;line-height:1.1}
+.seeds small{font-size:15px;opacity:.6}
+.seeds .want{position:absolute;top:-8px;right:-6px;font-size:30px}
+.set h3{font-size:21px;margin:16px 0 6px;text-align:left}
+.seg{display:flex;background:var(--soft);border-radius:16px;padding:4px;gap:4px}
+.seg button{flex:1;border:none;background:none;border-radius:12px;padding:10px 6px;font-size:19px}
+.seg button.on{background:var(--accent);color:#fff}
+.set .note{font-size:15px;opacity:.65;text-align:left;margin:4px 2px}
+.unlocks{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:52px;margin:8px 0}
+
+/* ---------- 효과 ---------- */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.burst{position:fixed;transform:translate(-50%,-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:min(330px,84vw);
+  background:rgba(255,255,255,.94);border-radius:26px;padding:12px;box-shadow:0 8px 0 rgba(0,0,0,.15)}
+.burst span{font-size:50px;position:relative;animation:pop .3s;line-height:1.1}
+.burst b{position:absolute;bottom:-4px;right:-6px;font-weight:normal;font-size:17px;background:var(--accent);color:#fff;border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.flyer{position:fixed;font-size:46px;margin:-28px 0 0 -24px;transition:transform .6s cubic-bezier(.5,-.3,.6,1),opacity .6s}
+.floater{position:fixed;font-size:44px;transform:translate(-50%,0);animation:floatUp .9s ease-out forwards}
+.confetti{position:fixed;top:-60px;font-size:34px;animation:fall 1.8s linear forwards}
+.ol .ow{white-space:nowrap}
+@media (max-width:560px){
+  .pill{font-size:21px;min-height:46px;padding:3px 12px 3px 6px} .pill .em{font-size:24px} .pill .bar{display:none}
+  .icon-btn{width:48px;height:48px;font-size:22px} .tabs button{font-size:19px;min-height:56px} .tabs .em{font-size:26px}
+  .ol{gap:6px;padding:6px 2px} .ol .oe{font-size:40px} .ol .ow{font-size:23px} .ol .on{font-size:34px;min-width:30px}
+  .ol .dots{grid-template-columns:repeat(5,10px);gap:3px} .ol .dots i{width:10px;height:10px} .ol .ck{width:30px;font-size:26px}
+  .plot small{display:none}
+}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:var(--card);font-size:22px;padding:12px 20px;border-radius:18px;z-index:70;max-width:90vw;text-align:center;animation:pop .2s}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="pill" id="coinPill"><span class="em">🪙</span><span id="coinN">0</span></div>
+    <div class="pill" id="lvPill"><span class="em">⭐</span><span id="lvN">1</span><div class="bar"><i id="lvBar"></i></div></div>
+    <div class="sp"></div>
+    <button class="icon-btn" id="wordsBtn" aria-label="단어 카드">📖</button>
+    <button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button>
+  </header>
+  <main id="view"></main>
+  <nav class="tabs">
+    <button data-v="farm"><span class="em">🌱</span>농장<span class="badge" id="bFarm"></span></button>
+    <button data-v="shop"><span class="em">🏪</span>가게<span class="badge" id="bShop"></span></button>
+    <button data-v="market"><span class="em">🛒</span>시장</button>
+  </nav>
+</div>
+<div class="splash" id="splash">
+  <div class="pics"><span>🐰</span><span>🥕</span><span>🏪</span><span>🍓</span><span>🐔</span></div>
+  <h1>꼬마 농장 가게</h1>
+  <p>키우고, 세고, 읽고, 팔아요!</p>
+  <button class="big-btn" id="goBtn">놀러 가기 🚜</button>
+</div>
+<div id="modal" hidden></div>
+<div id="fx"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
+
+/* ======================================================================
+   자료
+   ====================================================================== */
+// one/many: 영어 손님이 말하는 낱개·여러 개 모양
+const ITEMS={
+  carrot:    {e:'🥕',ko:'당근',  en:'carrot',    one:'carrot',         many:'carrots',          price:1,grow:15,yield:[3,4],cost:0, lv:1},
+  tomato:    {e:'🍅',ko:'토마토',en:'tomato',    one:'tomato',         many:'tomatoes',         price:1,grow:20,yield:[3,4],cost:0, lv:1},
+  potato:    {e:'🥔',ko:'감자',  en:'potato',    one:'potato',         many:'potatoes',         price:1,grow:25,yield:[3,5],cost:6, lv:1},
+  corn:      {e:'🌽',ko:'옥수수',en:'corn',      one:'ear of corn',    many:'ears of corn',     price:2,grow:30,yield:[2,4],cost:10,lv:2},
+  strawberry:{e:'🍓',ko:'딸기',  en:'strawberry',one:'strawberry',     many:'strawberries',     price:2,grow:30,yield:[3,5],cost:12,lv:2},
+  egg:       {e:'🥚',ko:'달걀',  en:'egg',       one:'egg',            many:'eggs',             price:2},
+  cucumber:  {e:'🥒',ko:'오이',  en:'cucumber',  one:'cucumber',       many:'cucumbers',        price:2,grow:35,yield:[3,4],cost:18,lv:3},
+  pumpkin:   {e:'🎃',ko:'호박',  en:'pumpkin',   one:'pumpkin',        many:'pumpkins',         price:3,grow:45,yield:[2,3],cost:25,lv:4},
+  milk:      {e:'🥛',ko:'우유',  en:'milk',      one:'bottle of milk', many:'bottles of milk',  price:3},
+  grapes:    {e:'🍇',ko:'포도',  en:'grapes',    one:'bunch of grapes',many:'bunches of grapes',price:3,grow:45,yield:[2,4],cost:35,lv:5},
+  watermelon:{e:'🍉',ko:'수박',  en:'watermelon',one:'watermelon',     many:'watermelons',      price:4,grow:60,yield:[2,3],cost:45,lv:5},
+  honey:     {e:'🍯',ko:'꿀',    en:'honey',     one:'jar of honey',   many:'jars of honey',    price:4},
+  wool:      {e:'🧶',ko:'털실',  en:'yarn',      one:'ball of yarn',   many:'balls of yarn',    price:5},
+};
+const CROPS=Object.keys(ITEMS).filter(id=>ITEMS[id].grow);
+const ANIMALS={
+  chicken:{e:'🐔',ko:'닭',  en:'chicken',sound:'꼬꼬댁!',item:'egg',  every:25,yield:[2,3],cost:15,lv:3},
+  cow:    {e:'🐄',ko:'젖소',en:'cow',    sound:'음매~', item:'milk', every:40,yield:[2,3],cost:30,lv:4},
+  bee:    {e:'🐝',ko:'꿀벌',en:'bee',    sound:'붕붕~', item:'honey',every:50,yield:[1,2],cost:50,lv:6},
+  sheep:  {e:'🐑',ko:'양',  en:'sheep',  sound:'메에~', item:'wool', every:60,yield:[1,2],cost:70,lv:7},
+};
+const DECOR=[
+  {id:'flower',e:'🌷',ko:'꽃',en:'flower',cost:3,lv:1},       {id:'tree',e:'🌳',ko:'나무',en:'tree',cost:5,lv:1},
+  {id:'puppy',e:'🐶',ko:'강아지',en:'puppy',cost:8,lv:1},     {id:'duck',e:'🦆',ko:'오리',en:'duck',cost:8,lv:2},
+  {id:'snowman',e:'⛄',ko:'눈사람',en:'snowman',cost:12,lv:2},{id:'house',e:'🏠',ko:'집',en:'house',cost:15,lv:2},
+  {id:'tent',e:'⛺',ko:'텐트',en:'tent',cost:15,lv:3},        {id:'fountain',e:'⛲',ko:'분수',en:'fountain',cost:25,lv:3},
+  {id:'rainbow',e:'🌈',ko:'무지개',en:'rainbow',cost:30,lv:4},{id:'carousel',e:'🎠',ko:'회전목마',en:'carousel',cost:35,lv:4},
+  {id:'ferris',e:'🎡',ko:'대관람차',en:'Ferris wheel',cost:50,lv:5},{id:'castle',e:'🏰',ko:'성',en:'castle',cost:80,lv:6},
+  {id:'rocket',e:'🚀',ko:'로켓',en:'rocket',cost:100,lv:7},   {id:'unicorn',e:'🦄',ko:'유니콘',en:'unicorn',cost:120,lv:8},
+];
+const PLOT_COST=[10,20,35], PLOT_LV=[2,3,4];   // 7·8·9번째 밭
+const CUST=[['🐰','토끼','Bunny'],['🐻','곰','Bear'],['🐼','판다','Panda'],['🦊','여우','Fox'],['🐷','돼지','Piggy'],['🐸','개구리','Froggy'],
+  ['🐯','호랑이','Tiger'],['🐨','코알라','Koala'],['🐵','원숭이','Monkey'],['🐱','고양이','Kitty'],['🐧','펭귄','Penguin'],['🦁','사자','Lion'],
+  ['🐹','햄스터','Hamster'],['🐘','코끼리','Elephant'],['🦒','기린','Giraffe'],['🐢','거북이','Turtle']];
+
+/* ======================================================================
+   말 · 소리
+   ====================================================================== */
+const KO_UNIT=['','하나','둘','셋','넷','다섯','여섯','일곱','여덟','아홉'];
+const KO_TEN=['','열','스물','서른','마흔','쉰','예순','일흔','여든','아흔'];
+const koNum=n=>(n<=0||n>=100)?String(n):KO_TEN[Math.floor(n/10)]+KO_UNIT[n%10];
+// 세는 말 앞: 한 개, 두 개, 스무 개
+const koCnt=n=>n===20?'스무':koNum(n).replace(/하나$/,'한').replace(/둘$/,'두').replace(/셋$/,'세').replace(/넷$/,'네');
+const EN=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
+const enNum=n=>EN[n]||String(n);
+const numWord=(n,lang)=>lang==='en'?enNum(n):koNum(n);
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+function hasB(w){ const c=w.charCodeAt(w.length-1); return c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28!==0; }
+const jo=(w,a,b)=>w+(hasB(w)?a:b);
+
+let koV=null,enV=null;
+function pickVoices(){ try{ const vs=speechSynthesis.getVoices(); koV=vs.find(v=>/^ko/i.test(v.lang))||null;
+  enV=vs.find(v=>/^en[-_]US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null; }catch(e){} }
+if('speechSynthesis' in window){ pickVoices(); speechSynthesis.onvoiceschanged=pickVoices; }
+function utter(t,lang,rate){ const u=new SpeechSynthesisUtterance(t); u.lang=lang==='en'?'en-US':'ko-KR'; const v=lang==='en'?enV:koV; if(v) u.voice=v; u.rate=rate; u.pitch=1.1; return u; }
+function say(t,lang='ko',rate=.95){ sayList([[t,lang]],rate); }
+function sayList(list,rate=.95){ if(!S.set.sound||!('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel(); list.forEach(([t,l])=>speechSynthesis.speak(utter(t,l||'ko',rate))); }catch(e){} }
+
+let AC=null;
+function tone(f,d=.12,type='sine',vol=.14,when=0){
+  if(!S.set.sound) return;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+    const t=AC.currentTime+when, o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d+.02); }catch(e){} }
+const sfx={
+  pop:()=>tone(660+rnd(200),.09,'triangle'),
+  coin:()=>{ tone(988,.07,'square',.05); tone(1319,.14,'square',.05,.07); },
+  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,'triangle',.13,i*.1)),
+  no:()=>{ tone(587,.12,'sine',.07); tone(494,.2,'sine',.07,.11); },        // 혼내는 느낌 없는 부드러운 '음?'
+  water:()=>{ tone(900,.08,'sine',.08); tone(600,.12,'sine',.08,.06); },
+  ding:()=>tone(1175,.25,'triangle',.08),
+  buy:()=>[784,988,1175,1568].forEach((f,i)=>tone(f,.16,'square',.05,i*.08)),
+};
+
+/* ======================================================================
+   상태
+   ====================================================================== */
+const SKEY='farmshop-v1';
+function fresh(){ return { coins:3, served:0, crops:['carrot','tomato'], animals:[], plots:Array.from({length:6},()=>({c:null})),
+  stock:{carrot:3,tomato:2}, decor:[], customer:null, tray:{}, pending:null, met:[],
+  set:{diff:1,auto:true,english:true,sound:true}, adj:1, good:0, hard:0 }; }
+let S=Object.assign(fresh(),store.get(SKEY,{}));
+S.set=Object.assign(fresh().set,S.set||{});
+if(typeof S.set.english==='number') S.set.english=S.set.english>0;
+delete S.set.maxNum; delete S.set.textOnly;
+if(S.adj==null||S.adj>S.set.diff) S.adj=S.set.diff;
+
+// 난이도: 어른이 고른 단계가 가장 높은 단계. ‘자동 맞춤’은 그 아래에서만 오르내림
+// fill 0: 담을 때마다 주문 점이 채워짐 · 1: 한 번 헤맨 뒤부터 · 2: 도움을 받을 때만
+const DIFF=[
+  {e:'🐣',name:'아주 쉬움',desc:'3까지 세기 · 그림 주문만',max:3, multi:0,  en:0,  text:0,  fill:0},
+  {e:'🐥',name:'쉬움',     desc:'5까지 세기 · 가끔 영어 손님',max:5, multi:0,  en:.25,text:0,  fill:0},
+  {e:'🐔',name:'보통',     desc:'10까지 · 두 가지 · 글자 주문',max:10,multi:.35,en:.3, text:.3, fill:1},
+  {e:'🦅',name:'어려움',   desc:'점 없이 숫자만 · 글자·영어 자주',max:10,multi:.5, en:.45,text:.45,fill:2},
+];
+const effD=()=>S.set.auto?Math.min(S.adj,S.set.diff):S.set.diff;
+function adapt(good,hard){
+  if(!S.set.auto) return;
+  if(good){ S.good++; S.hard=0; if(S.good>=4&&S.adj<S.set.diff){ S.adj++; S.good=0; } }
+  else { S.good=0; if(hard){ S.hard++; if(S.hard>=2&&S.adj>0){ S.adj--; S.hard=0; } } }
+}
+const save=()=>store.set(SKEY,S);
+
+const needXP=L=>(L-1)*(L+2)/2;           // 레벨 L이 되는 손님 수: 0,2,5,9,14,20,27,35…
+function level(s=S.served){ let L=1; while(s>=needXP(L+1)) L++; return L; }
+const avail=()=>[...new Set([...S.crops,...S.animals.map(a=>ANIMALS[a.t].item)])];
+const ORDER=Object.keys(ITEMS);
+const byOrder=(a,b)=>ORDER.indexOf(a)-ORDER.indexOf(b);
+
+/* ======================================================================
+   공통 화면 조각
+   ====================================================================== */
+let view='farm';
+function updateTop(){
+  $('#coinN').textContent=S.coins;
+  const L=level(), a=needXP(L), b=needXP(L+1);
+  $('#lvN').textContent=L; $('#lvBar').style.width=((S.served-a)/(b-a)*100)+'%';
+}
+function bump(id){ const el=$(id); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+function updateBadges(){
+  const now=Date.now();
+  const ready=S.plots.filter(p=>p.c&&now>=p.end).length+S.animals.filter(a=>now>=a.end).length;
+  $('#bFarm').textContent=view!=='farm'&&ready?ready:'';
+  $('#bShop').textContent=view!=='shop'&&(S.customer||S.pending)?'!':'';
+}
+function go(v){ view=v; render(); }
+function render(){
+  updateTop();
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
+  $('#view').scrollTop=0;
+  ({farm:renderFarm,shop:renderShop,market:renderMarket,words:renderWords})[view]();
+  updateBadges();
+}
+function toast(t,ms=2200){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),ms); }
+function modal(html,setup,{backdrop=true}={}){
+  const m=$('#modal'); m.innerHTML=`<div class="sheet">${html}</div>`; m.hidden=false;
+  m.onclick=e=>{ if(backdrop&&e.target===m) closeModal(); };
+  m.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal());
+  if(setup) setup(m.querySelector('.sheet'));
+}
+let onModalClose=null;
+function closeModal(){ $('#modal').hidden=true; $('#modal').innerHTML=''; const f=onModalClose; onModalClose=null; if(f) f(); }
+
+/* ---------- 효과 ---------- */
+const center=el=>{ const r=el.getBoundingClientRect(); return [r.left+r.width/2,r.top+r.height/2]; };
+function flyTo(fromEl,toEl,emoji){
+  if(!fromEl||!toEl) return;
+  const [ax,ay]=center(fromEl), [bx,by]=center(toEl);
+  const d=document.createElement('div'); d.className='flyer'; d.textContent=emoji; d.style.left=ax+'px'; d.style.top=ay+'px';
+  $('#fx').appendChild(d); void d.offsetWidth;
+  d.style.transform=`translate(${bx-ax}px,${by-ay}px) scale(.5)`; d.style.opacity='.4';
+  setTimeout(()=>d.remove(),650);
+}
+function floatAt(el,emoji){ const [x,y]=center(el); const d=document.createElement('div'); d.className='floater'; d.textContent=emoji;
+  d.style.left=x+'px'; d.style.top=(y-30)+'px'; $('#fx').appendChild(d); setTimeout(()=>d.remove(),950); }
+function confetti(){ for(let i=0;i<26;i++){ const d=document.createElement('div'); d.className='confetti'; d.textContent=pick(['🎉','⭐','✨','💖','🌟','🎈']);
+  d.style.left=rnd(100)+'vw'; d.style.animationDelay=(Math.random()*.5)+'s'; $('#fx').appendChild(d); setTimeout(()=>d.remove(),2500); } }
+// 거둔 것을 하나씩 세어 보여 주고 가게로 날려 보냄
+async function countFx(el,emoji,n,lang='ko'){
+  const [x,y]=center(el); const d=document.createElement('div'); d.className='burst';
+  d.style.left=Math.max(170,Math.min(innerWidth-170,x))+'px'; d.style.top=Math.max(120,Math.min(innerHeight-160,y))+'px';
+  $('#fx').appendChild(d);
+  for(let k=1;k<=n;k++){ const s=document.createElement('span'); s.innerHTML=`${emoji}<b>${k}</b>`; d.appendChild(s);
+    sfx.pop(); say(numWord(k,lang),lang,1); await sleep(600); }
+  await sleep(350);
+  const tab=$('.tabs [data-v="shop"]');
+  [...d.children].forEach((s,j)=>setTimeout(()=>{ flyTo(s,tab,emoji); s.style.visibility='hidden'; },j*90));
+  setTimeout(()=>d.remove(),n*90+80);
+}
+
+/* ======================================================================
+   농장
+   ====================================================================== */
+function villageHTML(){
+  return `<div class="village"><span class="sun">☀️</span><span class="cloud">☁️</span><span data-say="우리 집|house">🏡</span>${
+    S.decor.map(id=>{ const d=DECOR.find(x=>x.id===id); return `<span data-say="${d.ko}|${d.en}">${d.e}</span>`; }).join('')}${
+    S.decor.length?'':'<span class="vhint">🛒 시장에서 마을을 꾸며요!</span>'}</div>`;
+}
+function memoHTML(){
+  const c=S.customer; if(!c) return '';
+  return `<button class="memo" data-act="toShop"><span class="w">${c.who[0]}</span><span>${c.lines.map(l=>`${c.textOnly?ITEMS[l.id].ko:ITEMS[l.id].e} ${l.n}`).join(' · ')}</span><b>가게로 ➜</b></button>`;
+}
+function renderFarm(){
+  $('#view').innerHTML=`<div class="wrap">${villageHTML()}${memoHTML()}
+    <h2 class="sec">🌱 밭 <small>빈 밭 심기 · 누를수록 쑥쑥 · 다 자라면 거두기</small></h2>
+    <div class="plots">${S.plots.map((p,i)=>`<button class="plot" data-i="${i}"></button>`).join('')}</div>
+    ${S.animals.length?`<h2 class="sec">🐾 동물 친구 <small>누를수록 쑥쑥</small></h2>
+    <div class="pens">${S.animals.map((a,i)=>`<button class="pen" data-a="${i}"></button>`).join('')}</div>`:''}</div>`;
+  tickFarm(true);
+}
+function growState(o,now){ if(!o.c&&!o.t) return {k:'e',f:0}; const f=Math.min(1,(now-o.start)/(o.end-o.start)); return {k:f>=1?'r':f<.5?'g1':'g2',f}; }
+function plotInner(p,st){
+  if(st.k==='e') return `<span class="plus">＋</span><small>심기</small>`;
+  const it=ITEMS[p.c];
+  if(st.k==='r') return `<span class="big">${it.e}</span><small>${it.ko} 거두기!</small>`;
+  return `<span class="big">${st.k==='g1'?'🌱':'🌿'}</span><div class="bar"><i></i></div><small>${it.ko}</small>`;
+}
+function penInner(a,st){
+  const an=ANIMALS[a.t], it=ITEMS[an.item];
+  return st.k==='r'?`<span class="ae">${an.e}</span><span class="prod">${it.e}</span><small>${it.ko} 가져가기!</small>`
+    :`<span class="ae">${an.e}</span><div class="bar"><i></i></div><small>${an.ko}</small>`;
+}
+function tickFarm(force){
+  const now=Date.now();
+  const upd=(el,o,st,inner,base)=>{
+    const key=st.k+(o.c||o.t||'');
+    if(el.dataset.k!==key){ if(!force&&st.k==='r'&&el.dataset.k) sfx.ding();
+      el.dataset.k=key; el.className=base+(st.k==='r'?' ready':''); el.innerHTML=inner(o,st); }
+    const b=el.querySelector('.bar i'); if(b) b.style.width=(st.f*100).toFixed(1)+'%';
+  };
+  document.querySelectorAll('.plot').forEach(el=>{ const p=S.plots[+el.dataset.i]; if(p) upd(el,p,growState(p,now),plotInner,'plot'); });
+  document.querySelectorAll('.pen').forEach(el=>{ const a=S.animals[+el.dataset.a]; if(a) upd(el,a,growState(a,now),penInner,'pen'); });
+}
+// 기다릴 필요 없음: 물·먹이를 줄 때마다 1/3씩 자람 (가만히 두어도 조금씩 자람)
+function boost(o){ const third=(o.end-o.start)/3; o.start-=third; o.end-=third; }
+function onPlot(i,el){
+  const p=S.plots[i], now=Date.now(), st=growState(p,now);
+  if(st.k==='e') return seedPicker(i);
+  if(st.k==='r') return harvest(i,el);
+  const it=ITEMS[p.c];
+  boost(p); save(); sfx.water(); floatAt(el,'💧'); say(pick(['쑥쑥!','무럭무럭!','물 주기!','꿀꺽꿀꺽!']));
+  tickFarm();
+}
+function seedPicker(i){
+  const c=S.customer, want=c&&!c.textOnly?c.lines.map(l=>l.id):[];
+  modal(`<h2>무엇을 심을까요? 🌱</h2><div class="seeds">${S.crops.slice().sort(byOrder).map(id=>{ const it=ITEMS[id];
+      return `<button data-seed="${id}">${want.includes(id)?`<span class="want">${c.who[0]}</span>`:''}<span class="e">${it.e}</span>${it.ko}<small>${it.en}</small></button>`; }).join('')}</div>
+    <button class="big-btn alt small" data-close>닫기</button>`, sh=>{
+    sh.querySelectorAll('[data-seed]').forEach(b=>b.onclick=()=>{
+      const id=b.dataset.seed, it=ITEMS[id], now=Date.now();
+      S.plots[i]={c:id,start:now,end:now+it.grow*1000}; save(); closeModal(); sfx.pop();
+      say(`${jo(it.ko,'을','를')} 심었어요! 밭을 누르면 물을 줘요.`); tickFarm();
+    });
+  });
+  say('무엇을 심을까요?');
+}
+async function harvest(i,el){
+  const p=S.plots[i], id=p.c, it=ITEMS[id], n=it.yield[0]+rnd(it.yield[1]-it.yield[0]+1);
+  S.plots[i]={c:null}; S.stock[id]=(S.stock[id]||0)+n; save(); tickFarm(); updateBadges();
+  await countFx(el,it.e,n);
+  say(`${it.ko} ${koCnt(n)} 개!`);
+}
+async function onPen(i,el){
+  const a=S.animals[i], an=ANIMALS[a.t], now=Date.now(), st=growState(a,now);
+  if(st.k==='r'){
+    const it=ITEMS[an.item], n=an.yield[0]+rnd(an.yield[1]-an.yield[0]+1);
+    S.stock[an.item]=(S.stock[an.item]||0)+n; Object.assign(a,{start:now,end:now+an.every*1000}); save(); tickFarm(); updateBadges();
+    await countFx(el,it.e,n); say(`${it.ko} ${koCnt(n)} 개!`); return;
+  }
+  boost(a); save(); sfx.water(); floatAt(el,'🌾'); say(an.sound+' 냠냠!');
+  tickFarm();
+}
+
+/* ======================================================================
+   가게
+   ====================================================================== */
+function makeOrder(){
+  const L=level(), E=effD(), d=DIFF[E], items=avail(), easy=S.served<2;
+  const top=Math.min(d.max, easy?3: L<=1?3: L<=3?5: 10);
+  const multi=!easy&&L>=3&&items.length>=3&&Math.random()<d.multi;
+  const en=!easy&&S.set.english&&L>=2&&Math.random()<d.en;
+  const textOnly=!easy&&!en&&L>=3&&Math.random()<d.text;
+  // 쉬운 단계: 창고에 있는 만큼만 주문해서 바로 팔 수 있게
+  const stocked=items.filter(id=>(S.stock[id]||0)>0), soft=E<=1&&stocked.length>0;
+  const ids=shuffle(soft?stocked:items).slice(0,multi?2:1).sort(byOrder);
+  const lines=ids.map(id=>{ let m=multi?Math.min(top,4):top; if(soft) m=Math.min(m,S.stock[id]); return {id,n:1+rnd(m)}; });
+  const who=pick(CUST); if(!S.met.includes(who[0])) S.met.push(who[0]);
+  return {who,en,textOnly,reveal:false,lines,miss:0,help:0,dots:E<3,fill:d.fill};
+}
+const koPhrase=c=>c.lines.map(l=>`${ITEMS[l.id].ko} ${koCnt(l.n)} 개`).join('랑 ');
+const enPhrase=c=>cap(c.lines.map(l=>`${enNum(l.n)} ${l.n===1?ITEMS[l.id].one:ITEMS[l.id].many}`).join(' and '));
+function greet(c,full){
+  if(!c) return;
+  if(c.en) say(`Hello! ${enPhrase(c)}, please!`,'en',.85);
+  else if(c.textOnly&&!c.reveal&&!full) say('안녕하세요! 제 주문을 읽어 볼래요?');
+  else say(`안녕하세요! ${koPhrase(c)} 주세요!`);
+}
+function newCustomer(){
+  S.customer=makeOrder(); S.tray={}; save();
+  if(view==='shop'){ renderShop(); setTimeout(()=>greet(S.customer),500); } else updateBadges();
+}
+function custHTML(c){
+  const hide=c.textOnly&&!c.reveal;
+  return `<div class="counter"><button class="who" data-act="greet">${c.who[0]}</button>
+    <div class="cname">${c.en?`${c.who[2]} 손님 · 영어로 말해요`:`${c.who[1]} 손님`}</div>
+    <div class="bubble">${c.en?'<div class="hello">Hello! … please!</div>':''}${c.lines.map(l=>{ const it=ITEMS[l.id];
+      return `<div class="ol" data-line="${l.id}"><span class="oe">${hide?'❓':it.e}</span><span class="ow">${c.en?(l.n===1?it.one:it.many):it.ko}</span>
+        <span class="on">${l.n}</span><span class="dots"></span><span class="ck"></span></div>`; }).join('')}
+      <div class="brow"><button class="icon-btn" data-act="hear" aria-label="다시 듣기">🔊</button>${hide?'<button class="big-btn alt small" data-act="reveal">그림 보기 👀</button>':''}
+        <button class="big-btn alt small${(c.miss||0)>=2&&!c.help?' pulse':''}" data-act="help">${c.help?'🤝 같이 담기':'💡 도와줘요'}</button></div>
+    </div></div>`;
+}
+function payHTML(){
+  const p=S.pending;
+  return `<div class="counter"><div class="who happy">${p.who[0]}</div><div class="cname">💖 ${p.en?'Thank you!':'고마워요!'}</div>
+    <div class="paybox"><p>코인을 하나씩 눌러서 세어요</p>
+      <div class="coins">${Array.from({length:p.n-p.got},()=>'<button data-act="coin">🪙</button>').join('')}</div>
+      <div class="paycount"><span id="got">${p.got}</span> / ${p.n}</div>
+      <button class="big-btn alt small" data-act="allcoins">한꺼번에 넣기</button></div></div>`;
+}
+function renderShop(){
+  if(!S.customer&&!S.pending){ S.customer=makeOrder(); S.tray={}; save(); setTimeout(()=>greet(S.customer),500); }
+  const c=S.customer, busy=!!S.pending;
+  $('#view').innerHTML=`<div class="shop"><div>${busy?payHTML():custHTML(c)}</div><div>
+    <h3 class="sec">🧺 바구니 <small>누르면 빠져요</small></h3><div class="tray" id="tray"></div>
+    <div class="row give-row"><button class="big-btn" id="giveBtn" data-act="give" ${busy?'disabled':''}>드리기 🎁</button></div>
+    <h3 class="sec">📦 창고 <small>눌러서 바구니에 담아요</small></h3><div class="stock" id="stock"></div>
+    ${busy?'':'<div class="row"><button class="link" data-act="skip">다른 손님 부르기</button></div>'}</div></div>`;
+  drawTray(); drawStock();
+}
+function drawTray(){
+  const ids=Object.keys(S.tray).filter(id=>S.tray[id]>0).sort(byOrder);
+  $('#tray').innerHTML=ids.length?ids.map(id=>`<div class="tg" data-tg="${id}">${
+      Array.from({length:S.tray[id]},()=>`<button data-untray="${id}">${ITEMS[id].e}</button>`).join('')}<span class="tn">${S.tray[id]}</span></div>`).join('')
+    :`<p class="hint">${S.pending?'바구니가 비었어요':'창고에서 골라 담아요 👇'}</p>`;
+  const c=S.customer;
+  if(c){ const fill=!c.fill||(c.fill===1&&c.miss>0)||c.help>0, show=c.dots!==false||c.help>0;
+    document.querySelectorAll('.ol').forEach(el=>{ const l=c.lines.find(x=>x.id===el.dataset.line), have=S.tray[l.id]||0;
+      el.querySelector('.ck').textContent=have===l.n?'✅':'';
+      const dd=el.querySelector('.dots'); dd.hidden=!show;
+      dd.innerHTML=fill?Array.from({length:l.n},(_,k)=>`<i class="${k<have?'':'off'}"></i>`).join('')+'<i class="over"></i>'.repeat(Math.max(0,have-l.n)):'<i></i>'.repeat(l.n); });
+    $('#giveBtn').classList.toggle('pulse',!checkTray()); }
+}
+function drawStock(){
+  const c=S.customer;
+  const ids=[...new Set([...avail(),...Object.keys(S.stock).filter(k=>S.stock[k]>0)])].sort(byOrder);
+  $('#stock').innerHTML=ids.map(id=>{ const n=S.stock[id]||0;
+    const glow=c&&c.help&&c.lines.some(l=>l.id===id);
+    return `<button class="${n?'':'zero'}${glow?' glow':''}" data-tray="${id}"><span class="cnt">${n}</span><span class="e">${ITEMS[id].e}</span>${ITEMS[id].ko}</button>`; }).join('');
+}
+function addTray(id,el){
+  const c=S.customer; if(!c||S.pending||helping) return;
+  const it=ITEMS[id];
+  if(!(S.stock[id]>0)){ sfx.no(); say(`${jo(it.ko,'이','가')} 없어요! 농장에서 키워 볼까요?`); toast(`${it.e} ${jo(it.ko,'이','가')} 없어요 → 🌱 농장`); return; }
+  S.stock[id]--; S.tray[id]=(S.tray[id]||0)+1; save(); sfx.pop();
+  flyTo(el,$('#tray'),it.e);
+  const lang=c.en?'en':'ko'; say(numWord(S.tray[id],lang),lang,1);
+  drawTray(); drawStock();
+}
+function unTray(id){
+  if(!(S.tray[id]>0)||helping) return;
+  S.tray[id]--; S.stock[id]=(S.stock[id]||0)+1; if(!S.tray[id]) delete S.tray[id]; save(); sfx.pop();
+  if(S.tray[id]){ const lang=S.customer&&S.customer.en?'en':'ko'; say(numWord(S.tray[id],lang),lang,1); }
+  drawTray(); drawStock();
+}
+function checkTray(){
+  const c=S.customer, need={}; c.lines.forEach(l=>need[l.id]=l.n);
+  for(const id in S.tray) if(S.tray[id]>0&&!need[id]) return {id,type:'extra'};
+  for(const l of c.lines){ const have=S.tray[l.id]||0;
+    if(have<l.n) return {id:l.id,type:'less',k:l.n-have};
+    if(have>l.n) return {id:l.id,type:'more',k:have-l.n}; }
+  return null;
+}
+function give(){
+  const c=S.customer; if(!c||S.pending||helping) return;
+  if(!Object.keys(S.tray).length){ sfx.no(); say('창고에서 물건을 눌러서 바구니에 담아요!'); return; }
+  const r=checkTray();
+  if(r){
+    const ko=ITEMS[r.id].ko, k=r.k===1?'하나':`${koCnt(r.k)} 개`;
+    sfx.no();
+    const shakeEl=r.type==='extra'?document.querySelector(`[data-tg="${r.id}"]`):document.querySelector(`[data-line="${r.id}"]`);
+    if(shakeEl){ shakeEl.classList.remove('shake'); void shakeEl.offsetWidth; shakeEl.classList.add('shake'); }
+    c.miss=(c.miss||0)+1; save(); drawTray();
+    const msg=r.type==='extra'?`${jo(ko,'은','는')} 주문에 없어요. 눌러서 빼 볼까요?`
+      :r.type==='less'?`${jo(ko,'이','가')} ${k} 더 필요해요!`:`${jo(ko,'이','가')} ${k} 많아요. 눌러서 빼 볼까요?`;
+    say(c.miss>=2?`괜찮아요! ${msg} 도와줘요를 눌러도 돼요.`:`음, ${msg}`);
+    if(c.miss===2&&!c.help) renderShop();
+    return;
+  }
+  const total=c.lines.reduce((s,l)=>s+l.n*ITEMS[l.id].price,0);
+  const lvUp=level(S.served+1)>level();
+  adapt(!c.miss&&!c.help,(c.miss||0)>=2||(c.help||0)>=2);
+  S.tray={}; S.served++; S.pending={n:total,got:0,en:c.en,who:c.who,lvUp}; S.customer=null; save();
+  sfx.ok(); confetti(); updateTop();
+  say(c.en?`Thank you! Here ${total===1?'is one coin':`are ${enNum(total)} coins`}!`:`고마워요! 여기 코인 ${koCnt(total)} 개예요!`,c.en?'en':'ko');
+  renderShop();
+}
+// 💡 첫 번째: 주문을 천천히 읽고 필요한 물건을 반짝이게 · 두 번째부터: 같이 세면서 담아 줌
+let helping=false;
+async function help(){
+  const c=S.customer; if(!c||S.pending||helping) return;
+  c.help=(c.help||0)+1; c.reveal=true; save();
+  if(c.help===1){
+    renderShop();
+    sayList(c.en?[[`${enPhrase(c)}, please!`,'en'],[`${koPhrase(c)} 달래요. 반짝이는 걸 눌러 봐요!`,'ko']]
+      :[[`${koPhrase(c)} 주세요!`,'ko'],['반짝이는 걸 눌러서 담아 봐요!','ko']],.85);
+    return;
+  }
+  helping=true;
+  for(const id in S.tray) S.stock[id]=(S.stock[id]||0)+S.tray[id];
+  S.tray={}; save(); renderShop();
+  const lang=c.en?'en':'ko';
+  say('같이 세어 볼까요?'); await sleep(1300);
+  for(const l of c.lines){
+    for(let k=0;k<l.n;k++){
+      if(!(S.stock[l.id]>0)){ helping=false; say(`${jo(ITEMS[l.id].ko,'이','가')} 모자라요. 농장에서 키워 올까요?`); toast(`${ITEMS[l.id].e} 모자라요 → 🌱 농장`); return; }
+      const b=document.querySelector(`[data-tray="${l.id}"]`); if(b) flyTo(b,$('#tray'),ITEMS[l.id].e);
+      S.stock[l.id]--; S.tray[l.id]=(S.tray[l.id]||0)+1; save(); sfx.pop();
+      say(numWord(S.tray[l.id],lang),lang,1); drawTray(); drawStock();
+      await sleep(800);
+    }
+  }
+  helping=false;
+  say('다 담았어요! 이제 드리기를 눌러 봐요!');
+}
+function takeCoin(el){
+  const p=S.pending; if(!p||p.got>=p.n) return;
+  p.got++; S.coins++; save(); sfx.coin(); flyTo(el,$('#coinPill'),'🪙'); el.style.visibility='hidden';
+  setTimeout(()=>{ $('#coinN').textContent=S.coins; bump('#coinPill'); },550);
+  $('#got').textContent=p.got;
+  const lang=p.en?'en':'ko'; say(numWord(p.got,lang),lang,1.05);
+  if(p.got>=p.n) setTimeout(finishPay,700);
+}
+async function allCoins(){
+  const btns=[...document.querySelectorAll('[data-act="coin"]')].filter(b=>b.style.visibility!=='hidden');
+  for(const b of btns){ if(!S.pending) return; takeCoin(b); await sleep(260); }
+}
+function finishPay(){
+  const p=S.pending; if(!p) return;
+  S.pending=null; save(); updateTop();
+  say(`코인 ${koCnt(p.n)} 개! 모두 ${S.coins<100?koCnt(S.coins)+' 개':S.coins+'개'}가 되었어요.`);
+  if(p.lvUp) setTimeout(levelUp,1600);
+  else setTimeout(newCustomer,1800);
+}
+function levelUp(){
+  const L=level();
+  const un=[...CROPS.filter(id=>ITEMS[id].lv===L).map(id=>ITEMS[id].e),...Object.values(ANIMALS).filter(a=>a.lv===L).map(a=>a.e),
+    ...DECOR.filter(d=>d.lv===L).map(d=>d.e),...(PLOT_LV.includes(L)?['🟫']:[])];
+  confetti(); sfx.buy();
+  onModalClose=newCustomer;
+  modal(`<div class="huge">⭐</div><h2>레벨 ${L}!</h2>
+    ${un.length?`<p>시장에 새 물건이 들어왔어요!</p><div class="unlocks">${un.join('')}</div>`:'<p>손님들이 아주 좋아해요!</p>'}
+    ${L===3&&DIFF[effD()].multi?'<p>이제 한 번에 두 가지를 사는 손님, 글자로만 주문하는 손님도 와요!</p>':''}
+    <div class="row"><button class="big-btn" data-act-m="market">🛒 시장 가기</button><button class="big-btn alt" data-close>계속하기</button></div>`,sh=>{
+    sh.querySelector('[data-act-m]').onclick=()=>{ closeModal(); go('market'); };
+  },{backdrop:false});
+  say(`레벨 ${L}! ${un.length?'시장에 새로운 물건이 들어왔어요!':'정말 잘했어요!'}`);
+}
+
+/* ======================================================================
+   시장
+   ====================================================================== */
+function goods(){
+  const L=level(), g=[];
+  CROPS.filter(id=>ITEMS[id].cost>0).forEach(id=>{ const it=ITEMS[id]; g.push({key:'crop:'+id,e:it.e,name:`${it.ko} 씨앗`,word:it.ko,en:it.en,cost:it.cost,lv:it.lv,owned:S.crops.includes(id),sec:'seed'}); });
+  Object.entries(ANIMALS).forEach(([id,a])=>g.push({key:'animal:'+id,e:a.e,name:a.ko,word:a.ko,en:a.en,cost:a.cost,lv:a.lv,owned:S.animals.some(x=>x.t===id),sec:'animal'}));
+  const k=S.plots.length-6;
+  if(k<PLOT_COST.length) g.push({key:'plot',e:'🟫',name:'새 밭',word:'새 밭',en:'field',cost:PLOT_COST[k],lv:PLOT_LV[k],owned:false,sec:'plot'});
+  DECOR.forEach(d=>g.push({key:'decor:'+d.id,e:d.e,name:d.ko,word:d.ko,en:d.en,cost:d.cost,lv:d.lv,owned:S.decor.includes(d.id),sec:'decor'}));
+  g.forEach(x=>x.locked=x.lv>L);
+  return g;
+}
+function renderMarket(){
+  const g=goods();
+  const cards=sec=>g.filter(x=>x.sec===sec).map(x=>`<button class="card ${x.owned?'owned':x.locked?'locked':S.coins<x.cost?'cant':''}" data-buy="${x.key}">
+    <span class="e">${x.e}</span>${x.name}<span class="en">${x.en}</span>
+    <span class="price">${x.owned?'✔ 있어요':x.locked?`🔒 ⭐${x.lv}`:`🪙 ${x.cost}`}</span></button>`).join('');
+  $('#view').innerHTML=`<div class="wrap"><p class="coinsay">내 코인은 🪙 <b>${S.coins}</b>개</p>
+    <h2 class="sec">🌱 새 씨앗</h2><div class="cards">${cards('seed')}</div>
+    <h2 class="sec">🐾 동물 친구</h2><div class="cards">${cards('animal')}${cards('plot')}</div>
+    <h2 class="sec">🏡 마을 꾸미기</h2><div class="cards">${cards('decor')}</div></div>`;
+}
+function buy(key){
+  const x=goods().find(g=>g.key===key); if(!x) return;
+  if(x.owned){ say(`${x.word}, 벌써 있어요!`); return; }
+  if(x.locked){ sfx.no(); say(`레벨 ${x.lv}까지 키우면 살 수 있어요!`); toast(`⭐ 레벨 ${x.lv}가 되면 살 수 있어요`); return; }
+  if(S.coins<x.cost){
+    const need=x.cost-S.coins; sfx.no();
+    modal(`<div class="huge">${x.e}</div><h2>코인이 모자라요</h2>
+      <div class="math">🪙 ${x.cost} − ${S.coins} = <b>${need}</b></div>
+      <p>${koCnt(need)} 개 더 모으면 살 수 있어요!<br>가게에서 손님에게 팔아 볼까요?</p>
+      <div class="row"><button class="big-btn" data-m="shop">🏪 가게로</button><button class="big-btn alt" data-close>닫기</button></div>`,sh=>{
+      sh.querySelector('[data-m]').onclick=()=>{ closeModal(); go('shop'); };
+    });
+    say(`코인이 ${koCnt(need)} 개 더 필요해요. 가게에서 모아 볼까요?`); return;
+  }
+  modal(`<div class="huge">${x.e}</div><h2>${jo(x.name,'을','를')} 살까요?</h2><div class="math">🪙 ${x.cost}</div>
+    <div class="row"><button class="big-btn good" data-m="yes">살래요!</button><button class="big-btn alt" data-close>아니요</button></div>`,sh=>{
+    sh.querySelector('[data-m]').onclick=()=>{
+      const before=S.coins, now=Date.now(); S.coins-=x.cost;
+      const [kind,id]=key.split(':');
+      if(kind==='crop') S.crops.push(id);
+      else if(kind==='animal') S.animals.push({t:id,start:now,end:now+ANIMALS[id].every*1000});
+      else if(kind==='decor') S.decor.push(id);
+      else S.plots.push({c:null});
+      save(); updateTop(); sfx.buy(); confetti();
+      modal(`<div class="huge">${x.e}</div><h2>${jo(x.name,'을','를')} 샀어요!</h2>
+        <div class="math">🪙 ${before} − ${x.cost} = <b>${S.coins}</b></div>
+        <p>${kind==='crop'?'농장에서 심어 보세요!':kind==='animal'?'농장에 새 친구가 왔어요!':kind==='decor'?'농장 위 마을에 놓았어요!':'농장에 밭이 하나 늘었어요!'}</p>
+        <div class="row"><button class="big-btn" data-m="farm">🌱 농장 보기</button><button class="big-btn alt" data-close>더 둘러보기</button></div>`,sh2=>{
+        sh2.querySelector('[data-m]').onclick=()=>{ closeModal(); go('farm'); };
+      });
+      onModalClose=()=>{ if(view==='market') renderMarket(); };
+      sayList([[`${jo(x.word,'을','를')} 샀어요!`,'ko'],[x.en,'en'],[S.coins?`코인이 ${S.coins<100?koCnt(S.coins)+' 개':S.coins+'개'} 남았어요.`:'코인을 다 썼어요.','ko']]);
+    };
+  });
+  say(`${jo(x.name,'은','는')} 코인 ${koCnt(x.cost)} 개예요. 살까요?`);
+}
+
+/* ======================================================================
+   단어 카드
+   ====================================================================== */
+function renderWords(){
+  const av=avail();
+  const list=[...ORDER.map(id=>({e:ITEMS[id].e,ko:ITEMS[id].ko,en:ITEMS[id].en,has:av.includes(id)||(S.stock[id]||0)>0})),
+    ...Object.entries(ANIMALS).map(([id,a])=>({e:a.e,ko:a.ko,en:a.en,has:S.animals.some(x=>x.t===id)})),
+    ...CUST.map(c=>({e:c[0],ko:c[1],en:c[2].replace(/^(Bunny|Piggy|Froggy|Kitty)$/,m=>({Bunny:'rabbit',Piggy:'pig',Froggy:'frog',Kitty:'cat'})[m]).toLowerCase(),has:S.met.includes(c[0])})),
+    ...DECOR.map(d=>({e:d.e,ko:d.ko,en:d.en,has:S.decor.includes(d.id)}))];
+  const got=list.filter(x=>x.has).length;
+  $('#view').innerHTML=`<div class="wrap"><h2 class="sec">📖 단어 카드 <small>모은 카드 ${got} / ${list.length} · 눌러서 들어요</small></h2>
+    <div class="cards">${list.map(x=>x.has?`<button class="wcard" data-say="${x.ko}|${x.en}"><span class="e">${x.e}</span><b>${x.ko}</b><i>${x.en}</i></button>`
+      :`<button class="wcard no" data-act="nocard"><span class="e">❔</span><b>?</b><i>?</i></button>`).join('')}</div></div>`;
+}
+
+/* ======================================================================
+   어른 설정 (꾹 누르기)
+   ====================================================================== */
+function settings(){
+  const seg=(k,opts)=>`<div class="seg">${opts.map(([v,t])=>`<button data-k="${k}" data-v="${v}" class="${S.set[k]===v?'on':''}">${t}</button>`).join('')}</div>`;
+  const E=effD();
+  modal(`<h2>어른 설정</h2><div class="set">
+    <h3>난이도</h3><div class="diffs">${DIFF.map((d,i)=>`<button data-diff="${i}" class="${S.set.diff===i?'on':''}"><span class="e">${d.e}</span><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
+    <h3>자동 맞춤</h3>${seg('auto',[[true,'켜기'],[false,'끄기']])}
+    <p class="note">켜 두면 아이가 연달아 헤맬 때 몰래 한 단계 쉬워지고, 잘하면 위에서 고른 난이도까지 다시 올라가요. 아이에게는 알리지 않아요.${S.set.auto&&E<S.set.diff?` 지금은 ${DIFF[E].e} ${DIFF[E].name}로 하고 있어요.`:''}</p>
+    <h3>영어로 말하는 손님</h3>${seg('english',[[true,'와요'],[false,'안 와요']])}
+    <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}
+    <p class="note">⏱️ 시간 제한은 없어요. 손님은 끝까지 기다리고, 밭과 동물은 누를수록 바로 자라요. 틀려도 코인이 줄지 않고, 💡 도와줘요로 언제든 도움을 받을 수 있어요.</p>
+    <div class="row" style="margin-top:20px"><button class="big-btn alt small" data-m="reset">처음부터 다시</button><button class="big-btn small" data-close>닫기</button></div></div>`,sh=>{
+    sh.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{ S.set.diff=+b.dataset.diff; S.adj=S.set.diff; S.good=S.hard=0; save(); settings(); });
+    sh.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.k, cur=S.set[k]; S.set[k]=typeof cur==='number'?+b.dataset.v:typeof cur==='boolean'?b.dataset.v==='true':b.dataset.v;
+      if(k==='auto'){ S.adj=S.set.diff; S.good=S.hard=0; }
+      save(); b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    });
+    sh.querySelector('[data-m="reset"]').onclick=()=>modal(`<h2>처음부터 다시 할까요?</h2><p>코인, 밭, 동물, 마을이 모두 처음으로 돌아가요.<br>설정은 그대로 남아요.</p>
+      <div class="row"><button class="big-btn" data-m="yes">네, 다시 할래요</button><button class="big-btn alt" data-close>아니요</button></div>`,sh2=>{
+      sh2.querySelector('[data-m]').onclick=()=>{ const set=S.set; S=fresh(); S.set=set; save(); closeModal(); go('farm'); toast('새 농장이 열렸어요 🌱'); };
+    });
+  });
+}
+(function(){ const b=$('#setBtn'); let t; const stop=()=>{ clearTimeout(t); b.classList.remove('holding'); };
+  b.addEventListener('pointerdown',()=>{ b.classList.add('holding'); t=setTimeout(()=>{ stop(); settings(); },1000); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));
+  b.addEventListener('click',()=>{ if(!$('#modal').hidden) return; toast('어른 설정은 꾹 눌러 주세요'); });
+})();
+
+/* ======================================================================
+   눌렀을 때
+   ====================================================================== */
+$('#view').addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-say]'); if(!t) return;
+  const d=t.dataset;
+  if(d.i!==undefined) return onPlot(+d.i,t);
+  if(d.a!==undefined) return onPen(+d.a,t);
+  if(d.tray) return addTray(d.tray,t);
+  if(d.untray) return unTray(d.untray);
+  if(d.buy) return buy(d.buy);
+  if(d.say){ const [ko,en]=d.say.split('|'); sfx.pop(); sayList([[ko,'ko'],[en,'en']]); return; }
+  const c=S.customer;
+  switch(d.act){
+    case 'toShop': return go('shop');
+    case 'greet': return greet(c);
+    case 'hear': return greet(c,true);
+    case 'reveal': if(c){ c.reveal=true; save(); renderShop(); greet(c,true); } return;
+    case 'give': return give();
+    case 'help': return help();
+    case 'skip': if(c){ for(const id in S.tray) S.stock[id]=(S.stock[id]||0)+S.tray[id]; S.tray={}; S.customer=null; save();
+        say(c.en?'Bye bye!':'다음에 또 올게요~',c.en?'en':'ko'); $('#view').innerHTML='<div class="hint" style="margin-top:40px;font-size:60px">👋</div>'; setTimeout(newCustomer,1300); } return;
+    case 'coin': return takeCoin(t);
+    case 'allcoins': return allCoins();
+    case 'nocard': return say('가게, 농장, 시장에서 새 카드를 모아요!');
+  }
+});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ sfx.pop(); go(b.dataset.v);
+  if(b.dataset.v==='market') say(`시장이에요! 코인이 ${S.coins<100&&S.coins>0?koCnt(S.coins)+' 개':S.coins+'개'} 있어요.`);
+  if(b.dataset.v==='farm') say('농장이에요!'); });
+$('#wordsBtn').onclick=()=>{ sfx.pop(); go('words'); say('단어 카드예요. 눌러서 들어 봐요!'); };
+$('#goBtn').onclick=()=>{
+  tone(1,.01,'sine',.0001);
+  $('#splash').hidden=true;
+  const first=!S.served&&S.plots.every(p=>!p.c);
+  say(first?'꼬마 농장 가게에 온 걸 환영해요! 빈 밭을 눌러서 씨앗을 심어 봐요!':'또 왔네요! 오늘도 키우고 팔아 볼까요?');
+};
+
+setInterval(()=>{ if(view==='farm') tickFarm(); updateBadges(); },300);
+render();
+if('serviceWorker' in navigator&&location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
