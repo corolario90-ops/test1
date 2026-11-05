@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>우주 택배 기차</title>
+<meta name="theme-color" content="#0b1030">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="택배 기차">
+<meta name="robots" content="noindex, nofollow, noimageindex, noarchive">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/train-192.png">
+<link rel="icon" href="icons/train-192.png">
+<style>
+@font-face{font-family:"Jua";font-weight:400;font-style:normal;font-display:swap;src:url("../fonts/jua.woff2") format("woff2")}
+/* 우주는 언제나 밤하늘이라 밝은·어두운 모드 모두 같은 색을 씀 */
+:root{
+  --space1:#0b1030; --space2:#1c1550; --ink:#f4f6ff; --glass:rgba(255,255,255,.12); --glass2:rgba(255,255,255,.2);
+  --card:#ffffff; --cardInk:#26263a; --accent:#ff8a3d; --good:#22c55e; --gold:#ffd23f; --train:#ef4444;
+  --shadow:0 6px 0 rgba(0,0,0,.3);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%}
+body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--space1);
+  background-image:radial-gradient(ellipse at 70% 0%,var(--space2),var(--space1) 70%);overflow:hidden;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+h1,h2,h3{font-weight:normal;margin:0}
+#app{height:100dvh;display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+
+.big-btn{font-size:24px;padding:12px 24px;border:none;border-radius:20px;background:var(--accent);color:#fff;box-shadow:var(--shadow);min-height:60px}
+.big-btn.alt{background:var(--glass2);color:var(--ink)}
+.big-btn.light{background:#eef1ff;color:var(--cardInk)}
+.big-btn.pulse,.icon-btn.pulse{animation:pulse 1s ease-in-out infinite}
+.big-btn:active,.icon-btn:active,.box:active,.topic:active{transform:translateY(3px)}
+.icon-btn{font-size:26px;width:56px;height:56px;border:none;border-radius:18px;background:var(--glass2);box-shadow:var(--shadow);position:relative;overflow:hidden;flex:none}
+.icon-btn.holding::after{content:"";position:absolute;left:0;bottom:0;height:6px;background:var(--accent);animation:hold 1s linear forwards}
+.pill{display:flex;align-items:center;gap:6px;background:var(--glass2);border-radius:999px;padding:4px 16px 4px 10px;font-size:26px;min-height:52px}
+@keyframes hold{from{width:0}to{width:100%}}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bob{50%{transform:translateY(-10px)}}
+@keyframes shake{20%,60%{transform:translateX(-9px) rotate(-4deg)}40%,80%{transform:translateX(9px) rotate(4deg)}}
+@keyframes twinkle{50%{opacity:.35}}
+@keyframes warp{to{background-position:1400px 0,900px 0,600px 0}}
+@keyframes chug{50%{transform:translateY(-3px)}}
+@keyframes inLeft{from{transform:translateX(-110vw)}to{transform:none}}
+@keyframes outRight{to{transform:translateX(110vw)}}
+@keyframes dance{25%{transform:rotate(-12deg) scale(1.15)}75%{transform:rotate(12deg) scale(1.15)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+
+/* ---------- 별 하늘 ---------- */
+.sky{position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent 70%),radial-gradient(1.6px 1.6px at 140px 110px,#cfe0ff,transparent 70%),radial-gradient(1.2px 1.2px at 90px 170px,#fff,transparent 70%);
+  background-size:220px 200px,170px 150px,120px 210px;animation:twinkle 4s ease-in-out infinite}
+
+/* ---------- 처음 화면 ---------- */
+.home{flex:1;overflow-y:auto;position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:6px}
+.home .bar{width:100%;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.home h1{font-size:clamp(42px,8vw,76px);text-shadow:0 4px 0 rgba(0,0,0,.35);position:relative}
+.home .hero{font-size:clamp(56px,10vw,96px);position:relative;line-height:1}
+.home .hero span{display:inline-block;animation:bob 1.8s ease-in-out infinite}
+.home .hero span:nth-child(2){animation-delay:.3s}.home .hero span:nth-child(3){animation-delay:.6s}
+.home p{font-size:21px;opacity:.85;margin:0;position:relative}
+.topics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:min(640px,100%);position:relative}
+.topic{border:none;border-radius:26px;padding:16px 10px;box-shadow:var(--shadow);color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:28px;min-height:130px;justify-content:center}
+.topic .e{font-size:50px;line-height:1.1}
+.topic small{font-size:16px;opacity:.9}
+.t-num{background:linear-gradient(#ff9f43,#ff6b3d)} .t-ko{background:linear-gradient(#4ade80,#16a34a)}
+.t-en{background:linear-gradient(#60a5fa,#4f46e5)} .t-mix{background:linear-gradient(#f472b6,#a855f7)}
+
+/* ---------- 놀이 화면 ---------- */
+.play{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0}
+.bar{display:flex;align-items:center;gap:10px}
+.route{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:26px;min-width:0}
+.route i{font-style:normal;opacity:.5}
+.route b{font-weight:normal;font-size:34px}
+.route .line{width:clamp(10px,3vw,30px);height:4px;background:var(--glass2);border-radius:4px}
+.scene{position:relative;flex:1;min-height:0;overflow:hidden;border-radius:28px;background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 2px var(--glass);display:flex;flex-direction:column}
+.scene.travel .sky{animation:warp 1.7s cubic-bezier(.4,0,.6,1)}
+.stop{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,36px);padding:14px;flex-wrap:wrap}
+.stop.arrive{animation:inLeft .9s cubic-bezier(.2,.8,.3,1)}
+.stop.leave{animation:outRight .9s cubic-bezier(.6,0,.8,.3) forwards}
+.planet{position:relative;width:clamp(120px,22vmin,220px);aspect-ratio:1;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 32% 30%,var(--p1),var(--p2) 70%);box-shadow:inset -14px -18px 0 rgba(0,0,0,.18),0 0 40px color-mix(in srgb,var(--p1) 45%,transparent)}
+.planet.ring::after{content:"";position:absolute;left:-18%;right:-18%;top:44%;height:16%;border-radius:50%;border:6px solid rgba(255,255,255,.55);transform:rotate(-14deg)}
+.planet .alien{position:absolute;left:50%;top:-12%;transform:translateX(-50%);font-size:clamp(60px,11vmin,104px);line-height:1;z-index:1;border:none;background:none;padding:0}
+.planet .alien.happy{animation:dance .5s ease-in-out 3}
+.planet .station{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(64px,12vmin,110px)}
+.bubble{position:relative;background:var(--card);color:var(--cardInk);border-radius:28px;padding:14px 18px;min-width:min(260px,70vw);max-width:min(460px,92vw);
+  display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 8px 0 rgba(0,0,0,.25)}
+.bubble .who{font-size:18px;opacity:.6}
+.ask{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px;line-height:1}
+.ask .big{font-size:clamp(68px,13vmin,120px)}
+.ask .pic{font-size:clamp(76px,14vmin,128px)}
+.ask .eq{font-size:clamp(54px,10vmin,96px);white-space:nowrap}
+.ask .say{font-size:28px;margin-top:8px;opacity:.8}
+.ask .note{font-size:20px;opacity:.65;margin-top:6px}
+.ask .hdots{display:flex;gap:18px;justify-content:center;margin-top:10px}
+.dots{display:grid;grid-template-columns:repeat(5,var(--d,12px));gap:calc(var(--d,12px)*.35);justify-content:center}
+.dots i{width:var(--d,12px);height:var(--d,12px);border-radius:50%;background:var(--accent)}
+.ask .dots{--d:clamp(18px,3.2vmin,28px)}
+.bubble .brow{display:flex;gap:8px}
+.bubble .icon-btn{background:#eef1ff}
+.depart{text-align:center;font-size:24px}
+.depart b{font-weight:normal;color:var(--accent)}
+
+.trainwrap{position:relative;padding:0 10px 14px}
+.train{display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px 6px;justify-content:center}
+.scene.travel .train{animation:chug .25s linear infinite}
+.engine{font-size:clamp(70px,11vmin,110px);line-height:.9;position:relative;bottom:2px}
+.car{position:relative;padding:8px 8px 14px;border-radius:14px 14px 8px 8px;background:var(--train);box-shadow:inset 0 -8px 0 rgba(0,0,0,.25)}
+.car::before{content:"";position:absolute;left:-8px;bottom:16px;width:10px;height:6px;background:#555}
+.car .wh{position:absolute;bottom:-9px;width:20px;height:20px;border-radius:50%;background:#2b2b38;border:4px solid #9aa0b5;left:10px}
+.car .wh.r{left:auto;right:10px}
+.rainbow{background:linear-gradient(90deg,#ef4444,#f97316,#eab308,#22c55e,#3b82f6,#a855f7)}
+.box{width:clamp(70px,10.5vmin,104px);aspect-ratio:1;border:none;border-radius:12px;padding:4px;color:#4a3216;
+  background:linear-gradient(#e7b77c,#cf955a);box-shadow:inset 0 0 0 3px rgba(120,70,20,.35),0 4px 0 rgba(0,0,0,.25);
+  display:grid;place-items:center;position:relative;line-height:1}
+.box::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:12%;transform:translateX(-50%);background:rgba(255,240,200,.45)}
+.box>*{position:relative;background:rgba(255,248,232,.92);border-radius:10px;padding:4px 6px;min-width:70%}
+.box .n{font-size:clamp(36px,6vmin,56px)}
+.box .l{font-size:clamp(38px,6.4vmin,60px)}
+.box .w{font-size:clamp(17px,3vmin,28px);white-space:nowrap}
+.box .dots{--d:clamp(8px,1.4vmin,12px);padding:6px}
+.box.gone{visibility:hidden}
+.box.dim{opacity:.25;filter:grayscale(1)}
+.box.glow{box-shadow:0 0 0 6px var(--gold),0 0 30px var(--gold);animation:pulse 1s ease-in-out infinite}
+.box.shake{animation:shake .5s}
+.rail{height:8px;margin-top:8px;border-radius:4px;background:repeating-linear-gradient(90deg,#8d93ab 0 18px,transparent 18px 26px),#4b4f66}
+.ctrl{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ctrl .big-btn{min-width:150px}
+
+/* ---------- 우주 친구 ---------- */
+.friends{flex:1;overflow-y:auto}
+.friends h2{font-size:26px;margin:16px 4px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.fcard{border:none;background:var(--glass);border-radius:20px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;font-size:19px}
+.fcard .e{font-size:52px;line-height:1.15}
+.fcard.no{opacity:.35}
+.skin{border:4px solid transparent;border-radius:18px;background:var(--glass);padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:18px}
+.skin.on{border-color:var(--gold)}
+.skin .sw{width:70px;height:40px;border-radius:10px}
+
+/* ---------- 창 ---------- */
+#modal{position:fixed;inset:0;background:rgba(5,5,25,.6);display:grid;place-items:center;z-index:50;padding:16px}
+.sheet{background:var(--card);color:var(--cardInk);border-radius:28px;padding:20px;max-width:640px;width:100%;max-height:90dvh;overflow:auto;box-shadow:0 10px 0 rgba(0,0,0,.3);text-align:center;animation:pop .25s}
+.sheet h2{font-size:32px;margin-bottom:10px}
+.sheet .huge{font-size:100px;line-height:1.1}
+.sheet p{font-size:21px;line-height:1.5;margin:8px 0}
+.sheet .big-btn.alt{background:#eef1ff;color:var(--cardInk)}
+.set h3{font-size:21px;margin:16px 0 6px;text-align:left}
+.seg{display:flex;background:#eef1ff;border-radius:16px;padding:4px;gap:4px}
+.seg button{flex:1;border:none;background:none;border-radius:12px;padding:10px 6px;font-size:19px}
+.seg button.on{background:var(--accent);color:#fff}
+.set .note{font-size:15px;opacity:.7;text-align:left;margin:4px 2px;line-height:1.5}
+.diffs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.diffs button{border:3px solid transparent;background:#eef1ff;border-radius:16px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.diffs .e{font-size:34px;line-height:1.1} .diffs b{font-weight:normal;font-size:20px} .diffs small{font-size:14px;opacity:.7}
+.diffs button.on{border-color:var(--accent);background:#ffe9da}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.flyer{position:fixed;margin:-40px 0 0 -40px;transition:transform .7s cubic-bezier(.4,-.3,.6,1),opacity .7s;z-index:61}
+.confetti{position:fixed;top:-60px;font-size:34px;animation:fall 1.8s linear forwards}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#fff;color:var(--cardInk);font-size:22px;padding:12px 20px;border-radius:18px;z-index:70;max-width:90vw;text-align:center;animation:pop .2s}
+
+@media (max-width:600px){
+  .ctrl .big-btn{min-width:0;font-size:20px;padding:10px 14px;min-height:52px}
+  .pill{font-size:21px;min-height:46px} .icon-btn{width:48px;height:48px;font-size:22px}
+  .route{font-size:18px} .route b{font-size:26px}
+  .car{padding:6px 6px 12px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" hidden></div>
+<div id="fx"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const range=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
+
+/* ======================================================================
+   글자 · 낱말 자료
+   ====================================================================== */
+const KO_UNIT=['','하나','둘','셋','넷','다섯','여섯','일곱','여덟','아홉'];
+const KO_TEN=['','열','스물','서른','마흔','쉰','예순','일흔','여든','아흔'];
+const koNum=n=>(n<=0||n>=100)?String(n):KO_TEN[Math.floor(n/10)]+KO_UNIT[n%10];
+const koCnt=n=>n===20?'스무':koNum(n).replace(/하나$/,'한').replace(/둘$/,'두').replace(/셋$/,'세').replace(/넷$/,'네');
+function hasB(w){ const c=w.charCodeAt(w.length-1); return c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28!==0; }
+const jo=(w,a,b)=>w+(hasB(w)?a:b);
+
+const CONS=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const CNAME={'ㄱ':'기역','ㄴ':'니은','ㄷ':'디귿','ㄹ':'리을','ㅁ':'미음','ㅂ':'비읍','ㅅ':'시옷','ㅇ':'이응','ㅈ':'지읒','ㅊ':'치읓','ㅋ':'키읔','ㅌ':'티읕','ㅍ':'피읖','ㅎ':'히읗'};
+const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const choOf=w=>CHO[Math.floor((w.charCodeAt(0)-0xAC00)/588)];
+const KO_WORDS=[['곰','🐻'],['개','🐶'],['소','🐮'],['말','🐴'],['배','🍐'],['귤','🍊'],['달','🌙'],['별','⭐'],['꽃','🌸'],['공','⚽'],
+  ['차','🚗'],['집','🏠'],['새','🐦'],['게','🦀'],['책','📖'],['컵','🥤'],['양','🐑'],['우유','🥛'],['사과','🍎'],['포도','🍇'],['오리','🦆'],
+  ['토끼','🐰'],['기차','🚂'],['나무','🌳'],['나비','🦋'],['사자','🦁'],['우산','☂️'],['모자','🧢'],['하마','🦛'],['피자','🍕'],['고래','🐳'],
+  ['돼지','🐷'],['라면','🍜'],['로봇','🤖'],['시계','⏰'],['수박','🍉'],['지구','🌍'],['장갑','🧤'],['치즈','🧀'],['토마토','🍅'],['펭귄','🐧'],
+  ['피아노','🎹'],['호랑이','🐯'],['코끼리','🐘'],['카메라','📷'],['바나나','🍌'],['비행기','✈️'],['낙타','🐫'],['다람쥐','🐿️'],['라디오','📻']]
+  .map(([w,e])=>({w,e,i:choOf(w)}));
+const EN_WORDS=[['ant','🐜'],['apple','🍎'],['bear','🐻'],['bus','🚌'],['bee','🐝'],['cat','🐱'],['cake','🍰'],['cow','🐮'],['dog','🐶'],['duck','🦆'],
+  ['egg','🥚'],['fish','🐟'],['fox','🦊'],['frog','🐸'],['goat','🐐'],['hat','🎩'],['ice','🧊'],['juice','🧃'],['key','🔑'],['lion','🦁'],['moon','🌙'],
+  ['milk','🥛'],['nose','👃'],['owl','🦉'],['pig','🐷'],['queen','👸'],['rabbit','🐰'],['ring','💍'],['sun','☀️'],['star','⭐'],['tree','🌳'],
+  ['train','🚂'],['umbrella','☂️'],['van','🚐'],['whale','🐳'],['yo-yo','🪀'],['zebra','🦓'],['ball','⚽'],['book','📖'],['car','🚗']]
+  .map(([w,e])=>({w,e,i:w[0].toUpperCase()}));
+const ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/* ======================================================================
+   문제 종류
+   pool(E): 고를 값들 · key: 같은 칸이 두 번 안 나오게 · face: 상자 · ask: 행성 말풍선
+   say: 처음 부탁 · name: 정답을 읽는 말 · box: 다른 상자를 읽는 말 · hint: 첫 도움에서 덧붙이는 말
+   ====================================================================== */
+const numFace=v=>`<b class="n">${v}</b>`;
+const dotsFace=v=>`<span class="dots" style="grid-template-columns:repeat(${Math.min(v,5)},var(--d,12px))">${'<i></i>'.repeat(v)}</span>`;
+const letFace=c=>`<b class="l">${c}</b>`;
+const wordFace=w=>`<b class="w">${w}</b>`;
+const K=t=>[t,'ko'], N=t=>[t,'en'];
+const TYPES={
+  'num-same':{topic:'num',pool:E=>range(1,E?10:5),face:numFace,ask:v=>`<span class="big">${v}</span>`,
+    say:v=>[K(`${v}번 택배 주세요!`)],name:v=>[K(`${v}!`)],box:v=>[K(`${v}`)]},
+  'num-dots':{topic:'num',pool:E=>range(1,E<=1?6:10),face:numFace,ask:v=>dotsFace(v),
+    say:()=>[K('점을 세어 보고, 그 숫자 상자를 주세요!')],name:v=>[K(`점이 ${koNum(v)}! ${v}번 상자예요.`)],box:v=>[K(`${v}`)],
+    hint:v=>[K('같이 세어 볼까요?'),K(range(1,v).map(koNum).join(', '))]},
+  'num-dotsbox':{topic:'num',pool:()=>range(1,10),face:dotsFace,ask:v=>`<span class="big">${v}</span>`,
+    say:v=>[K(`${v}! 점이 ${koCnt(v)} 개인 상자를 주세요!`)],name:v=>[K(`점이 ${koCnt(v)} 개인 상자예요.`)],box:v=>[K(`점 ${koCnt(v)} 개`)]},
+  'num-word':{topic:'num',pool:()=>range(1,10),face:numFace,ask:v=>`<span class="big" style="font-size:clamp(56px,11vmin,100px)">${koNum(v)}</span>`,
+    say:()=>[K('이 글자를 읽어 보고, 숫자 상자를 찾아요!')],name:v=>[K(`${koNum(v)}! 숫자로 ${v}이에요.`)],box:v=>[K(`${v}`)],hint:v=>[K(koNum(v))]},
+  'num-plus':{topic:'num',pool:()=>range(2,10),face:numFace,
+    make:v=>{ const a=1+rnd(v-1); return {a,b:v-a}; },
+    ask:(v,x)=>`<span class="eq">${x.a} + ${x.b}</span>`,
+    helpAsk:(v,x)=>`<div class="hdots">${dotsFace(x.a)}<span style="font-size:30px">+</span>${dotsFace(x.b)}</div>`,
+    say:(v,x)=>[K(`${x.a} 더하기 ${x.b}는 몇일까요?`)],name:(v,x)=>[K(`${x.a} 더하기 ${x.b}는 ${v}!`)],box:v=>[K(`${v}`)],
+    hint:v=>[K('점을 모두 세어 봐요!')]},
+  'ko-same':{topic:'ko',pool:E=>CONS.slice(0,E?14:5),face:letFace,ask:c=>`<span class="big">${c}</span>`,
+    say:c=>[K(`${CNAME[c]} 상자 주세요!`)],name:c=>[K(`${CNAME[c]}!`)],box:c=>[K(CNAME[c])]},
+  'ko-sound':{topic:'ko',pool:E=>CONS.slice(0,E<=1?10:14),face:letFace,ask:()=>`<span class="big">🔊</span><span class="note">잘 들어 봐요</span>`,
+    say:c=>[K(`${CNAME[c]}! ${CNAME[c]} 상자를 찾아요!`)],name:c=>[K(`${CNAME[c]}는 이렇게 생겼어요.`)],box:c=>[K(CNAME[c])]},
+  'ko-word':{topic:'ko',pool:()=>KO_WORDS,key:o=>o.w,face:o=>wordFace(o.w),ask:o=>`<span class="pic">${o.e}</span>`,
+    say:o=>[K(`${o.w} 상자 주세요!`)],name:o=>[K(`${o.w}!`)],box:o=>[K(o.w)]},
+  'ko-read':{topic:'ko',pool:()=>KO_WORDS,key:o=>o.w,face:o=>wordFace(o.w),ask:o=>`<span class="pic">${o.e}</span>`,
+    say:()=>[K('그림을 보고, 맞는 글자 상자를 찾아요!')],name:o=>[K(`${o.w}!`)],box:o=>[K(o.w)],hint:o=>[K(o.w)]},
+  'ko-initial':{topic:'ko',pool:()=>KO_WORDS.filter(o=>CONS.includes(o.i)),key:o=>o.i,face:o=>letFace(o.i),
+    ask:o=>`<span class="pic">${o.e}</span>`,helpAsk:o=>`<span class="say">${o.w}</span>`,
+    say:o=>[K(`${o.w}! ${jo(o.w,'은','는')} 어떤 글자로 시작할까요?`)],name:o=>[K(`${o.w}! ${CNAME[o.i]}${o.i==='ㄹ'?'로':'으로'} 시작해요.`)],box:o=>[K(CNAME[o.i])]},
+  'en-same':{topic:'en',pool:E=>ABC.slice(0,E?26:6),face:letFace,ask:c=>`<span class="big">${c}</span>`,
+    say:c=>[N(`Letter ${c}, please!`)],name:c=>[N(`${c}!`)],box:c=>[N(c)]},
+  'en-sound':{topic:'en',pool:E=>ABC.slice(0,E<=1?12:26),face:letFace,ask:()=>`<span class="big">🔊</span><span class="note">잘 들어 봐요</span>`,
+    say:c=>[N(`Letter ${c}! Find ${c}!`)],name:c=>[N(`${c}!`)],box:c=>[N(c)]},
+  'en-case':{topic:'en',pool:()=>ABC,face:c=>letFace(c.toLowerCase()),ask:c=>`<span class="big">${c}</span><span class="note">작은 글자는?</span>`,
+    say:c=>[N(`Big ${c}.`),K('작은 글자 상자를 찾아요!')],name:c=>[N(`Big ${c}, little ${c.toLowerCase()}!`)],box:c=>[N(c)]},
+  'en-word':{topic:'en',pool:()=>EN_WORDS,key:o=>o.w,face:o=>wordFace(o.w),ask:o=>`<span class="pic">${o.e}</span>`,
+    say:o=>[N(`${o.w}, please!`)],name:o=>[N(`${o.w}!`)],box:o=>[N(o.w)]},
+  'en-read':{topic:'en',pool:()=>EN_WORDS,key:o=>o.w,face:o=>wordFace(o.w),ask:o=>`<span class="pic">${o.e}</span>`,
+    say:()=>[K('그림을 보고, 맞는 영어 상자를 찾아요!')],name:o=>[N(`${o.w}!`)],box:o=>[N(o.w)],hint:o=>[N(o.w)]},
+  'en-initial':{topic:'en',pool:()=>EN_WORDS,key:o=>o.i,face:o=>letFace(o.i),ask:o=>`<span class="pic">${o.e}</span>`,helpAsk:o=>`<span class="say">${o.w}</span>`,
+    say:o=>[N(`${o.w}!`),K('어떤 글자로 시작할까요?')],name:o=>[N(`${o.w} starts with ${o.i}!`)],box:o=>[N(o.i)]},
+};
+
+// 난이도: 어른이 고른 단계가 가장 높은 단계. ‘자동 맞춤’은 그 아래에서만 오르내림
+const DIFF=[
+  {e:'🐣',name:'아주 쉬움',desc:'똑같은 모양 찾기 · 상자 3개',stops:3,decoy:0,
+    types:{num:['num-same'],ko:['ko-same'],en:['en-same']}},
+  {e:'🐥',name:'쉬움',desc:'점 세기 · 소리 듣고 찾기',stops:3,decoy:1,
+    types:{num:['num-same','num-dots'],ko:['ko-same','ko-sound'],en:['en-same','en-sound']}},
+  {e:'🐔',name:'보통',desc:'숫자 말 · 낱말 읽기 · 소문자',stops:4,decoy:1,
+    types:{num:['num-dots','num-dotsbox','num-word'],ko:['ko-word','ko-sound'],en:['en-case','en-word']}},
+  {e:'🦅',name:'어려움',desc:'더하기 · 첫 글자 · 그림 보고 읽기',stops:4,decoy:2,
+    types:{num:['num-plus','num-word'],ko:['ko-read','ko-initial'],en:['en-read','en-initial']}},
+];
+
+const ALIENS=[['👽','뽀뽀'],['👾','삐삐'],['🤖','띠띠'],['🐙','말랑'],['🦑','꼬물'],['🐸','폴짝'],['🦄','반짝'],['🐲','용용'],['🦖','쿵쿵'],['🐳','둥실'],
+  ['🦋','팔랑'],['🐞','콩콩'],['🐧','뒤뚱'],['🦉','부엉'],['🐼','몽실'],['🐨','보들'],['🐯','어흥'],['🐰','깡총'],['🦊','살금'],['🐵','까꿍'],
+  ['🦀','집게'],['🐢','느릿'],['🦕','길쭉'],['🐝','붕붕']];
+const PLANETS=[['#ffb36b','#e8590c'],['#7dd3fc','#1d4ed8'],['#86efac','#15803d'],['#f9a8d4','#be185d'],['#c4b5fd','#6d28d9'],
+  ['#fde68a','#ca8a04'],['#5eead4','#0f766e'],['#fca5a5','#b91c1c']];
+const SKINS=[{id:'red',name:'빨강',c:'#ef4444'},{id:'blue',name:'파랑',c:'#3b82f6'},{id:'green',name:'초록',c:'#22c55e'},
+  {id:'purple',name:'보라',c:'#a855f7'},{id:'orange',name:'주황',c:'#f97316'},{id:'pink',name:'분홍',c:'#ec4899'},
+  {id:'gold',name:'금빛',c:'#eab308'},{id:'rainbow',name:'무지개',c:''}];
+
+/* ======================================================================
+   말 · 소리
+   ====================================================================== */
+let koV=null,enV=null;
+function pickVoices(){ try{ const vs=speechSynthesis.getVoices(); koV=vs.find(v=>/^ko/i.test(v.lang))||null;
+  enV=vs.find(v=>/^en[-_]US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null; }catch(e){} }
+if('speechSynthesis' in window){ pickVoices(); speechSynthesis.onvoiceschanged=pickVoices; }
+function utter(t,lang,rate){ const u=new SpeechSynthesisUtterance(t); u.lang=lang==='en'?'en-US':'ko-KR'; const v=lang==='en'?enV:koV; if(v) u.voice=v; u.rate=rate; u.pitch=1.1; return u; }
+function sayList(list,rate=.95){ if(!S.set.sound||!('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel(); list.forEach(([t,l])=>speechSynthesis.speak(utter(t,l||'ko',l==='en'?rate*.9:rate))); }catch(e){} }
+const say=(t,lang='ko',rate)=>sayList([[t,lang]],rate);
+
+let AC=null;
+function tone(f,d=.12,type='sine',vol=.14,when=0,to){
+  if(!S.set.sound) return;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+    const t=AC.currentTime+when, o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t); if(to) o.frequency.exponentialRampToValueAtTime(to,t+d);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d+.02); }catch(e){} }
+const sfx={
+  pop:()=>tone(660+rnd(200),.09,'triangle'),
+  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,'triangle',.13,i*.1)),
+  no:()=>{ tone(587,.12,'sine',.07); tone(494,.2,'sine',.07,.11); },     // 혼내는 느낌 없는 부드러운 '음?'
+  go:()=>{ tone(300,.5,'sawtooth',.05,0,900); [0,.25,.5,.75,1].forEach(w=>tone(180,.12,'square',.04,w+.4)); tone(880,.3,'triangle',.08,1.3); },
+  win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.25,'triangle',.12,i*.12)),
+};
+
+/* ======================================================================
+   상태
+   ====================================================================== */
+const SKEY='spacetrain-v1';
+function fresh(){ return {stars:0,trips:0,friends:[],skins:['red'],skin:'red',set:{diff:1,auto:true,sound:true},adj:1,good:0,hard:0}; }
+let S=Object.assign(fresh(),store.get(SKEY,{}));
+S.set=Object.assign(fresh().set,S.set||{});
+if(S.adj==null||S.adj>S.set.diff) S.adj=S.set.diff;
+const save=()=>store.set(SKEY,S);
+const effD=()=>S.set.auto?Math.min(S.adj,S.set.diff):S.set.diff;
+function adapt(good,hard){
+  if(!S.set.auto) return;
+  if(good){ S.good++; S.hard=0; if(S.good>=4&&S.adj<S.set.diff){ S.adj++; S.good=0; } }
+  else { S.good=0; if(hard){ S.hard++; if(S.hard>=2&&S.adj>0){ S.adj--; S.hard=0; } } }
+}
+const skinCss=()=>{ const s=SKINS.find(x=>x.id===S.skin)||SKINS[0]; return s.c?`--train:${s.c}`:''; };
+const skinCls=()=>S.skin==='rainbow'?' rainbow':'';
+
+/* ======================================================================
+   공통
+   ====================================================================== */
+function toast(t,ms=2200){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),ms); }
+let onModalClose=null;
+function modal(html,setup,{backdrop=true}={}){
+  const m=$('#modal'); m.innerHTML=`<div class="sheet">${html}</div>`; m.hidden=false;
+  m.onclick=e=>{ if(backdrop&&e.target===m) closeModal(); };
+  m.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal());
+  if(setup) setup(m.querySelector('.sheet'));
+}
+function closeModal(){ $('#modal').hidden=true; $('#modal').innerHTML=''; const f=onModalClose; onModalClose=null; if(f) f(); }
+const center=el=>{ const r=el.getBoundingClientRect(); return [r.left+r.width/2,r.top+r.height/2]; };
+function flyTo(fromEl,toEl){
+  const [ax,ay]=center(fromEl), [bx,by]=center(toEl);
+  const d=fromEl.cloneNode(true); d.classList.add('flyer'); d.classList.remove('glow','shake');
+  d.style.left=ax+'px'; d.style.top=ay+'px'; $('#fx').appendChild(d); void d.offsetWidth;
+  d.style.transform=`translate(${bx-ax}px,${by-ay}px) scale(.4) rotate(20deg)`; d.style.opacity='.2';
+  setTimeout(()=>d.remove(),750);
+}
+function confetti(n=26){ for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='confetti'; d.textContent=pick(['⭐','✨','🌟','💫','🎉','🪐']);
+  d.style.left=rnd(100)+'vw'; d.style.animationDelay=(Math.random()*.5)+'s'; $('#fx').appendChild(d); setTimeout(()=>d.remove(),2500); } }
+function holdBtn(b,fn){ let t; const stop=()=>{ clearTimeout(t); b.classList.remove('holding'); };
+  b.addEventListener('pointerdown',()=>{ b.classList.add('holding'); t=setTimeout(()=>{ stop(); fn(); },1000); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));
+  b.addEventListener('click',()=>{ if($('#modal').hidden) toast('어른 설정은 꾹 눌러 주세요'); }); }
+
+/* ======================================================================
+   처음 화면
+   ====================================================================== */
+let screen='home';
+function renderHome(){
+  screen='home'; TRIP=null;
+  $('#app').innerHTML=`<div class="home"><div class="sky"></div>
+    <div class="bar"><div class="pill">⭐ ${S.stars}</div><div class="row"><button class="icon-btn" data-act="friends" aria-label="우주 친구">🧑‍🚀</button><button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div></div>
+    <div class="hero"><span>🪐</span><span>🚂</span><span>📦</span></div>
+    <h1>우주 택배 기차</h1>
+    <p>행성 친구들에게 맞는 택배를 배달해요!</p>
+    <div class="topics">
+      <button class="topic t-num" data-topic="num"><span class="e">🔢</span>숫자<small>세고 찾기</small></button>
+      <button class="topic t-ko" data-topic="ko"><span class="e">가</span>한글<small>글자 찾기</small></button>
+      <button class="topic t-en" data-topic="en"><span class="e">🔤</span>ABC<small>영어 찾기</small></button>
+      <button class="topic t-mix" data-topic="mix"><span class="e">🎲</span>골고루<small>섞어서</small></button>
+    </div></div>`;
+  holdBtn($('#setBtn'),settings);
+}
+
+/* ======================================================================
+   배달 여행
+   ====================================================================== */
+let TRIP=null, phase='', busy=false;
+function makeTrip(topicChoice){
+  const E=effD(), d=DIFF[E];
+  const topic=topicChoice==='mix'?pick(['num','ko','en']):topicChoice;
+  const tname=pick(d.types[topic]), T=TYPES[tname];
+  const need=d.stops+d.decoy, keyOf=T.key||(v=>v), seen=new Set(), vals=[];
+  for(const v of shuffle(T.pool(E))){ const k=keyOf(v); if(seen.has(k)) continue; seen.add(k); vals.push(v); if(vals.length===need) break; }
+  const planets=shuffle(PLANETS), aliens=shuffle(ALIENS);
+  const stops=vals.slice(0,d.stops).map((v,i)=>{ const x=T.make?T.make(v):{};
+    return {v,x,alien:aliens[i],planet:planets[i%planets.length],ring:Math.random()<.4,miss:0,help:0,done:false}; });
+  const boxes=shuffle(vals.map(v=>({v,done:false,dim:false,glow:false})));
+  return {topicChoice,T,tname,stops,boxes,cur:-1,startStars:S.stars};
+}
+function startTrip(topicChoice){
+  TRIP=makeTrip(topicChoice); screen='play'; phase='go'; busy=false;
+  $('#app').innerHTML=`<div class="play">
+    <div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="route" id="route"></div>
+      <div class="pill">⭐ <span id="starN">${S.stars}</span></div><button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <div class="scene" id="scene"><div class="sky"></div><div class="stop" id="stop"></div>
+      <div class="trainwrap"><div class="train" id="train"></div><div class="rail"></div></div></div>
+    <div class="ctrl"><button class="big-btn alt" data-act="hear" id="hearBtn">🔊 다시 듣기</button><button class="big-btn alt" data-act="help" id="helpBtn">💡 도와줘요</button>
+      <button class="big-btn pulse" data-act="go" id="goBtn">🚀 출발!</button></div></div>`;
+  holdBtn($('#setBtn'),settings);
+  drawStation(); drawTrain(); drawRoute(); drawCtrl();
+  sayList([K('택배를 다 실었어요!'),K('출발 단추를 눌러요!')]);
+}
+const curStop=()=>TRIP&&TRIP.stops[TRIP.cur];
+function drawRoute(){
+  $('#route').innerHTML=['<b>🛰️</b>',...TRIP.stops.map((s,i)=>`<span class="line"></span>${s.done?'<b>✅</b>':i===TRIP.cur?'<b>🪐</b>':'<i>⚪</i>'}`)].join('');
+}
+function drawStation(){
+  $('#stop').className='stop';
+  $('#stop').innerHTML=`<div class="planet" style="--p1:#cbd5e1;--p2:#64748b"><div class="station">🛰️</div></div>
+    <div class="bubble"><div class="who">우주 정거장</div><div class="depart">상자 <b>${TRIP.boxes.length}</b>개를 싣고<br>행성 <b>${TRIP.stops.length}</b>곳에 배달해요!</div></div>`;
+}
+function drawStop(){
+  const s=curStop(), T=TRIP.T;
+  $('#stop').innerHTML=`<div class="planet${s.ring?' ring':''}" style="--p1:${s.planet[0]};--p2:${s.planet[1]}"><button class="alien" id="alien" data-act="hear">${s.alien[0]}</button></div>
+    <div class="bubble"><div class="who">${s.alien[1]}${TRIP.T.topic==='en'?' · 영어로 말해요':''}</div>
+      <div class="ask">${T.ask(s.v,s.x)}${s.help&&T.helpAsk?T.helpAsk(s.v,s.x):''}</div></div>`;
+}
+function drawTrain(){
+  $('#train').style.cssText=skinCss();
+  $('#train').innerHTML=`<span class="engine">🚂</span>`+TRIP.boxes.map((b,i)=>`<div class="car${skinCls()}">
+    <button class="box${b.done?' gone':''}${b.dim?' dim':''}${b.glow?' glow':''}" data-b="${i}">${TRIP.T.face(b.v)}</button><i class="wh"></i><i class="wh r"></i></div>`).join('');
+}
+function drawCtrl(){
+  const s=curStop(), dl=phase==='deliver';
+  $('#goBtn').hidden=phase!=='go';
+  $('#hearBtn').hidden=!dl; $('#helpBtn').hidden=!dl;
+  if(dl){ $('#helpBtn').textContent=s.help?'🤝 정답 보기':'💡 도와줘요'; $('#helpBtn').classList.toggle('pulse',s.miss>=2&&!s.help); }
+}
+function prompt(){ const s=curStop(); if(s) sayList(TRIP.T.say(s.v,s.x)); }
+async function go(){
+  if(phase!=='go'||busy) return;
+  busy=true; phase='travel'; drawCtrl(); sfx.go(); say('출발! 칙칙폭폭!');
+  const scene=$('#scene'), stop=$('#stop');
+  stop.classList.add('leave'); scene.classList.add('travel');
+  await sleep(1700);
+  scene.classList.remove('travel');
+  TRIP.cur++; drawStop(); stop.className='stop arrive'; drawRoute();
+  await sleep(900);
+  phase='deliver'; busy=false; drawCtrl(); prompt();
+}
+async function tapBox(i,el){
+  if(phase!=='deliver'||busy) return;
+  const b=TRIP.boxes[i], s=curStop(), T=TRIP.T;
+  if(b.done) return;
+  if(b.v===s.v){
+    busy=true; b.done=true; s.done=true; S.stars++; save();
+    adapt(!s.miss&&!s.help, s.miss>=2||s.help>=2); save();
+    flyTo(el,$('#alien')); el.classList.add('gone');
+    setTimeout(()=>{ $('#alien').classList.add('happy'); $('#starN').textContent=S.stars; },650);
+    sfx.ok(); confetti(14);
+    sayList([...(T.topic==='en'?[N('Thank you!')]:[K('고마워요!')]),...T.name(s.v,s.x)]);
+    TRIP.boxes.forEach(x=>{ x.dim=false; x.glow=false; });
+    drawRoute();
+    await sleep(1500);
+    if(TRIP.stops.every(x=>x.done)){ busy=false; return tripDone(); }
+    phase='go'; busy=false; drawTrain(); drawCtrl();
+    return;
+  }
+  s.miss++; sfx.no();
+  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+  sayList([K('음, 이 상자는'),...T.box(b.v),K(s.miss>=2?'괜찮아요! 다시 찾아 봐요. 도와줘요를 눌러도 돼요.':'다시 찾아 봐요!')]);
+  drawCtrl();
+}
+// 💡 첫 번째: 부탁을 다시 천천히 + 틀린 상자 절반을 흐리게 · 두 번째: 정답 상자가 반짝
+function help(){
+  if(phase!=='deliver'||busy) return;
+  const s=curStop(), T=TRIP.T; s.help++;
+  if(s.help===1){
+    const wrong=shuffle(TRIP.boxes.filter(b=>!b.done&&b.v!==s.v));
+    wrong.slice(0,wrong.length<=1?wrong.length:Math.ceil(wrong.length/2)).forEach(b=>b.dim=true);
+    drawStop(); drawTrain();
+    sayList([...T.say(s.v,s.x),...(T.hint?T.hint(s.v,s.x):[])],.85);
+  } else {
+    TRIP.boxes.forEach(b=>{ if(b.v===s.v) b.glow=true; });
+    drawStop(); drawTrain();
+    sayList([...T.name(s.v,s.x),K('반짝이는 상자를 눌러요!')],.85);
+  }
+  drawCtrl();
+}
+function tripDone(){
+  phase='done'; S.trips++;
+  const metNew=TRIP.stops.map(s=>s.alien[0]).filter(e=>!S.friends.includes(e));
+  const anyNew=ALIENS.map(a=>a[0]).filter(e=>!S.friends.includes(e));
+  const friend=metNew[0]||anyNew[0]||null;
+  if(friend) S.friends.push(friend);
+  let skin=null;
+  if(S.trips%2===0){ skin=SKINS.find(k=>!S.skins.includes(k.id))||null; if(skin){ S.skins.push(skin.id); S.skin=skin.id; } }
+  save(); sfx.win(); confetti();
+  const earned=S.stars-TRIP.startStars, fa=friend&&ALIENS.find(a=>a[0]===friend);
+  onModalClose=null;
+  modal(`<h2>배달 완료! 🎉</h2><p style="font-size:30px">⭐ ${earned}개를 받았어요</p>
+    ${fa?`<div class="huge">${fa[0]}</div><p>새 우주 친구 <b>${fa[1]}</b>${jo(fa[1],'이','가')} 생겼어요!</p>`:''}
+    ${skin?`<p>🚂 새 기차 색깔: <b>${skin.name}</b> 기차!</p>`:''}
+    <div class="row" style="margin-top:12px"><button class="big-btn" data-m="again">🚂 또 배달하기</button><button class="big-btn alt" data-m="home">🏠 처음으로</button></div>`,sh=>{
+    sh.querySelector('[data-m="again"]').onclick=()=>{ const t=TRIP.topicChoice; closeModal(); startTrip(t); };
+    sh.querySelector('[data-m="home"]').onclick=()=>{ closeModal(); renderHome(); };
+  },{backdrop:false});
+  sayList([K('배달 완료! 정말 잘했어요!'),...(fa?[K(`새 친구 ${jo(fa[1],'이','가')} 생겼어요!`)]:[]),...(skin?[K(`${skin.name} 기차를 얻었어요!`)]:[])]);
+}
+
+/* ======================================================================
+   우주 친구 · 기차 고르기
+   ====================================================================== */
+function renderFriends(){
+  screen='friends';
+  $('#app').innerHTML=`<div class="friends"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button>
+      <h2 style="margin:0">🧑‍🚀 우주 친구 ${S.friends.length} / ${ALIENS.length}</h2></div>
+    <div class="grid" style="margin-top:12px">${ALIENS.map(([e,n])=>S.friends.includes(e)?`<button class="fcard" data-say="${n}"><span class="e">${e}</span>${n}</button>`
+      :'<button class="fcard no" data-say="배달을 하면 만날 수 있어요"><span class="e">❔</span>?</button>').join('')}</div>
+    <h2>🚂 내 기차 <small style="font-size:16px;opacity:.7">배달 두 번마다 새 색깔</small></h2>
+    <div class="grid">${SKINS.map(k=>S.skins.includes(k.id)?`<button class="skin${S.skin===k.id?' on':''}" data-skin="${k.id}"><span class="sw${k.c?'':' rainbow'}" style="${k.c?`background:${k.c}`:''}"></span>${k.name}</button>`
+      :'<button class="skin" data-say="배달을 더 하면 생겨요" style="opacity:.35"><span class="sw" style="background:#555"></span>?</button>').join('')}</div></div>`;
+}
+
+/* ======================================================================
+   어른 설정 (꾹 누르기)
+   ====================================================================== */
+function settings(){
+  const E=effD();
+  const seg=(k,opts)=>`<div class="seg">${opts.map(([v,t])=>`<button data-k="${k}" data-v="${v}" class="${S.set[k]===v?'on':''}">${t}</button>`).join('')}</div>`;
+  modal(`<h2>어른 설정</h2><div class="set">
+    <h3>난이도</h3><div class="diffs">${DIFF.map((d,i)=>`<button data-diff="${i}" class="${S.set.diff===i?'on':''}"><span class="e">${d.e}</span><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
+    <h3>자동 맞춤</h3>${seg('auto',[[true,'켜기'],[false,'끄기']])}
+    <p class="note">켜 두면 아이가 연달아 헤맬 때 몰래 한 단계 쉬워지고, 잘하면 위에서 고른 난이도까지 다시 올라가요. 아이에게는 알리지 않아요. 바뀐 난이도는 다음 배달부터 적용돼요.${S.set.auto&&E<S.set.diff?` 지금은 ${DIFF[E].e} ${DIFF[E].name}로 하고 있어요.`:''}</p>
+    <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}
+    <p class="note">⏱️ 시간 제한은 없어요. 기차는 아이가 출발을 누를 때만 움직이고, 틀려도 별이 줄지 않아요. 💡 도와줘요를 누르면 틀린 상자 절반이 흐려지고, 한 번 더 누르면 정답 상자가 반짝여요.</p>
+    <div class="row" style="margin-top:20px"><button class="big-btn alt" data-m="reset" style="font-size:19px;min-height:48px">처음부터 다시</button><button class="big-btn" data-close style="font-size:19px;min-height:48px">닫기</button></div></div>`,sh=>{
+    sh.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{ S.set.diff=+b.dataset.diff; S.adj=S.set.diff; S.good=S.hard=0; save(); settings(); });
+    sh.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.k; S.set[k]=b.dataset.v==='true';
+      if(k==='auto'){ S.adj=S.set.diff; S.good=S.hard=0; }
+      save(); b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    });
+    sh.querySelector('[data-m="reset"]').onclick=()=>modal(`<h2>처음부터 다시 할까요?</h2><p>별, 우주 친구, 기차 색깔이 모두 처음으로 돌아가요.<br>설정은 그대로 남아요.</p>
+      <div class="row"><button class="big-btn" data-m="yes">네, 다시 할래요</button><button class="big-btn alt" data-close>아니요</button></div>`,sh2=>{
+      sh2.querySelector('[data-m]').onclick=()=>{ const set=S.set; S=fresh(); S.set=set; S.adj=set.diff; save(); closeModal(); renderHome(); };
+    });
+  });
+}
+
+/* ======================================================================
+   눌렀을 때
+   ====================================================================== */
+$('#app').addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  const d=t.dataset;
+  if(d.topic){ sfx.pop(); return startTrip(d.topic); }
+  if(d.b!==undefined) return tapBox(+d.b,t);
+  if(d.say){ sfx.pop(); return say(d.say); }
+  if(d.skin){ S.skin=d.skin; save(); sfx.pop(); renderFriends(); say(`${SKINS.find(k=>k.id===d.skin).name} 기차!`); return; }
+  switch(d.act){
+    case 'home': sfx.pop(); return renderHome();
+    case 'friends': sfx.pop(); renderFriends(); return say('우주 친구들이에요!');
+    case 'go': return go();
+    case 'hear': return prompt();
+    case 'help': return help();
+  }
+});
+
+renderHome();
+if('serviceWorker' in navigator&&location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
