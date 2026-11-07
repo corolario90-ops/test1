@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>포켓몬 시계</title>
+<meta name="theme-color" content="#cfe6ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="포켓몬 시계">
+<link rel="manifest" href="poke-clock.webmanifest">
+<link rel="apple-touch-icon" href="icons/clock-192.png">
+<link rel="icon" href="icons/clock-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#cfe6ff; --bg2:#fff1d6; --ink:#25303a; --card:#ffffff; --soft:#eef3fa; --line:rgba(0,0,0,.1);
+  --accent:#ff6b4a; --good:#22c55e; --gold:#ffcf33; --shadow:0 6px 0 rgba(0,0,0,.14);
+  --hour:#e11d48; --min:#2563eb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg1:#16233a; --bg2:#2a2440; --ink:#eef2f8; --card:#2c3446; --soft:#242c3c; --line:rgba(255,255,255,.14); }
+}
+:root[data-theme="dark"]{ --bg1:#16233a; --bg2:#2a2440; --ink:#eef2f8; --card:#2c3446; --soft:#242c3c; --line:rgba(255,255,255,.14); }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%}
+body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--bg1);background-image:linear-gradient(var(--bg1),var(--bg2));overflow:hidden;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+h1,h2,h3{font-weight:normal;margin:0}
+#app{height:100dvh;display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.big-btn{font-size:24px;padding:12px 24px;border:none;border-radius:20px;background:var(--accent);color:#fff;box-shadow:var(--shadow);min-height:60px}
+.big-btn.alt{background:var(--card);color:var(--ink)}
+.big-btn.small{font-size:19px;padding:8px 16px;min-height:48px}
+.big-btn:disabled{opacity:.45}
+.big-btn.pulse,.pulse{animation:pulse 1s ease-in-out infinite}
+.big-btn:active:not(:disabled),.icon-btn:active,.ch:active,.pcard:active,.lcard:active{transform:translateY(3px)}
+.icon-btn{font-size:26px;width:56px;height:56px;border:none;border-radius:18px;background:var(--card);box-shadow:var(--shadow);position:relative;overflow:hidden;flex:none}
+.icon-btn.holding::after{content:"";position:absolute;left:0;bottom:0;height:6px;background:var(--accent);animation:hold 1s linear forwards}
+.pill{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:999px;padding:4px 16px 4px 10px;font-size:24px;min-height:52px;box-shadow:0 4px 0 rgba(0,0,0,.12);flex:none}
+.bar{display:flex;align-items:center;gap:10px}
+.sp{flex:1}
+@keyframes hold{from{width:0}to{width:100%}}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes jump{30%{transform:translate(-50%,-30px)}60%{transform:translate(-50%,0)}80%{transform:translate(-50%,-10px)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@keyframes flash{0%,100%{filter:brightness(1)}50%{filter:brightness(0) invert(1)}}
+
+/* ---------- 포켓몬 그림 ---------- */
+.pic{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;pointer-events:none}
+.pic.sil{filter:brightness(0);opacity:.3}
+.noimg{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--c,#f59e0b);color:#fff;font-size:calc(var(--sz,80px)*.42);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.18);text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.noimg.sil{background:#888;opacity:.3}
+
+/* ---------- 처음 화면 ---------- */
+.home{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.home h1{font-size:clamp(38px,7.5vw,68px);text-shadow:0 4px 0 rgba(0,0,0,.08)}
+.partner{width:clamp(140px,26vmin,230px);aspect-ratio:1;--sz:clamp(140px,26vmin,230px);animation:bob 1.8s ease-in-out infinite}
+.pname{font-size:26px}
+.evocard{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:20px;padding:8px 16px;box-shadow:0 4px 0 rgba(0,0,0,.1);font-size:20px;text-align:left}
+.evocard .mini{width:58px;height:58px}
+.menu{display:grid;gap:12px;width:min(640px,100%);grid-template-columns:repeat(2,1fr)}
+.menu .big-btn{font-size:26px;min-height:76px}
+.menu .wide{grid-column:1/-1}
+@media (max-width:520px){ .menu{grid-template-columns:1fr} }
+.banner{background:#fff3c4;color:#5b4500;border-radius:18px;padding:12px 16px;max-width:560px;font-size:18px;line-height:1.5}
+.mini{display:block;flex:none}
+
+/* ---------- 짝꿍 고르기 · 도감 · 배우기 목록 ---------- */
+.list{flex:1;overflow-y:auto}
+.list h2{font-size:28px;margin:6px 0 12px;text-align:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.chips button{border:3px solid transparent;background:var(--card);border-radius:999px;padding:6px 16px;font-size:20px;box-shadow:0 4px 0 rgba(0,0,0,.1)}
+.chips button.on{border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.pcard{border:4px solid transparent;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:20px}
+.pcard .im{width:90px;height:90px;--sz:90px}
+.pcard small{font-size:14px;opacity:.65}
+.pcard .evt{display:flex;align-items:center;gap:6px}
+.pcard .evt .mini{width:34px;height:34px}
+.pcard.on{border-color:var(--accent)}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.lcard{border:4px solid transparent;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:14px;display:flex;align-items:center;gap:12px;text-align:left}
+.lcard .e{font-size:46px;line-height:1}
+.lcard b{font-weight:normal;font-size:22px;display:block}
+.lcard small{font-size:15px;opacity:.7}
+.lcard .no{font-size:15px;opacity:.5}
+.lcard.done{border-color:var(--good)}
+.lcard.next{border-color:var(--gold);animation:pulse 1.4s ease-in-out infinite}
+
+/* ---------- 놀이 화면 (시계 + 하늘) ---------- */
+:root{--ck:clamp(230px,min(46vw,calc(100dvh - 190px)),620px)}
+@media (max-aspect-ratio:1/1){ :root{--ck:clamp(220px,min(86vw,calc(100dvh - 450px)),560px)} }
+.play{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0}
+.who{display:flex;align-items:center;gap:8px;font-size:22px;min-width:0}
+.who .im{width:46px;height:46px;--sz:46px;flex:none}
+.dots{display:flex;gap:2px;font-size:22px;flex:0 1 auto;min-width:0;overflow:hidden}
+.dots span{opacity:.3;filter:grayscale(1)}
+.dots span.d{opacity:1;filter:none}
+.dots span.c{opacity:1;filter:none;display:inline-block;animation:bob 1.2s ease-in-out infinite}
+.stage{flex:1;min-height:0;display:flex;gap:16px;align-items:center;justify-content:center}
+@media (max-aspect-ratio:1/1){ .stage{flex-direction:column;gap:10px} .side{align-self:center} }
+.clockbox{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px}
+.digi{font-size:clamp(28px,4.6vmin,44px);background:#1f2633;color:#fff;border-radius:14px;padding:0 16px;letter-spacing:2px;font-variant-numeric:tabular-nums;line-height:1.35}
+.digi .h{color:#ff7b8f} .digi .m{color:#7cb8ff}
+.side{flex:1;min-width:0;max-width:560px;width:100%;display:flex;flex-direction:column;gap:10px;align-self:stretch;justify-content:center;min-height:0}
+.sky{position:relative;border-radius:24px;height:clamp(120px,30vh,280px);flex:none;overflow:hidden;box-shadow:var(--shadow);transition:background 1s;background:linear-gradient(#5ab8ff,#d6f0ff)}
+@media (max-aspect-ratio:1/1){ .sky{height:clamp(110px,17vh,200px)} }
+.sky.night::before{content:"";position:absolute;inset:0;background-image:radial-gradient(2px 2px at 12% 20%,#fff,transparent),radial-gradient(2px 2px at 30% 45%,#fff,transparent),
+  radial-gradient(2px 2px at 70% 15%,#fff,transparent),radial-gradient(1.5px 1.5px at 85% 40%,#fff,transparent),radial-gradient(1.5px 1.5px at 50% 25%,#fff,transparent),radial-gradient(2px 2px at 92% 70%,#fff,transparent)}
+.sky .sun{position:absolute;font-size:clamp(30px,5vmin,46px);transition:left 1s,top 1s;transform:translateX(-50%)}
+.sky .per{position:absolute;left:12px;top:10px;background:rgba(255,255,255,.85);color:#25303a;border-radius:999px;padding:2px 12px;font-size:20px}
+.sky .ground{position:absolute;left:0;right:0;bottom:0;height:18%;background:rgba(80,160,80,.55)}
+.sky.night .ground{background:rgba(20,50,40,.7)}
+.sky .pk{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);height:78%;aspect-ratio:1;--sz:100px}
+.sky .pk.jump{animation:jump .9s ease-out}
+.sky .act{position:absolute;right:6%;bottom:10%;font-size:clamp(40px,7vmin,64px);line-height:1}
+.sky .act>span{display:inline-block;animation:pop .4s}
+.prompt{background:var(--card);border-radius:22px;padding:12px 16px;font-size:clamp(20px,3.1vmin,28px);text-align:center;box-shadow:var(--shadow);line-height:1.45}
+.prompt b{color:var(--accent);font-weight:normal}
+.prompt .hr{color:var(--hour)} .prompt .mn{color:var(--min)}
+.prompt .tw{font-size:clamp(30px,5vmin,46px)}
+.ctrl{display:flex;flex-direction:column;gap:10px}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.choices.c2{grid-template-columns:repeat(2,1fr)}
+.ch{border:4px solid transparent;background:#fff6dc;color:#3a2d10;border-radius:22px;min-height:84px;box-shadow:var(--shadow);font-size:clamp(24px,3.6vmin,34px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px}
+.ch small{font-size:17px;opacity:.6}
+.ch.dim{opacity:.25;filter:grayscale(1)}
+.ch.glow{border-color:var(--gold);box-shadow:0 0 0 4px var(--gold),0 0 24px var(--gold);animation:pulse 1s ease-in-out infinite}
+.ch.ok{background:#c9f5d6;border-color:var(--good)}
+.ch.shake{animation:shake .45s}
+
+/* ---------- 시계 ---------- */
+.clock{display:block;width:var(--ck);height:var(--ck);touch-action:none;overflow:visible}
+.clock .face{fill:#fff;stroke:var(--rim,#ff6b4a);stroke-width:8}
+.clock .tk{stroke:#a3acb8;stroke-width:1.3}
+.clock .tk.b{stroke:#4b5563;stroke-width:3}
+.clock text{font-family:'Jua',system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+.clock .num{font-size:23px;fill:#25303a}
+.clock .dot{fill:#cbd5e1}
+.clock .ml text{font-size:11px;fill:var(--min)}
+.clock .ml circle{fill:#dbeafe}
+.clock .half{fill:rgba(96,165,250,.28)}
+.clock .hand,.clock .tag{transition:transform .18s ease-out}
+.clock .inst{transition:none!important}
+.clock.slow .hand,.clock.slow .tag{transition:transform .9s ease-in-out}
+.clock .hh line{stroke:var(--hour);stroke-width:11;stroke-linecap:round}
+.clock .mh line{stroke:var(--min);stroke-width:6.5;stroke-linecap:round}
+.clock .hand.hl{animation:hglow .9s ease-in-out infinite}
+@keyframes hglow{50%{filter:drop-shadow(0 0 4px #facc15) drop-shadow(0 0 6px #facc15)}}
+.clock .ghost line{opacity:.28}
+.clock .tag circle{fill:#fff;stroke-width:2.5}
+.clock .tag text{font-size:12px}
+.clock .th circle{stroke:var(--hour)} .clock .th text{fill:var(--hour)}
+.clock .tm circle{stroke:var(--min)} .clock .tm text{fill:var(--min)}
+.clock .gl{animation:gpulse 1s ease-in-out infinite}
+.clock .gl.h{fill:#fde047} .clock .gl.m{fill:#93c5fd}
+@keyframes gpulse{50%{opacity:.45}}
+.clock .walker{transition:transform .35s ease-out}
+
+/* ---------- 창 ---------- */
+#modal{position:fixed;inset:0;background:rgba(15,25,30,.5);display:grid;place-items:center;z-index:50;padding:14px}
+.sheet{background:var(--card);border-radius:28px;padding:18px;max-width:680px;width:100%;max-height:92dvh;overflow:auto;box-shadow:0 10px 0 rgba(0,0,0,.2);text-align:center;animation:pop .25s}
+.sheet h2{font-size:30px;margin-bottom:10px}
+.sheet p{font-size:20px;line-height:1.5;margin:8px 0}
+.evo{width:clamp(160px,34vmin,260px);aspect-ratio:1;margin:8px auto;--sz:clamp(160px,34vmin,260px)}
+.evo.flash{animation:flash .35s linear infinite}
+.reward{font-size:80px;line-height:1.1}
+.tl{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:10px 0}
+.tl div{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:16px;background:var(--soft);border-radius:16px;padding:6px 8px}
+.tl .mini{width:48px;height:48px}
+.tl .e{font-size:26px}
+.egrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+.egrid .pcard .im{width:70px;height:70px;--sz:70px}
+@media (max-width:520px){ .egrid{grid-template-columns:repeat(2,1fr)} }
+.set{text-align:left}
+.set h3{font-size:21px;margin:16px 0 6px}
+.seg{display:flex;background:var(--soft);border-radius:16px;padding:4px;gap:4px}
+.seg button{flex:1;border:none;background:none;border-radius:12px;padding:10px 6px;font-size:19px}
+.seg button.on{background:var(--accent);color:#fff}
+.set .note{font-size:15px;opacity:.7;margin:4px 2px;line-height:1.5}
+.diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:520px){ .diffs{grid-template-columns:1fr} }
+.diffs button{border:3px solid transparent;background:var(--soft);border-radius:16px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.diffs .e{font-size:34px;line-height:1.1} .diffs b{font-weight:normal;font-size:20px} .diffs small{font-size:14px;opacity:.7;text-align:center}
+.diffs button.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--soft))}
+.dlbar{height:14px;background:var(--soft);border-radius:8px;overflow:hidden;margin:8px 0}
+.dlbar i{display:block;height:100%;width:0;background:var(--good);transition:width .2s}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti{position:fixed;top:-60px;font-size:34px;animation:fall 1.8s linear forwards}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:var(--card);font-size:22px;padding:12px 20px;border-radius:18px;z-index:70;max-width:90vw;text-align:center;animation:pop .2s}
+@media (max-width:600px){ .pill{font-size:20px;min-height:46px} .icon-btn{width:48px;height:48px;font-size:22px} .who span{display:none} .bar:has(.dots) .who{display:none} .ch{min-height:70px} .dots{font-size:17px} }
+.vrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.vrow span{width:58px;font-size:19px;flex:none}
+.vrow select{flex:1;min-width:0;font:inherit;font-size:17px;padding:10px 8px;border-radius:12px;border:2px solid rgba(0,0,0,.15);background:#fff;color:#26263a}
+.vrow .icon-btn{width:50px;height:50px;font-size:20px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" hidden></div>
+<div id="fx"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const mod=(a,n)=>((a%n)+n)%n;
+const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+
+/* ======================================================================
+   포켓몬 (그림은 앱에 들어 있지 않음: 어른 설정에서 기기로 받음)
+   t: 타입 묶음 (고르기 화면의 거르기) · 진화 시각은 아래에서 포켓몬마다 정해 줌
+   ====================================================================== */
+const LINES=[
+  {ids:[172,25,26],ko:['피츄','피카츄','라이츄'],c:'#facc15',t:'elec'},
+  {ids:[1,2,3],ko:['이상해씨','이상해풀','이상해꽃'],c:'#4ade80',t:'grass'},
+  {ids:[4,5,6],ko:['파이리','리자드','리자몽'],c:'#fb923c',t:'fire'},
+  {ids:[7,8,9],ko:['꼬부기','어니부기','거북왕'],c:'#60a5fa',t:'water'},
+  {ids:[133],ko:['이브이'],c:'#c99a6b',t:'etc',eevee:true},
+  {ids:[10,11,12],ko:['캐터피','단데기','버터플'],c:'#a3e635',t:'grass'},
+  {ids:[16,17,18],ko:['구구','피죤','피죤투'],c:'#d6a35c',t:'etc'},
+  {ids:[173,35,36],ko:['삐','삐삐','픽시'],c:'#f9a8d4',t:'etc'},
+  {ids:[174,39,40],ko:['푸푸린','푸린','푸크린'],c:'#f472b6',t:'etc'},
+  {ids:[43,44,45],ko:['뚜벅쵸','냄새꼬','라플레시아'],c:'#6366f1',t:'grass'},
+  {ids:[60,61,62],ko:['발챙이','슈륙챙이','강챙이'],c:'#3b82f6',t:'water'},
+  {ids:[63,64,65],ko:['캐이시','윤겔라','후딘'],c:'#eab308',t:'etc'},
+  {ids:[66,67,68],ko:['알통몬','근육몬','괴력몬'],c:'#94a3b8',t:'etc'},
+  {ids:[74,75,76],ko:['꼬마돌','데구리','딱구리'],c:'#a8a29e',t:'etc'},
+  {ids:[81,82,462],ko:['코일','레어코일','자포코일'],c:'#9ca3af',t:'elec'},
+  {ids:[100,101],ko:['찌리리공','붐볼'],c:'#ef4444',t:'elec'},
+  {ids:[92,93,94],ko:['고오스','고우스트','팬텀'],c:'#8b5cf6',t:'etc'},
+  {ids:[129,130],ko:['잉어킹','갸라도스'],c:'#f87171',t:'water'},
+  {ids:[446,143],ko:['먹고자','잠만보'],c:'#64748b',t:'etc'},
+  {ids:[54,55],ko:['고라파덕','골덕'],c:'#fde047',t:'water'},
+  {ids:[37,38],ko:['식스테일','나인테일'],c:'#f97316',t:'fire'},
+  {ids:[58,59],ko:['가디','윈디'],c:'#fb923c',t:'fire'},
+  {ids:[52,53],ko:['나옹','페르시온'],c:'#fcd34d',t:'etc'},
+  {ids:[440,113,242],ko:['핑복','럭키','해피너스'],c:'#f9a8d4',t:'etc'},
+  {ids:[147,148,149],ko:['미뇽','신뇽','망나뇽'],c:'#a5b4fc',t:'etc'},
+  {ids:[152,153,154],ko:['치코리타','베이리프','메가니움'],c:'#86efac',t:'grass'},
+  {ids:[155,156,157],ko:['브케인','마그케인','블레이범'],c:'#f97316',t:'fire'},
+  {ids:[158,159,160],ko:['리아코','엘리게이','장크로다일'],c:'#38bdf8',t:'water'},
+  {ids:[175,176,468],ko:['토게피','토게틱','토게키스'],c:'#fde68a',t:'etc'},
+  {ids:[179,180,181],ko:['메리프','보송송','전룡'],c:'#facc15',t:'elec'},
+  {ids:[298,183,184],ko:['루리리','마릴','마릴리'],c:'#60a5fa',t:'water'},
+  {ids:[246,247,248],ko:['애버라스','데기라스','마기라스'],c:'#65a30d',t:'etc'},
+  {ids:[252,253,254],ko:['나무지기','나무돌이','나무킹'],c:'#22c55e',t:'grass'},
+  {ids:[255,256,257],ko:['아차모','영치코','번치코'],c:'#f97316',t:'fire'},
+  {ids:[258,259,260],ko:['물짱이','늪짱이','대짱이'],c:'#3b82f6',t:'water'},
+  {ids:[280,281,282],ko:['랄토스','킬리아','가디안'],c:'#4ade80',t:'etc'},
+  {ids:[371,372,373],ko:['아공이','쉘곤','보만다'],c:'#60a5fa',t:'etc'},
+  {ids:[309,310],ko:['썬더라이','썬더볼트'],c:'#facc15',t:'elec'},
+  {ids:[387,388,389],ko:['모부기','수풀부기','토대부기'],c:'#65a30d',t:'grass'},
+  {ids:[390,391,392],ko:['불꽃숭이','파이숭이','초염몽'],c:'#ef4444',t:'fire'},
+  {ids:[393,394,395],ko:['팽도리','팽태자','엠페르트'],c:'#3b82f6',t:'water'},
+  {ids:[403,404,405],ko:['꼬링크','럭시오','렌트라'],c:'#38bdf8',t:'elec'},
+  {ids:[447,448],ko:['리오르','루카리오'],c:'#3b82f6',t:'etc'},
+  {ids:[443,444,445],ko:['딥상어동','한바이트','한카리아스'],c:'#6366f1',t:'etc'},
+  {ids:[495,496,497],ko:['주리비얀','샤비','샤로다'],c:'#22c55e',t:'grass'},
+  {ids:[498,499,500],ko:['뚜꾸리','차오꿀','염무왕'],c:'#f97316',t:'fire'},
+  {ids:[501,502,503],ko:['수댕이','쌍검자비','대검귀'],c:'#38bdf8',t:'water'},
+  {ids:[650,651,652],ko:['도치마론','도치보구','브리가론'],c:'#16a34a',t:'grass'},
+  {ids:[653,654,655],ko:['푸호꼬','테르나','마폭시'],c:'#f97316',t:'fire'},
+  {ids:[656,657,658],ko:['개구마르','개굴반장','개굴닌자'],c:'#3b82f6',t:'water'},
+  {ids:[722,723,724],ko:['나몰빼미','빼미스로우','모크나이퍼'],c:'#84cc16',t:'grass'},
+  {ids:[725,726,727],ko:['냐오불','냐오히트','어흥염'],c:'#ef4444',t:'fire'},
+  {ids:[728,729,730],ko:['누리공','키요공','누리레느'],c:'#60a5fa',t:'water'},
+  {ids:[810,811,812],ko:['흥나숭','채키몽','고릴타'],c:'#16a34a',t:'grass'},
+  {ids:[813,814,815],ko:['염버니','래비풋','에이스번'],c:'#f97316',t:'fire'},
+  {ids:[816,817,818],ko:['울머기','누겔레온','인텔리레온'],c:'#38bdf8',t:'water'},
+  {ids:[906,907,908],ko:['나오하','나로테','마스카나'],c:'#22c55e',t:'grass'},
+  {ids:[909,910,911],ko:['뜨아거','악뜨거','라우드본'],c:'#ef4444',t:'fire'},
+  {ids:[912,913,914],ko:['꾸왁스','아꾸왁','웨이니발'],c:'#3b82f6',t:'water'},
+];
+// 진화 시각(하루 중 몇 분째): 포켓몬마다 다르게, 아침 9시 ~ 저녁 7시 반 사이
+LINES.forEach((L,i)=>{
+  const a=[9,10,11,13,14][i%5]*60+(i%3===1?30:0), b=[15,16,17,18,19][(i*2)%5]*60+(i%3===2?30:0);
+  L.evo=L.ids.length>=3?[a,b]:[a];
+});
+const EEVEE=[[134,'샤미드'],[135,'쥬피썬더'],[136,'부스터'],[196,'에브이'],[197,'블래키'],[470,'리피아'],[471,'글레이시아'],[700,'님피아']];
+const NAME={}, COLOR={};
+LINES.forEach(L=>L.ids.forEach((id,i)=>{ NAME[id]=L.ko[i]; COLOR[id]=L.c; }));
+EEVEE.forEach(([id,n])=>{ NAME[id]=n; COLOR[id]='#c99a6b'; });
+const ALL_IDS=[...LINES.flatMap(L=>L.ids),...EEVEE.map(e=>e[0])];
+const maxStage=i=>LINES[i].eevee?1:LINES[i].ids.length-1;
+
+const idb=(()=>{
+  let p;
+  const open=()=>p||(p=new Promise((res,rej)=>{ const r=indexedDB.open('pokeclock',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('img'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }));
+  const tx=async(mode,fn)=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('img',mode), r=fn(t.objectStore('img'));
+    t.oncomplete=()=>res(r&&r.result); t.onerror=t.onabort=()=>rej(t.error); }); };
+  return {
+    put:(k,v)=>tx('readwrite',o=>o.put(v,k)),
+    clear:()=>tx('readwrite',o=>o.clear()),
+    all:async()=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('img'), out=[], c=t.objectStore('img').openCursor();
+      c.onsuccess=()=>{ const cur=c.result; if(cur){ out.push([cur.key,cur.value]); cur.continue(); } };
+      t.oncomplete=()=>res(out); t.onerror=()=>rej(t.error); }); },
+  };
+})();
+const IMG=new Map();
+async function loadImages(){ try{ for(const [k,b] of await idb.all()) if(!IMG.has(k)&&b) IMG.set(k,URL.createObjectURL(b)); }catch(e){} }
+const ART=id=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+async function shrink(blob){ // 기기에 저장하기 전에 256px로 줄이기
+  const u=URL.createObjectURL(blob);
+  try{ const im=new Image(); im.src=u; await im.decode();
+    const Z=256, c=document.createElement('canvas'); c.width=c.height=Z;
+    const k=Math.min(Z/im.naturalWidth,Z/im.naturalHeight), w=im.naturalWidth*k, h=im.naturalHeight*k;
+    c.getContext('2d').drawImage(im,(Z-w)/2,(Z-h)/2,w,h);
+    return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('toBlob')),'image/png'));
+  } finally{ URL.revokeObjectURL(u); }
+}
+// 지금 짝꿍 그림을 먼저 받고, 나머지는 그다음에
+async function downloadImages(progress){
+  const first=S.partner!=null?LINES[S.partner].ids:[];
+  const jobs=[...new Set([...first,...ALL_IDS])].filter(id=>!IMG.has('n'+id)), total=jobs.length; let done=0, fail=0;
+  const worker=async()=>{ while(jobs.length){ const id=jobs.shift();
+    try{ const r=await fetch(ART(id)); if(!r.ok) throw new Error(r.status); const b=await shrink(await r.blob()); await idb.put('n'+id,b); IMG.set('n'+id,URL.createObjectURL(b)); }
+    catch(e){ fail++; }
+    progress(++done,total); } };
+  await Promise.all([worker(),worker(),worker(),worker(),worker()]);
+  return {total,fail};
+}
+const haveImages=()=>ALL_IDS.some(id=>IMG.has('n'+id));
+const imgCount=()=>ALL_IDS.filter(id=>IMG.has('n'+id)).length;
+// 그림이 없으면 이름 첫 글자를 넣은 동그라미
+function art(id,cls=''){
+  const u=IMG.get('n'+id);
+  if(u) return `<img class="pic ${cls}" src="${u}" alt="" draggable="false">`;
+  return `<div class="noimg ${cls}" style="--c:${COLOR[id]||'#f59e0b'}">${cls==='sil'?'?':(NAME[id]||'?')[0]}</div>`;
+}
+const jong=w=>{ const c=w.charCodeAt(w.length-1); return c>=0xAC00&&c<=0xD7A3?(c-0xAC00)%28:0; };
+const jo=(w,a,b)=>w+(jong(w)?a:b);
+const ro=w=>w+(jong(w)&&jong(w)!==8?'으로':'로');
+
+/* ======================================================================
+   시각 읽기 (하루 중 몇 분째인지로 다룸: 7*60 = 아침 7시)
+   ====================================================================== */
+const H_KO=['열두','한','두','세','네','다섯','여섯','일곱','여덟','아홉','열','열한'];
+const M_KO={5:'오',10:'십',15:'십오',20:'이십',25:'이십오',30:'삼십',35:'삼십오',40:'사십',45:'사십오',50:'오십',55:'오십오'};
+const h12=T=>{ const h=Math.floor(mod(T,720)/60); return h||12; };
+const mm=T=>mod(T,60);
+const tText=T=>`${h12(T)}시`+(mm(T)===0?'':mm(T)===30?' 반':` ${mm(T)}분`);
+const tSay=T=>`${H_KO[h12(T)%12]} 시`+(mm(T)===0?'':mm(T)===30?' 반':` ${M_KO[mm(T)]||mm(T)} 분`);
+const dText=T=>`${h12(T)}:${String(mm(T)).padStart(2,'0')}`;
+const period=T=>{ const h=mod(T,1440)/60; return h<5?'새벽':h<11?'아침':h<17?'낮':h<20?'저녁':'밤'; };
+
+/* ======================================================================
+   말 · 소리
+   ====================================================================== */
+/* ---------- 목소리 고르기: 어른 설정에서 고른 목소리, 없으면 이 기기에서 가장 자연스러운 목소리 ---------- */
+let koV=null,enV=null;
+const vesc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 맥·아이패드의 장난스러운 효과음 목소리는 목록에서 뺌
+const NOVELTY=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+function voiceList(lang){ try{ return speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().startsWith(lang)&&!NOVELTY.test(v.name)); }catch(e){ return []; } }
+// 고품질(Premium) > 향상된 품질(Enhanced) > Siri·Natural 목소리 순으로 점수
+function voiceScore(v){ const n=v.name; return (/premium|고품질/i.test(n)?6:0)+(/enhanced|향상/i.test(n)?4:0)+(/siri/i.test(n)?3:0)+(/natural|neural|online/i.test(n)?3:0)
+  +(/google/i.test(n)?1:0)+(/^(ko-kr|en-us)$/.test(v.lang.toLowerCase().replace('_','-'))?1:0); }
+const rankVoices=lang=>voiceList(lang).sort((a,b)=>voiceScore(b)-voiceScore(a));
+function pickVoices(){ let set={}; try{ set=S.set; }catch(e){ return; }
+  const pickOne=(lang,uri)=>{ const vs=rankVoices(lang); return (uri&&vs.find(v=>v.voiceURI===uri))||vs[0]||null; };
+  koV=pickOne('ko',set.voiceKo); enV=pickOne('en',set.voiceEn); }
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{ pickVoices(); const k=document.getElementById('vKo'), e=document.getElementById('vEn');
+  if(k) k.innerHTML=voiceOpts('ko',S.set.voiceKo); if(e) e.innerHTML=voiceOpts('en',S.set.voiceEn); };
+function voiceOpts(lang,cur){ const vs=rankVoices(lang);
+  return `<option value="">자동${vs[0]?` (${vesc(vs[0].name)})`:''}</option>`+vs.map(v=>`<option value="${vesc(v.voiceURI)}"${v.voiceURI===cur?' selected':''}>${vesc(v.name)}${voiceScore(v)>=4?' ⭐':''}</option>`).join(''); }
+const SAMPLE={ko:[['안녕하세요! 오늘도 같이 놀아요. 하나, 둘, 셋!','ko']],en:[["Hello! Let's play together. One, two, three!",'en']]};
+function voiceHTML(){
+  return `<h3>🗣️ 목소리</h3>
+    <div class="vrow"><span>한국어</span><select id="vKo">${voiceOpts('ko',S.set.voiceKo)}</select><button class="icon-btn" data-vtest="ko" aria-label="한국어 목소리 들어 보기">▶</button></div>
+    <div class="vrow"><span>영어</span><select id="vEn">${voiceOpts('en',S.set.voiceEn)}</select><button class="icon-btn" data-vtest="en" aria-label="영어 목소리 들어 보기">▶</button></div>
+    <h3>말 빠르기</h3><div class="seg"><button data-vslow="0" class="${S.set.slow?'':'on'}">보통</button><button data-vslow="1" class="${S.set.slow?'on':''}">조금 느리게</button></div>
+    <h3>목소리 높이</h3><div class="seg"><button data-vpitch="1" class="${S.set.pitch>1?'':'on'}">보통</button><button data-vpitch="1.15" class="${S.set.pitch>1?'on':''}">조금 높게</button></div>
+    <p class="note">⭐ 표시는 더 자연스러운 고품질 목소리예요. 고품질 목소리가 없으면 아이패드 <b>설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성</b>에서 한국어·영어의
+      ‘향상된 품질’ 또는 ‘고품질’ 목소리를 내려받은 뒤, 이 앱을 완전히 껐다가 다시 열어 주세요.${voiceList('ko').length?'':' 지금 이 기기에서는 한국어 목소리를 찾지 못했어요.'}</p>`;
+}
+function bindVoice(sh){
+  const pickSel=(id,key,lang)=>{ const el=sh.querySelector(id); if(el) el.onchange=()=>{ S.set[key]=el.value; save(); pickVoices(); sayList(SAMPLE[lang]); }; };
+  pickSel('#vKo','voiceKo','ko'); pickSel('#vEn','voiceEn','en');
+  sh.querySelectorAll('[data-vtest]').forEach(b=>b.onclick=()=>{ if(!S.set.sound){ toast('소리가 꺼져 있어요'); return; } sayList(SAMPLE[b.dataset.vtest]); });
+  const seg=(attr,apply)=>sh.querySelectorAll(`[${attr}]`).forEach(b=>b.onclick=()=>{ apply(b.getAttribute(attr)); save();
+    b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); sayList(SAMPLE.ko); });
+  seg('data-vslow',v=>S.set.slow=v==='1'); seg('data-vpitch',v=>S.set.pitch=+v);
+}
+function utter(t,lang,rate){ const u=new SpeechSynthesisUtterance(t); u.lang=lang==='en'?'en-US':'ko-KR'; const v=lang==='en'?enV:koV; if(v) u.voice=v; u.rate=rate*(S.set.slow?.85:1); u.pitch=S.set.pitch||1; return u; }
+function sayList(list,rate=.95){ if(!S.set.sound||!('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel(); list.forEach(([t,l])=>speechSynthesis.speak(utter(t,l||'ko',l==='en'?rate*.9:rate))); }catch(e){} }
+const say=(t,lang='ko',rate)=>sayList([[t,lang]],rate);
+const K=t=>[t,'ko'], N=t=>[t,'en'];
+let AC=null;
+function tone(f,d=.12,type='sine',vol=.14,when=0){
+  if(!S.set.sound) return;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+    const t=AC.currentTime+when, o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d+.02); }catch(e){} }
+const sfx={
+  tick:()=>tone(1500,.03,'square',.025),
+  pop:()=>tone(700,.08,'triangle'),
+  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,'triangle',.13,i*.1)),
+  no:()=>{ tone(587,.12,'sine',.07); tone(494,.2,'sine',.07,.11); },     // 혼내는 느낌 없는 부드러운 '음?'
+  ding:()=>{ tone(1047,.5,'sine',.1); tone(1319,.6,'sine',.08,.15); },
+  sparkle:()=>[1568,1760,2093,2349,2637].forEach((f,i)=>tone(f,.14,'sine',.07,i*.07)),
+  win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.25,'triangle',.12,i*.12)),
+};
+const PRAISE=['딩동댕!','맞았어요!','최고예요!','잘했어요!','우와, 정확해요!'];
+
+/* ======================================================================
+   상태 · 단계
+   ====================================================================== */
+const SKEY='pokeclock-v1';
+function fresh(){ return {partner:null,stages:{},eevee:null,stars:0,days:0,seen:[],day:null,lessons:{},welcomed:false,
+  set:{lvl:0,digital:true,tags:true,sound:true,voiceKo:'',voiceEn:'',slow:false,pitch:1}}; }
+let S=Object.assign(fresh(),store.get(SKEY,{}));
+S.set=Object.assign(fresh().set,S.set||{});
+const save=()=>store.set(SKEY,S);
+pickVoices();
+// 단계: 0 정각만 · 1 정각과 반 · 2 5분 단위
+const LVL=[
+  {e:'🐣',name:'정각',desc:'긴 바늘은 12에 그대로, 짧은 바늘만 움직여요',step:60},
+  {e:'🐥',name:'정각과 반',desc:'긴 바늘이 12나 6에 멈춰요',step:30},
+  {e:'🐔',name:'5분 단위',desc:'긴 바늘이 5분씩 움직여요 (6~7세)',step:5},
+];
+const lvl=()=>S.set.lvl;
+const pIdx=()=>S.partner??0;
+const stageOf=i=>S.stages[i]||0;
+function curId(i=pIdx()){ const L=LINES[i], s=stageOf(i); return L.eevee&&s>0?(S.eevee||134):L.ids[Math.min(s,L.ids.length-1)]; }
+const curName=(i=pIdx())=>NAME[curId(i)];
+function markSeen(id){ if(!S.seen.includes(id)) S.seen.push(id); }
+// 다음 진화 시각 (정각 단계에서는 '반'을 떼고 정각으로)
+function evoT(i=pIdx()){ const t=LINES[i].evo[Math.min(stageOf(i),LINES[i].evo.length-1)]; return lvl()===0?t-mm(t):t; }
+const canEvo=(i=pIdx())=>stageOf(i)<maxStage(i);
+
+/* ======================================================================
+   공통
+   ====================================================================== */
+function toast(t,ms=2200){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),ms); }
+let onModalClose=null;
+function modal(html,setup,{backdrop=true}={}){
+  const m=$('#modal'); m.innerHTML=`<div class="sheet">${html}</div>`; m.hidden=false;
+  m.onclick=e=>{ if(backdrop&&e.target===m) closeModal(); };
+  m.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal());
+  if(setup) setup(m.querySelector('.sheet'));
+}
+function closeModal(){ $('#modal').hidden=true; $('#modal').innerHTML=''; const f=onModalClose; onModalClose=null; if(f) f(); }
+function confetti(n=26){ for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='confetti'; d.textContent=pick(['⭐','✨','🌟','🎉','💖','🎈']);
+  d.style.left=rnd(100)+'vw'; d.style.animationDelay=(Math.random()*.5)+'s'; $('#fx').appendChild(d); setTimeout(()=>d.remove(),2500); } }
+function holdBtn(b,fn){ let t; const stop=()=>{ clearTimeout(t); b.classList.remove('holding'); };
+  b.addEventListener('pointerdown',()=>{ b.classList.add('holding'); t=setTimeout(()=>{ stop(); fn(); },1000); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));
+  b.addEventListener('click',()=>{ if($('#modal').hidden) toast('어른 설정은 꾹 눌러 주세요'); }); }
+
+/* ======================================================================
+   시계 (빨간 짧은 바늘 = 시 · 파란 긴 바늘 = 분)
+   C.T는 계속 늘어나는 '분'이라서 바늘이 늘 앞으로 자연스럽게 돔
+   ====================================================================== */
+const polar=(deg,r)=>{ const a=deg*Math.PI/180; return {x:+(r*Math.sin(a)).toFixed(2),y:+(-r*Math.cos(a)).toFixed(2)}; };
+function miniClock(T,rim='#ff6b4a'){
+  let tk=''; for(let i=0;i<12;i++){ const a=polar(i*30,36), b=polar(i*30,42); tk+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#64748b" stroke-width="${i%3?2:4}"/>`; }
+  return `<svg class="mini" viewBox="-50 -50 100 100" aria-hidden="true"><circle r="45" fill="#fff" stroke="${rim}" stroke-width="7"/>${tk}
+    <line x1="0" y1="4" x2="0" y2="-36" stroke="#2563eb" stroke-width="5" stroke-linecap="round" transform="rotate(${mod(T,60)*6})"/>
+    <line x1="0" y1="4" x2="0" y2="-23" stroke="#e11d48" stroke-width="8" stroke-linecap="round" transform="rotate(${mod(T,720)/2})"/>
+    <circle r="5" fill="#25303a"/></svg>`;
+}
+let C=null;
+function makeClock(host,o={}){
+  let tk=''; for(let i=0;i<60;i++){ const b=i%5===0, a=polar(i*6,b?88:93), z=polar(i*6,98); tk+=`<line class="tk${b?' b':''}" x1="${a.x}" y1="${a.y}" x2="${z.x}" y2="${z.y}"/>`; }
+  let nums=''; for(let n=1;n<=12;n++){ const p=polar(n*30,73); nums+=`<circle class="dot" id="cd${n}" cx="${p.x}" cy="${p.y}" r="4" visibility="hidden"/><text class="num" id="cn${n}" x="${p.x}" y="${p.y}">${n}</text>`; }
+  let ml=''; for(let k=0;k<12;k++){ const p=polar(k*30,114); ml+=`<circle cx="${p.x}" cy="${p.y}" r="10.5"/><text x="${p.x}" y="${p.y}">${k*5}</text>`; }
+  host.innerHTML=`<svg class="clock" viewBox="-125 -125 250 250" style="--rim:${o.rim||'#ff6b4a'}" role="img" aria-label="시계">
+    <circle class="face" r="100"/>
+    <path class="half" d="M0,-96 A96,96 0 0 1 0,96 Z" visibility="hidden"/>
+    <g>${tk}</g><g class="glows"></g><g>${nums}</g>
+    <g class="ml" visibility="hidden">${ml}</g>
+    <g class="ghost" visibility="hidden"><g class="gm"><line x1="0" y1="0" x2="0" y2="-82" stroke="#2563eb" stroke-width="6.5" stroke-linecap="round"/></g>
+      <g class="gh"><line x1="0" y1="0" x2="0" y2="-50" stroke="#e11d48" stroke-width="11" stroke-linecap="round"/></g></g>
+    <g class="handsG"><g class="hand mh"><line x1="0" y1="12" x2="0" y2="-82"/></g>
+    <g class="hand hh"><line x1="0" y1="10" x2="0" y2="-50"/></g>
+    <g class="tag tm"><circle r="9.5"/><text>분</text></g><g class="tag th"><circle r="9.5"/><text>시</text></g></g>
+    <circle r="9" fill="#e11d48"/><path d="M-9,0 A9,9 0 0 0 9,0 Z" fill="#fff"/><circle r="9" fill="none" stroke="#25303a" stroke-width="2"/><circle r="3" fill="#fff" stroke="#25303a" stroke-width="1.5"/>
+    <g class="walkG"></g>
+  </svg>`;
+  const svg=host.firstElementChild, q=s=>svg.querySelector(s);
+  const hh=q('.hh'), mh=q('.mh'), th=q('.th'), tm=q('.tm'), moving=[hh,mh,th,tm];
+  const K={T:o.T||0, step:5, lock:null, interactive:false, onDrop:null, onNum:null, onChange:null, svg};
+  K.render=()=>{
+    const ha=K.T/2, ma=K.T*6, pt=polar(ha,28), pm=polar(ma,52);
+    hh.style.transform=`rotate(${ha}deg)`; mh.style.transform=`rotate(${ma}deg)`;
+    th.style.transform=`translate(${pt.x}px,${pt.y}px)`; tm.style.transform=`translate(${pm.x}px,${pm.y}px)`;
+    th.style.display=tm.style.display=S.set.tags?'':'none';
+    if(K.onChange) K.onChange(K.T);
+  };
+  K.setT=(t,anim=true)=>{
+    if(!anim) moving.forEach(e=>e.classList.add('inst'));
+    K.T=t; K.render();
+    if(!anim){ svg.getBoundingClientRect(); requestAnimationFrame(()=>requestAnimationFrame(()=>moving.forEach(e=>e.classList.remove('inst')))); }
+  };
+  // 시간이 앞으로 흘러가는 모습 (긴 바늘이 돌면 짧은 바늘이 따라감)
+  K.runTo=async(t,ms=40)=>{ const id=playId; let d=mod(t-K.T,1440); const st=d>=300?15:5;
+    while(d>0){ const s=Math.min(st,d); K.T+=s; d-=s; K.render(); if(s===st) sfx.tick(); await sleep(ms); if(id!==playId) return; } };
+  K.glow=list=>{ q('.glows').innerHTML=list.map(g=>{ const p=polar(g.n*30,73); return `<circle class="gl ${g.c}" cx="${p.x}" cy="${p.y}" r="16"/>`; }).join(''); };
+  K.ghost=t=>{ const g=q('.ghost'); if(t==null){ g.setAttribute('visibility','hidden'); return; }
+    q('.gh').setAttribute('transform',`rotate(${mod(t,720)/2})`); q('.gm').setAttribute('transform',`rotate(${mod(t,60)*6})`); g.setAttribute('visibility','visible'); };
+  K.half=on=>q('.half').setAttribute('visibility',on?'visible':'hidden');
+  K.mlabels=on=>q('.ml').setAttribute('visibility',on?'visible':'hidden');
+  K.hands=on=>q('.handsG').setAttribute('visibility',on?'visible':'hidden');
+  K.hl=w=>{ hh.classList.toggle('hl',w==='h'); mh.classList.toggle('hl',w==='m'); };
+  K.nums=show=>{ for(let n=1;n<=12;n++){ const on=!show||show.has(n); q('#cn'+n).setAttribute('visibility',on?'visible':'hidden'); q('#cd'+n).setAttribute('visibility',on?'hidden':'visible'); } };
+  K.walk=(n,id)=>{ const g=q('.walkG'); if(n==null){ g.innerHTML=''; return; }
+    if(!g.firstChild){ const u=IMG.get('n'+id);
+      g.innerHTML=`<g class="walker">${u?`<image href="${u}" x="-19" y="-19" width="38" height="38"/>`:`<circle r="15" fill="${COLOR[id]}"/><text fill="#fff" font-size="15">${NAME[id][0]}</text>`}</g>`; }
+    const p=polar(n*30,104); g.firstChild.style.transform=`translate(${p.x}px,${p.y}px)`; };
+  // 손가락으로 바늘 돌리기
+  const toSvg=e=>{ const m=svg.getScreenCTM(); if(!m) return {x:0,y:0}; return new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()); };
+  const angOf=p=>mod(Math.atan2(p.x,-p.y)*180/Math.PI,360);
+  const adiff=(a,b)=>{ const d=mod(a-b,360); return Math.min(d,360-d); };
+  function apply(hand,a){ let d;
+    if(hand==='h'){ const tgt=mod(Math.round(a/30-mm(K.T)/60),12), cur=mod(Math.floor(mod(K.T,720)/60),12); d=mod(tgt-cur,12); if(d>6) d-=12; d*=60; }
+    else { const st=K.step, tgt=mod(Math.round(a/6/st)*st,60); d=mod(tgt-mm(K.T),60); if(d>30) d-=60; }
+    if(d){ K.T+=d; K.render(); sfx.tick(); } }
+  let drag=null;
+  svg.addEventListener('pointerdown',e=>{
+    const p=toSvg(e), r=Math.hypot(p.x,p.y), a=angOf(p);
+    if(K.onNum){ if(r>40) K.onNum(mod(Math.round(a/30),12)||12); return; }
+    if(!K.interactive||r>125) return;
+    let hand;
+    if(K.lock==='min') hand='h'; else if(K.lock==='hour') hand='m';
+    else { const dh=adiff(a,mod(K.T/2,360)), dm=adiff(a,mod(K.T*6,360)); hand=(dh<28&&dm<28)?(r<60?'h':'m'):(dh<dm?'h':'m'); }
+    drag={hand,start:K.T}; try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+    e.preventDefault(); apply(hand,a);
+  });
+  svg.addEventListener('pointermove',e=>{ if(drag) apply(drag.hand,angOf(toSvg(e))); });
+  const end=()=>{ if(!drag) return; const d=drag; drag=null; if(K.onDrop) K.onDrop(d.start!==K.T); };
+  svg.addEventListener('pointerup',end); svg.addEventListener('pointercancel',end);
+  K.render();
+  return K;
+}
+
+/* ======================================================================
+   놀이 화면 틀 (시계 · 하늘 · 말풍선 · 버튼)
+   ====================================================================== */
+let screen='home', playId=0, freeMode=false;
+function renderPlay(o){
+  playId++; screen=o.screen;
+  $('#app').innerHTML=`<div class="play">
+    <div class="bar"><button class="icon-btn" data-act="${o.back||'home'}" aria-label="돌아가기">${o.back?'⬅️':'🏠'}</button>
+      <div class="who"><div class="im">${art(curId())}</div><span>${o.title}</span></div><div class="sp"></div>
+      ${o.dots?'<div class="dots" id="dots"></div>':''}
+      <div class="pill">⭐ <span id="starN">${S.stars}</span></div><button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <div class="stage"><div class="clockbox"><div id="ck"></div><div class="digi" id="digi"></div></div>
+      <div class="side"><div class="sky" id="sky"><div class="sun" id="sun"></div><div class="per" id="per"></div><div class="ground"></div>
+        <div class="pk" id="pk">${art(curId())}</div><div class="act" id="act"></div></div>
+        <div class="prompt" id="prompt"></div><div class="ctrl" id="ctrl"></div></div></div></div>`;
+  holdBtn($('#setBtn'),settings);
+  digiHidden=false; freeMode=!!o.free;
+  C=makeClock($('#ck'),{rim:LINES[pIdx()].c,T:o.T||0});
+  C.onChange=T=>{ updDigi(T); if(o.skyLive!==false) sky(T); if(o.onChange) o.onChange(T); };
+  C.render();
+}
+let digiHidden=false;
+function updDigi(T){ const el=$('#digi'); if(!el) return;
+  el.hidden=!(S.set.digital||freeMode);
+  el.innerHTML=digiHidden?'<span class="h">?</span>:<span class="m">??</span>':`<span class="h">${h12(T)}</span>:<span class="m">${String(mm(T)).padStart(2,'0')}</span>`; }
+function hideDigi(on){ digiHidden=on; if(C) updDigi(C.T); }
+function skyOf(T){ const h=mod(T,1440)/60;
+  if(h<5||h>=20.5) return {bg:'linear-gradient(#0f1b4d,#3b3f8f)',c:'🌙',night:true};
+  if(h<7) return {bg:'linear-gradient(#ff9a8b,#ffe0b5)',c:'🌅'};
+  if(h<17) return {bg:'linear-gradient(#5ab8ff,#d6f0ff)',c:'☀️'};
+  if(h<19) return {bg:'linear-gradient(#ff8a65,#ffd59e)',c:'🌇'};
+  return {bg:'linear-gradient(#4b3f8f,#f39ab8)',c:'🌆'}; }
+function sky(T){ const el=$('#sky'); if(!el) return; const s=skyOf(T), h=mod(T,1440)/60;
+  el.style.background=s.bg; el.classList.toggle('night',!!s.night);
+  const sun=$('#sun'); sun.textContent=s.c;
+  const f=s.night?mod(h-20.5,24)/8.5:Math.min(1,Math.max(0,(h-5)/15.5));
+  sun.style.left=(8+f*84)+'%'; sun.style.top=(6+(1-Math.sin(Math.PI*f))*30)+'%';
+  $('#per').textContent=period(T); }
+function setPrompt(html,say){ const p=$('#prompt'); if(p) p.innerHTML=html; if(say) sayList(say); }
+function cheer(emoji){ const pk=$('#pk'); if(pk){ pk.classList.remove('jump'); void pk.offsetWidth; pk.classList.add('jump'); }
+  const a=$('#act'); if(a&&emoji) a.innerHTML=`<span>${emoji}</span>`; }
+const helpRow=(help=true)=>`<div class="row"><button class="icon-btn" data-q="hear" aria-label="다시 듣기">🔊</button>${help?'<button class="big-btn alt small" data-q="help">💡 도와줘요</button>':''}</div>`;
+function tell(html,say,btn='알겠어요 ▶'){
+  return new Promise(res=>{ const id=playId; setPrompt(html,say);
+    $('#ctrl').innerHTML=`<div class="row"><button class="icon-btn" data-q="hear" aria-label="다시 듣기">🔊</button><button class="big-btn" data-q="next">${btn}</button></div>`;
+    $('#ctrl [data-q="hear"]').onclick=()=>sayList(say);
+    $('#ctrl [data-q="next"]').onclick=()=>{ if(id===playId){ sfx.pop(); res(); } }; });
+}
+function updStars(){ const s=$('#starN'); if(s) s.textContent=S.stars; }
+
+/* ---------- 시계 맞추기: 맞을 때까지 기다림, 틀려도 잃는 것 없음 ---------- */
+function askSet(target,o){
+  return new Promise(res=>{
+    const id=playId; let help=0, miss=0, fin=false;
+    C.glow([]); C.ghost(null); C.hl(null); C.onNum=null;
+    if(o.hourOnly&&mm(C.T)!==mm(target)) C.setT(C.T-mm(C.T)+mm(target),false);
+    C.lock=o.hourOnly?'min':null; C.step=o.step||5; C.interactive=true;
+    hideDigi(false); setPrompt(o.html,o.say);
+    $('#ctrl').innerHTML=helpRow();
+    const hb=$('#ctrl [data-q="help"]');
+    $('#ctrl [data-q="hear"]').onclick=()=>sayList(o.say);
+    const ok=()=>mod(C.T-target,720)===0;
+    const finish=()=>{ if(fin) return; fin=true; C.interactive=false; C.onDrop=null; C.glow([]); C.ghost(null); C.hl(null); res(); };
+    C.onDrop=moved=>{ if(id!==playId||fin) return; if(ok()) return finish(); if(moved&&++miss===3&&!help) hb.classList.add('pulse'); };
+    hb.onclick=async()=>{ if(fin) return; hb.classList.remove('pulse'); help++; sfx.pop();
+      const h=h12(target), m=mm(target);
+      if(help===1){
+        C.glow([{n:h,c:'h'},...(o.hourOnly?[]:[{n:m?m/5:12,c:'m'}])]);
+        say(m===0?`짧은 빨간 바늘을 숫자 ${h}에 놓아 봐요.${o.hourOnly?'':' 긴 파란 바늘은 12에 두어요.'}`
+          :m===30?`긴 파란 바늘은 6에 놓아요. 짧은 빨간 바늘은 ${h}하고 ${h%12+1} 사이에 와요.`
+          :`긴 파란 바늘을 숫자 ${m/5}에 놓으면 ${M_KO[m]} 분이에요. 짧은 빨간 바늘은 ${h}를 조금 지나요.`);
+        hb.textContent='💡 더 도와줘요';
+      } else if(help===2){ C.ghost(target); say('흐린 바늘 모양을 따라 맞춰 봐요!'); hb.textContent='🤝 같이 하기'; }
+      else { C.interactive=false; let d=mod(target-C.T,720); if(d>360) d-=720;
+        C.svg.classList.add('slow'); C.setT(C.T+d); await sleep(1000); C.svg.classList.remove('slow'); if(id===playId) finish(); }
+    };
+  });
+}
+/* ---------- 몇 시일까: 보기 3개 중 고르기 ---------- */
+function readChoices(T,L){ const m=mm(T), c=[T+60,T-60];
+  if(m===30) c.push(T-30,T+30); else if(m===0){ if(h12(T)!==12) c.push(T-mod(T,720)); if(L>=1) c.push(T+30); } else c.push(T+5,T-5,T+10);
+  const seen=new Set([mod(T,720)]), out=[];
+  for(const x of shuffle(c)){ const k=mod(x,720); if(out.length<2&&!seen.has(k)){ seen.add(k); out.push(x); } }
+  return shuffle([T,...out]); }
+function askRead(T,o={}){
+  return new Promise(res=>{
+    const id=playId; let miss=0, help=0, fin=false;
+    C.interactive=false; C.glow([]); C.ghost(null); hideDigi(true);
+    const list=readChoices(T,o.lvl??lvl()), say0=o.say||[K('지금 몇 시일까요?')];
+    setPrompt(o.html||'<b>지금 몇 시일까?</b>',say0);
+    $('#ctrl').innerHTML=`<div class="choices">${list.map((t,i)=>`<button class="ch" data-i="${i}">${tText(t)}${S.set.digital?`<small>${dText(t)}</small>`:''}</button>`).join('')}</div>`+helpRow();
+    const btns=[...$('#ctrl').querySelectorAll('.ch')], hb=$('#ctrl [data-q="help"]');
+    const right=list.findIndex(t=>t===T);
+    $('#ctrl [data-q="hear"]').onclick=()=>sayList(say0);
+    const hint=()=>{ const m=mm(T);
+      if(m===0){ C.hl('h'); say('짧은 빨간 바늘이 가리키는 숫자를 봐요! 긴 바늘이 12에 있으면 정각이에요.'); }
+      else if(m===30){ C.hl('m'); say('긴 바늘이 6에 있으면 반이에요. 짧은 바늘이 막 지나온 숫자는 뭘까요?'); }
+      else { C.hl('m'); C.mlabels(true); say('긴 파란 바늘이 가리키는 곳의 파란 숫자를 봐요!'); } };
+    btns.forEach((b,i)=>b.onclick=()=>{ if(fin||b.classList.contains('dim')) return;
+      if(i===right){ fin=true; b.classList.add('ok'); C.hl(null); if(!o.keepMl) C.mlabels(false); hideDigi(false); return res(); }
+      sfx.no(); b.classList.add('shake','dim'); miss++; hint(); if(miss>=2&&!help) hb.classList.add('pulse'); });
+    hb.onclick=()=>{ if(fin) return; help++; hb.classList.remove('pulse'); sfx.pop(); hint();
+      if(help>=2||btns.filter(b=>!b.classList.contains('dim')).length<=2) btns[right].classList.add('glow');
+      else { const w=btns.find((b,i)=>i!==right&&!b.classList.contains('dim')); if(w) w.classList.add('dim'); } };
+  });
+}
+/* ---------- 그 밖의 보기 고르기 ---------- */
+function askChoice(html,say,opts){
+  return new Promise(res=>{ setPrompt(html,say);
+    $('#ctrl').innerHTML=`<div class="choices${opts.length===2?' c2':''}">${opts.map((o,i)=>`<button class="ch" data-i="${i}">${o.h}</button>`).join('')}</div>`+helpRow(false);
+    $('#ctrl [data-q="hear"]').onclick=()=>sayList(say);
+    $('#ctrl').querySelectorAll('.ch').forEach((b,i)=>b.onclick=()=>{ if(b.classList.contains('dim')) return;
+      if(opts[i].ok){ b.classList.add('ok'); res(); } else { sfx.no(); b.classList.add('shake','dim'); if(opts[i].no) say(opts[i].no); } }); });
+}
+async function praise(T,extra=''){ sfx.ok(); cheer('⭐'); say(`${pick(PRAISE)} ${T!=null?tSay(T)+'!':''} ${extra}`); await sleep(1600); }
+
+/* ======================================================================
+   화면: 처음
+   ====================================================================== */
+function renderHome(){
+  screen='home'; playId++;
+  const has=S.partner!=null, done=Object.keys(S.lessons).length;
+  $('#app').innerHTML=`<div class="home">
+    <div class="bar" style="width:100%"><div class="pill">⭐ ${S.stars}</div><div class="pill">☀️ ${S.days}</div><div class="sp"></div>
+      <button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <h1>포켓몬 시계</h1>
+    ${has?`<div class="partner">${art(curId())}</div><div class="pname">짝꿍 ${curName()}</div>
+      ${canEvo()?`<button class="evocard" data-say="${jo(curName(),'은','는')} ${period(evoT())} ${tSay(evoT())}에 진화해요!">${miniClock(evoT(),LINES[pIdx()].c)}<span>✨ 진화 시간<br><b style="font-weight:normal;font-size:24px">${period(evoT())} ${tText(evoT())}</b></span></button>`
+        :'<div class="evocard">🎉 다 자랐어요! ☀️ 하루를 보내며 ⭐를 모아요</div>'}`
+      :'<div class="partner" style="font-size:110px;display:grid;place-items:center">⏰</div><div class="pname">함께할 짝꿍을 골라요!</div>'}
+    ${haveImages()?'':'<div class="banner">🖼️ 포켓몬 그림이 아직 없어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 해 주세요. 그림 없이도 놀 수 있어요.</div>'}
+    <div class="menu">
+      <button class="big-btn${done<3?' pulse':''}" data-act="learn">📚 시계 배우기 <small style="font-size:17px;opacity:.85">${done}/${LESSONS.length}</small></button>
+      <button class="big-btn" data-act="day">${S.day?'☀️ 하루 이어 하기':'☀️ 포켓몬의 하루'}</button>
+      <button class="big-btn alt" data-act="free">🕰️ 자유 시계</button>
+      <button class="big-btn alt" data-act="pick">🔄 짝꿍 ${has?'바꾸기':'고르기'}</button>
+      <button class="big-btn alt wide" data-act="dex">📖 진화 도감</button>
+    </div></div>`;
+  holdBtn($('#setBtn'),settings);
+}
+/* ---------- 짝꿍 고르기 ---------- */
+let pickFilter='all', afterPick=null;
+const FILTERS=[['all','⭐ 전체'],['grass','🌿 풀'],['fire','🔥 불'],['water','💧 물'],['elec','⚡ 전기'],['etc','✨ 여러 가지']];
+function renderPick(){
+  screen='pick'; playId++;
+  const list=LINES.map((L,i)=>i).filter(i=>pickFilter==='all'||LINES[i].t===pickFilter);
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
+    <h2>함께할 짝꿍은 누구?</h2>
+    <div class="chips">${FILTERS.map(([k,t])=>`<button data-filter="${k}" class="${pickFilter===k?'on':''}">${t}</button>`).join('')}</div>
+    <div class="grid">${list.map(i=>`<button class="pcard${S.partner===i?' on':''}" data-pick="${i}"><div class="im">${art(curId(i))}</div>${curName(i)}
+      ${canEvo(i)?`<div class="evt">${miniClock(evoT(i),LINES[i].c)}<small>${period(evoT(i))} ${tText(evoT(i))}<br>진화</small></div>`:'<small>🎉 다 자랐어요</small>'}</button>`).join('')}</div></div>`;
+}
+function renderDex(){
+  screen='dex'; playId++;
+  const got=ALL_IDS.filter(id=>S.seen.includes(id)).length;
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
+    <h2>📖 진화 도감 ${got} / ${ALL_IDS.length}</h2>
+    <div class="grid">${ALL_IDS.map(id=>S.seen.includes(id)?`<button class="pcard" data-say="${NAME[id]}"><div class="im">${art(id)}</div>${NAME[id]}</button>`
+      :`<button class="pcard" data-say="진화 시간에 시계를 맞추면 만날 수 있어요"><div class="im">${art(id,'sil')}</div>???</button>`).join('')}</div></div>`;
+}
+
+/* ======================================================================
+   시계 배우기 (아날로그 시계를 처음 보는 아이를 위한 차례)
+   ====================================================================== */
+const LESSONS=[
+  {k:'nums',e:'🔢',name:'시계 숫자',desc:'1부터 12까지 빙글빙글',run:lesNums},
+  {k:'hour',e:'🔴',name:'짧은 바늘은 "시"',desc:'짧은 바늘이 가리키는 숫자',run:lesHour},
+  {k:'read',e:'🕐',name:'몇 시일까?',desc:'긴 바늘이 12면 정각',run:lesRead},
+  {k:'half',e:'🌗',name:'긴 바늘이 6이면 "반"',desc:'반 바퀴 = 30분',run:lesHalf},
+  {k:'five',e:'🖐️',name:'5분씩 세기',desc:'숫자 하나 = 5분',run:lesFive},
+  {k:'day',e:'🌞',name:'하루는 두 바퀴',desc:'아침 7시와 저녁 7시',run:lesDay},
+];
+function renderLearn(){
+  screen='learn'; playId++;
+  const next=LESSONS.findIndex(l=>!S.lessons[l.k]);
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
+    <h2>📚 시계 배우기</h2>
+    <div class="lgrid">${LESSONS.map((l,i)=>`<button class="lcard${S.lessons[l.k]?' done':i===next?' next':''}" data-lesson="${i}"><span class="e">${l.e}</span>
+      <span><span class="no">${i+1}번째</span><b>${l.name}</b><small>${l.desc}</small></span><span class="sp"></span>${S.lessons[l.k]?'✅':''}</button>`).join('')}</div></div>`;
+}
+async function startLesson(i){
+  if(S.partner==null){ afterPick=()=>startLesson(i); renderPick(); return say('먼저 함께할 짝꿍을 골라요!'); }
+  const L=LESSONS[i];
+  renderPlay({screen:'lesson',title:L.name,back:'learn',T:12*60,skyLive:false});
+  sky(12*60);
+  const id=playId; await L.run(id); if(id!==playId) return;
+  const first=!S.lessons[L.k]; S.lessons[L.k]=1; if(first) S.stars+=2; save(); updStars();
+  sfx.win(); confetti(30);
+  const nx=LESSONS[i+1];
+  modal(`<div class="reward">🎓</div><h2>${L.name} 끝!</h2><div class="evo" style="width:150px;--sz:150px">${art(curId())}</div>
+    ${first?'<p style="font-size:24px">⭐ 2개를 받았어요!</p>':''}
+    <div class="row">${nx?`<button class="big-btn" data-m="next">${nx.e} 다음 배우기</button>`:`<button class="big-btn" data-m="day">☀️ 포켓몬의 하루</button>`}
+      <button class="big-btn alt" data-m="list">📚 목록</button></div>`,sh=>{
+    sh.querySelector('[data-m="list"]').onclick=()=>{ closeModal(); renderLearn(); };
+    const n=sh.querySelector('[data-m="next"]'); if(n) n.onclick=()=>{ closeModal(); startLesson(i+1); };
+    const d=sh.querySelector('[data-m="day"]'); if(d) d.onclick=()=>{ closeModal(); startDay(); };
+  },{backdrop:false});
+  say(`${L.name}, 다 배웠어요! ${jo(curName(),'이','가')} 박수를 쳐요!`);
+}
+const alive=id=>id===playId;
+function pickHours(n,ex=[]){ return shuffle([1,2,3,4,5,6,7,8,9,10,11,12].filter(h=>!ex.includes(h))).slice(0,n); }
+
+async function lesNums(id){
+  C.hands(false); C.nums(new Set()); C.walk(12,curId());
+  await tell('시계에는 <b>숫자</b>가 있어요.<br>숫자들이 숨었네! 같이 찾아볼까?',[K('시계에는 숫자가 있어요. 숫자들이 숨었네! 같이 찾아볼까?')],'좋아요 ▶'); if(!alive(id)) return;
+  const shown=new Set();
+  for(let n=1;n<=12;n++){
+    C.glow([{n,c:'h'}]);
+    setPrompt(`반짝이는 곳을 눌러 봐요! <b class="tw">${n}</b>`,n===1?[K('반짝이는 곳을 눌러 봐요!')]:null);
+    $('#ctrl').innerHTML='';
+    await new Promise(res=>{ C.onNum=k=>{ if(k===n){ C.onNum=null; res(); } else { sfx.no(); } }; }); if(!alive(id)) return;
+    shown.add(n); C.nums(shown); C.walk(n,curId()); sfx.pop(); say(String(n)); await sleep(350);
+  }
+  C.glow([]); cheer('🎉');
+  await tell('짠! 1부터 12까지 <b>빙글</b> 돌아가며 있어요.<br><b>12</b>는 맨 위, <b>6</b>은 맨 아래!',[K('짠! 1부터 12까지 빙글 돌아가며 있어요. 12는 맨 위, 6은 맨 아래에 있어요!')]); if(!alive(id)) return;
+  for(const n of [12,6]){ C.glow([{n,c:'h'}]); C.walk(n,curId()); say(String(n)); await sleep(1100); if(!alive(id)) return; }
+  C.glow([]);
+  await askChoice('<b>3</b>은 어디에 있을까?<br>12에서 오른쪽으로 빙글 가 봐요',[K('3은 어디에 있을까요? 12에서 오른쪽으로 빙글 가 봐요.')],
+    [{h:'👉 오른쪽',ok:true},{h:'👈 왼쪽',no:'12에서 1, 2, 3. 오른쪽으로 가요!'}]); if(!alive(id)) return;
+  C.glow([{n:3,c:'h'}]); C.walk(3,curId()); await praise(null,'3은 오른쪽에 있어요!'); C.glow([]); C.walk(null);
+  C.hands(true);
+}
+async function lesHour(id){
+  C.setT(12*60,false); C.hl('h');
+  await tell('빨간 <b class="hr">짧은 바늘</b>은 <b>"몇 시"</b>를 알려 줘요.<br>파란 <b class="mn">긴 바늘</b>은 지금 12에서 쉬고 있어요.',
+    [K('빨간 짧은 바늘은 몇 시인지 알려 줘요. 파란 긴 바늘은 지금 12에서 쉬고 있어요.')]); if(!alive(id)) return;
+  for(const h of [1,2,3]){ C.setT(h*60); C.glow([{n:h,c:'h'}]);
+    setPrompt(`짧은 바늘이 숫자 <b>${h}</b>에 있으면 <b class="tw">${h}시</b>`,[K(`짧은 바늘이 숫자 ${h}에 있으면, ${H_KO[h]} 시!`)]); $('#ctrl').innerHTML='';
+    await sleep(2600); if(!alive(id)) return; }
+  C.glow([]); C.hl(null);
+  for(const h of pickHours(3,[3])){
+    await askSet(h*60,{hourOnly:true,step:60,html:`짧은 빨간 바늘을 숫자 <b>${h}</b>에 놓아 봐요!<br><b class="tw">${h}시</b>`,
+      say:[K(`짧은 빨간 바늘을 숫자 ${h}에 놓아 봐요. ${H_KO[h]} 시!`)]}); if(!alive(id)) return;
+    await praise(h*60); if(!alive(id)) return;
+  }
+}
+async function lesRead(id){
+  C.setT(12*60,false); C.glow([{n:12,c:'m'}]); C.hl('m');
+  await tell('파란 <b class="mn">긴 바늘</b>이 <b>12</b>에 있으면 <b>"정각"</b>이에요.<br>그럼 빨간 짧은 바늘만 보면 돼요!',
+    [K('파란 긴 바늘이 12에 있으면 정각이에요. 그럼 빨간 짧은 바늘만 보면 돼요!')]); if(!alive(id)) return;
+  C.glow([]); C.hl(null);
+  for(const h of pickHours(3)){
+    C.setT(h*60);
+    await askRead(h*60,{lvl:0,html:'짧은 바늘이 어디 있나요?<br><b>몇 시일까?</b>',say:[K('짧은 바늘이 어디 있나요? 몇 시일까요?')]}); if(!alive(id)) return;
+    await praise(h*60); if(!alive(id)) return;
+  }
+}
+async function lesHalf(id){
+  C.setT(3*60,false);
+  await tell('지금은 <b>3시</b>예요.<br>이제 긴 바늘이 움직이면 어떻게 될까?',[K('지금은 세 시예요. 이제 긴 바늘이 움직이면 어떻게 될까요?')],'보여 줘요 ▶'); if(!alive(id)) return;
+  C.half(true); C.hl('m'); setPrompt('긴 바늘이 빙글…',null); $('#ctrl').innerHTML='';
+  for(let i=0;i<6;i++){ C.setT(C.T+5); sfx.tick(); await sleep(450); if(!alive(id)) return; }
+  C.hl(null); C.glow([{n:3,c:'h'},{n:4,c:'h'},{n:6,c:'m'}]);
+  await tell('긴 바늘이 <b>6</b>까지 <b>반 바퀴</b> 돌았어요! 이걸 <b>"반"</b>이라고 해요.<br>짧은 바늘은 <b>3</b>하고 <b>4</b> <b>사이</b>! 그래서 <b class="tw">3시 반</b>',
+    [K('긴 바늘이 6까지 반 바퀴 돌았어요! 이걸 반이라고 해요. 짧은 바늘은 3하고 4 사이에 있어요. 그래서, 세 시 반!')]); if(!alive(id)) return;
+  C.glow([]); C.half(false); setPrompt('긴 바늘이 마저 빙글…',null); $('#ctrl').innerHTML='';
+  for(let i=0;i<6;i++){ C.setT(C.T+5); sfx.tick(); await sleep(400); if(!alive(id)) return; }
+  C.glow([{n:4,c:'h'}]);
+  await tell('긴 바늘이 <b>한 바퀴</b>를 다 돌면 짧은 바늘이 <b>4</b>에 딱! <b class="tw">4시</b>',[K('긴 바늘이 한 바퀴를 다 돌면 짧은 바늘이 4에 딱 와요. 네 시!')]); if(!alive(id)) return;
+  C.glow([]);
+  for(const h of pickHours(2,[3,12])){
+    C.setT(h*60+30);
+    await askRead(h*60+30,{lvl:1,html:'긴 바늘이 6에 있어요!<br><b>몇 시 반일까?</b>',say:[K('긴 바늘이 6에 있어요! 몇 시 반일까요?')]}); if(!alive(id)) return;
+    await praise(h*60+30); if(!alive(id)) return;
+  }
+  for(const h of pickHours(2,[3,12])){
+    C.setT((h-1)*60,false);
+    await askSet(h*60+30,{step:30,html:`<b class="tw">${h}시 반</b>을 만들어 봐요!<br>긴 바늘은 6, 짧은 바늘은 ${h}하고 ${h%12+1} 사이`,
+      say:[K(`${H_KO[h]} 시 반을 만들어 봐요! 긴 바늘은 6에, 짧은 바늘은 ${h}하고 ${h%12+1} 사이에 와요.`)]}); if(!alive(id)) return;
+    await praise(h*60+30); if(!alive(id)) return;
+  }
+}
+async function lesFive(id){
+  C.setT(2*60,false); C.mlabels(true);
+  await tell('파란 <b class="mn">긴 바늘</b>은 <b>"몇 분"</b>을 알려 줘요.<br>숫자 하나를 지날 때마다 <b>5분</b>씩 커져요!',[K('파란 긴 바늘은 몇 분인지 알려 줘요. 숫자 하나를 지날 때마다 5분씩 커져요!')],'세어 봐요 ▶'); if(!alive(id)) return;
+  $('#ctrl').innerHTML=''; C.hl('m');
+  for(let m=5;m<=60;m+=5){ C.setT(C.T+5); C.glow([{n:m/5,c:'m'}]); setPrompt(`<b class="tw mn">${m}분</b>`,null);
+    say(m===60?'육십 분!':M_KO[m]+' 분'); await sleep(950); if(!alive(id)) return; }
+  C.hl(null); C.glow([{n:3,c:'h'}]);
+  await tell('긴 바늘이 한 바퀴 돌면 <b>60분 = 1시간</b>!<br>짧은 바늘이 2에서 <b>3</b>으로 한 칸 갔어요.',[K('긴 바늘이 한 바퀴 돌면 육십 분, 한 시간이에요! 짧은 바늘이 2에서 3으로 한 칸 갔어요.')]); if(!alive(id)) return;
+  C.glow([]);
+  for(const m of shuffle([10,15,20,40,45,50]).slice(0,3)){
+    const h=pickHours(1,[12])[0], t=h*60+m; C.setT(h*60,false);
+    await askSet(t,{step:5,html:`<b class="tw">${tText(t)}</b>을 만들어 봐요!<br>파란 숫자 <b class="mn">${m}</b>에 긴 바늘을 놓아요`,
+      say:[K(`${tSay(t)}을 만들어 봐요! 파란 숫자 ${m}에 긴 바늘을 놓아요.`)]}); if(!alive(id)) return;
+    await praise(t); if(!alive(id)) return;
+  }
+  C.mlabels(false);
+}
+async function lesDay(id){
+  C.setT(7*60,false); sky(7*60); C.onChange=T=>{ updDigi(T); sky(T); }; cheer('🌅');
+  await tell('<b>아침 7시</b>! 해님이 떠요. 일어날 시간!',[K('아침 일곱 시! 해님이 떠요. 일어날 시간!')],'시간아 흘러라 ▶'); if(!alive(id)) return;
+  $('#ctrl').innerHTML=''; setPrompt('시간이 흘러요…',null);
+  await C.runTo(19*60,60); if(!alive(id)) return; cheer('🌆');
+  await askChoice('<b>저녁 7시</b>예요!<br>아침 7시랑 시계 모양이 같을까?',[K('저녁 일곱 시예요! 아침 일곱 시랑 시계 모양이 같을까요?')],
+    [{h:'😮 같아요',ok:true},{h:'🤔 달라요',no:'다시 봐요. 짧은 바늘이 7, 긴 바늘이 12. 아침이랑 똑같아요!'}]); if(!alive(id)) return;
+  sfx.ok();
+  await tell('맞아요! 짧은 바늘은 하루에 <b>두 바퀴</b> 돌아요.<br>아침인지 저녁인지는 <b>하늘</b>을 보면 알 수 있어요! ☀️🌙',[K('맞아요! 짧은 바늘은 하루에 두 바퀴 돌아요. 아침인지 저녁인지는 하늘을 보면 알 수 있어요!')]); if(!alive(id)) return;
+  await askChoice('달님이 떴어요 🌙<br>밤 9시에는 무엇을 할까?',[K('달님이 떴어요. 밤 아홉 시에는 무엇을 할까요?')],
+    [{h:'🛝 놀이터',no:'밤에는 깜깜해서 놀이터에 안 가요.'},{h:'😴 잠자기',ok:true},{h:'🍙 점심밥',no:'점심밥은 낮에 먹어요.'}]); if(!alive(id)) return;
+  C.setT(21*60); cheer('😴'); await praise(null,'밤에는 쿨쿨 자요!');
+}
+
+/* ======================================================================
+   포켓몬의 하루 (일과에 맞춰 시계 맞추기 · 읽기, 진화 시간이 들어 있음)
+   ====================================================================== */
+const EVENTS=[
+  {k:'wake',e:'🌅',t:7*60,a:'일어나요',d:'일어났어요'},
+  {k:'breakfast',e:'🍳',t:8*60,a:'아침밥을 먹어요',d:'아침밥을 먹었어요'},
+  {k:'school',e:'🎒',t:9*60,a:'유치원에 가요',d:'유치원에 갔어요'},
+  {k:'play',e:'🛝',t:10*60,a:'놀이터에서 놀아요',d:'신나게 놀았어요'},
+  {k:'lunch',e:'🍙',t:12*60,a:'점심밥을 먹어요',d:'점심밥을 먹었어요'},
+  {k:'nap',e:'😪',t:13*60,a:'낮잠을 자요',d:'낮잠을 잤어요'},
+  {k:'draw',e:'🎨',t:14*60,a:'그림을 그려요',d:'그림을 그렸어요'},
+  {k:'snack',e:'🍪',t:15*60,a:'간식을 먹어요',d:'간식을 먹었어요'},
+  {k:'book',e:'📚',t:16*60,a:'책을 읽어요',d:'책을 읽었어요'},
+  {k:'walk',e:'🐾',t:17*60,a:'산책을 해요',d:'산책을 했어요'},
+  {k:'dinner',e:'🍲',t:18*60,a:'저녁밥을 먹어요',d:'저녁밥을 먹었어요'},
+  {k:'bath',e:'🛁',t:19*60,a:'목욕을 해요',d:'목욕을 했어요'},
+  {k:'brush',e:'🪥',t:20*60,a:'이를 닦아요',d:'이를 닦았어요'},
+  {k:'sleep',e:'🌙',t:21*60,a:'잠을 자요',d:'쿨쿨 잠들었어요'},
+];
+const EVO_EV={k:'evo',e:'✨',a:'진화해요',d:'진화했어요'};
+const evInfo=k=>k==='evo'?EVO_EV:EVENTS.find(e=>e.k===k);
+function newDay(){
+  const L=lvl(), mid=shuffle(EVENTS.slice(1,-1)).slice(0,4);
+  let ev=[EVENTS[0],...mid,EVENTS[EVENTS.length-1]].map(x=>({k:x.k,t:x.t}));
+  ev.forEach(x=>{ if(L===1&&rnd(2)) x.t+=30; if(L===2) x.t+=5*rnd(12); });
+  if(canEvo()){ const et=evoT(); ev=ev.filter(x=>Math.floor(x.t/60)!==Math.floor(et/60)); ev.push({k:'evo',t:et}); }
+  ev.sort((a,b)=>a.t-b.t);
+  let n=0; ev.forEach(x=>x.mode=x.k==='evo'?'set':(n++%2===0?'set':'read'));
+  S.day={ev,i:0,T:6*60,lvl:L,partner:pIdx()}; save();
+}
+function drawDots(){ const d=$('#dots'); if(!d||!S.day) return;
+  d.innerHTML=S.day.ev.map((x,j)=>`<span class="${j<S.day.i?'d':j===S.day.i?'c':''}">${evInfo(x.k).e}</span>`).join(''); }
+async function startDay(){
+  if(S.partner==null){ afterPick=startDay; renderPick(); return say('먼저 함께할 짝꿍을 골라요!'); }
+  if(S.day&&(S.day.lvl!==lvl()||S.day.partner!==pIdx())) S.day=null;
+  const isNew=!S.day; if(isNew) newDay();
+  renderPlay({screen:'day',title:`${curName()}의 하루`,dots:true,T:S.day.T});
+  const id=playId, nm=curName(), evo=S.day.ev.find(x=>x.k==='evo');
+  drawDots();
+  if(isNew) await tell(`${jo(nm,'이랑','랑')} 함께 하루를 보내요! ☀️${evo?`<br>오늘 <b>${period(evo.t)} ${tText(evo.t)}</b>에는 ✨<b>진화 시간</b>이 있어요!`:''}`,
+    [K(`${jo(nm,'이랑','랑')} 함께 하루를 보내요!${evo?` 오늘 ${period(evo.t)} ${tSay(evo.t)}에는 진화 시간이 있어요!`:''}`)],'출발! ▶');
+  while(alive(id)&&S.day&&S.day.i<S.day.ev.length){ await runEvent(S.day.ev[S.day.i],id); }
+  if(alive(id)&&S.day) dayEnd();
+}
+async function runEvent(ev,id){
+  const E=evInfo(ev.k), nm=curName(), L=lvl();
+  drawDots(); $('#act').innerHTML='';
+  if(ev.mode==='set'){
+    const html=ev.k==='evo'
+      ?`✨ <b>진화 시간</b>이에요!<br>시계를 <b class="tw">${tText(ev.t)}</b>에 맞추면 ${jo(nm,'이','가')} 진화해요!`
+      :`${E.e} ${jo(nm,'이','가')} <b>${period(ev.t)} ${tText(ev.t)}</b>에 ${E.a}.<br>시계를 <b class="tw">${tText(ev.t)}</b>에 맞춰 줄래?`;
+    const sy=ev.k==='evo'?[K(`진화 시간이에요! 시계를 ${period(ev.t)} ${tSay(ev.t)}에 맞추면 ${jo(nm,'이','가')} 진화해요!`)]
+      :[K(`${jo(nm,'이','가')} ${period(ev.t)} ${tSay(ev.t)}에 ${E.a}. 시계를 ${tSay(ev.t)}에 맞춰 줄래?`)];
+    if(ev.k==='evo') sfx.sparkle();
+    await askSet(ev.t,{hourOnly:L===0,step:LVL[L].step,html,say:sy}); if(!alive(id)) return;
+  } else {
+    setPrompt(`${E.e} 시간이 흘러요…`,null); $('#ctrl').innerHTML='';
+    await C.runTo(ev.t); if(!alive(id)) return;
+    await askRead(ev.t,{html:`${E.e} ${jo(nm,'이','가')} ${E.a}!<br><b>지금 몇 시일까?</b>`,say:[K(`${jo(nm,'이','가')} ${E.a}! 지금 몇 시일까요?`)]}); if(!alive(id)) return;
+  }
+  C.setT(ev.t,false); S.day.T=ev.t; S.day.i++; S.stars++; save(); updStars(); drawDots();
+  sfx.ok(); cheer(E.e); confetti(8);
+  say(`${pick(PRAISE)} ${period(ev.t)} ${tSay(ev.t)}! ${jo(nm,'이','가')} ${E.d}!`);
+  setPrompt(`${E.e} <b>${period(ev.t)} ${tText(ev.t)}</b><br>${jo(nm,'이','가')} ${E.d}!`,null);
+  if(ev.k==='evo'){ await sleep(1400); if(!alive(id)) return; await evolve(); if(!alive(id)) return; }
+  $('#ctrl').innerHTML=`<div class="row"><button class="big-btn pulse" data-q="next">${S.day.i<S.day.ev.length?'다음 ▶':'🌙 하루 끝'}</button></div>`;
+  await new Promise(res=>{ $('#ctrl [data-q="next"]').onclick=()=>{ sfx.pop(); res(); }; });
+}
+function dayEnd(){
+  const ev=S.day.ev, nm=curName(); S.day=null; S.days++; S.stars+=3; save(); sfx.win(); confetti(40);
+  modal(`<h2>하루 끝! 🌙 잘 자, ${nm}</h2><div class="evo" style="width:140px;--sz:140px">${art(curId())}</div>
+    <div class="tl">${ev.map(x=>`<div><span class="e">${evInfo(x.k).e}</span>${miniClock(x.t)}${tText(x.t)}</div>`).join('')}</div>
+    <p style="font-size:24px">⭐ 3개를 더 받았어요!</p>
+    <div class="row"><button class="big-btn" data-m="again">☀️ 새 하루</button><button class="big-btn alt" data-m="home">🏠 처음으로</button></div>`,sh=>{
+    sh.querySelector('[data-m="again"]').onclick=()=>{ closeModal(); startDay(); };
+    sh.querySelector('[data-m="home"]').onclick=()=>{ closeModal(); renderHome(); };
+  },{backdrop:false});
+  say(`하루 끝! ${jo(nm,'이랑','랑')} 함께 멋진 하루를 보냈어요. 잘 자, ${nm}!`);
+}
+function chooseEevee(){
+  return new Promise(res=>{
+    modal(`<h2>이브이는 여러 모습으로 진화할 수 있어요!</h2><p>어떤 모습이 좋아?</p>
+      <div class="egrid">${EEVEE.map(([eid,n])=>`<button class="pcard" data-e="${eid}"><div class="im">${art(eid)}</div>${n}</button>`).join('')}</div>`,sh=>{
+      sh.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{ closeModal(); res(+b.dataset.e); }); },{backdrop:false});
+    say('이브이는 여러 모습으로 진화할 수 있어요! 어떤 모습이 좋아?');
+  });
+}
+async function evolve(){
+  const i=pIdx(), L=LINES[i], from=curId(), fromName=curName();
+  if(L.eevee) S.eevee=await chooseEevee();
+  S.stages[i]=stageOf(i)+1; const to=curId(), toName=curName(); markSeen(to); save();
+  await new Promise(res=>{
+    modal(`<div class="reward">⏰✨</div><h2 id="evh">진화 시간! 어? ${fromName}의 모습이…!</h2><div class="evo" id="evo">${art(from)}</div>
+      <div class="row"><button class="big-btn" id="evb" hidden>계속하기</button></div>`,sh=>{ sh.querySelector('#evb').onclick=()=>{ closeModal(); res(); }; },{backdrop:false});
+    say(`진화 시간! 어? ${fromName}의 모습이...`); sfx.sparkle();
+    setTimeout(()=>{ const ev=$('#evo'); if(ev) ev.classList.add('flash'); },1800);
+    setTimeout(()=>{ const ev=$('#evo'); if(!ev) return; ev.classList.remove('flash'); ev.innerHTML=art(to);
+      $('#evh').textContent=`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`; $('#evb').hidden=false;
+      sfx.win(); confetti(); say(`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`); },3600);
+  });
+  $('#pk').innerHTML=art(to); const w=document.querySelector('.who .im'); if(w) w.innerHTML=art(to);
+  const sp=document.querySelector('.who span'); if(sp) sp.textContent=`${toName}의 하루`;
+}
+
+/* ======================================================================
+   자유 시계 (마음대로 돌려 보고, 하늘이 바뀌는 걸 보기)
+   ====================================================================== */
+function startFree(){
+  if(S.partner==null){ afterPick=startFree; renderPick(); return say('먼저 함께할 짝꿍을 골라요!'); }
+  const now=new Date(), T=now.getHours()*60+Math.round(now.getMinutes()/5)*5;
+  const show=t=>setPrompt(`<span class="tw">${period(t)} <b>${tText(t)}</b></span>`,null);
+  renderPlay({screen:'free',title:'자유 시계',T,free:true,onChange:show});
+  C.interactive=true; C.step=5;
+  C.onDrop=moved=>{ if(moved) say(`${period(C.T)} ${tSay(C.T)}`); };
+  $('#ctrl').innerHTML=`<div class="row"><button class="big-btn" data-q="say">🔊 몇 시야?</button><button class="big-btn alt" data-q="now">⌚ 지금 진짜 시각</button></div>
+    <div class="row"><button class="big-btn alt small" data-q="ml">🖐️ 5분 숫자</button><button class="big-btn alt small" data-q="hr">+1시간 ⏩</button></div>`;
+  let ml=false;
+  $('#ctrl [data-q="say"]').onclick=()=>{ sfx.pop(); say(`${period(C.T)} ${tSay(C.T)}`); };
+  $('#ctrl [data-q="now"]').onclick=()=>{ const d=new Date(), t=d.getHours()*60+Math.round(d.getMinutes()/5)*5; C.svg.classList.add('slow');
+    let x=mod(t-C.T,1440); if(x>720) x-=1440; C.setT(C.T+x); setTimeout(()=>C.svg.classList.remove('slow'),950); say(`지금은 ${period(t)} ${tSay(t)}예요`); };
+  $('#ctrl [data-q="ml"]').onclick=e=>{ ml=!ml; C.mlabels(ml); e.currentTarget.classList.toggle('pulse',ml); sfx.pop(); };
+  $('#ctrl [data-q="hr"]').onclick=async()=>{ sfx.pop(); const id=playId; for(let i=0;i<12;i++){ C.setT(C.T+5); await sleep(50); if(!alive(id)) return; } say(`${period(C.T)} ${tSay(C.T)}`); };
+  say('바늘을 손가락으로 빙글 돌려 봐요! 긴 바늘이 한 바퀴 돌면 짧은 바늘이 한 칸 가요.');
+}
+
+/* ======================================================================
+   어른 설정 (꾹 누르기)
+   ====================================================================== */
+function imgSection(){
+  return `<h3>🖼️ 포켓몬 그림 받기</h3>
+    <p class="note">이 앱에는 포켓몬 그림이 들어 있지 않아요. 버튼을 누르면 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)의 공식 일러스트 ${ALL_IDS.length}장을 받아
+      작게 줄인 뒤 <b>기기 안에만</b> 저장해요(약 5~10MB). 한 번 받으면 인터넷 없이도 보여요. 와이파이에서 받는 걸 추천해요. 그림의 저작권은 Nintendo·Creatures·GAME FREAK에 있으니 가정에서만 써 주세요.</p>
+    <p class="note" id="imgHave">받은 그림 ${imgCount()} / ${ALL_IDS.length}장</p><div class="dlbar"><i id="dlbar"></i></div>
+    <div class="row" style="justify-content:flex-start"><button class="big-btn small" id="dl">⬇️ 그림 받기</button><button class="big-btn small alt" id="clr">🗑️ 받은 그림 지우기</button></div>`;
+}
+function bindImg(sh){
+  sh.querySelector('#dl').onclick=async()=>{
+    if(ALL_IDS.every(id=>IMG.has('n'+id))){ toast('이미 다 받았어요!'); return; }
+    try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+    const dl=sh.querySelector('#dl'); dl.disabled=true;
+    const r=await downloadImages((d,t)=>{ const b=$('#dlbar'), m=$('#imgHave'); if(b) b.style.width=(d/t*100)+'%'; if(m) m.textContent=`받는 중… ${d} / ${t}`; });
+    const m=$('#imgHave'); if(m) m.textContent=r.fail?`${r.total-r.fail}장 받았어요. ${r.fail}장은 받지 못했어요. 인터넷을 확인하고 한 번 더 눌러 주세요.`:`모두 받았어요! 🎉 (${imgCount()} / ${ALL_IDS.length}장)`;
+    dl.disabled=false;
+  };
+  const c=sh.querySelector('#clr'); if(c) c.onclick=()=>modal(`<h2>받은 그림을 지울까요?</h2><p>포켓몬 그림만 지워지고, 별과 진화 기록은 그대로예요.</p>
+    <div class="row"><button class="big-btn" data-m="yes">지울래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
+    s2.querySelector('[data-m]').onclick=async()=>{ try{ await idb.clear(); }catch(e){} IMG.forEach(u=>URL.revokeObjectURL(u)); IMG.clear(); closeModal(); toast('그림을 지웠어요'); };
+  });
+}
+function rerender(){ ({home:renderHome,pick:renderPick,dex:renderDex,learn:renderLearn,day:startDay,free:startFree,lesson:renderLearn})[screen](); }
+function settings(){
+  const seg=(k,opts)=>`<div class="seg">${opts.map(([v,t])=>`<button data-k="${k}" data-v="${v}" class="${S.set[k]===v?'on':''}">${t}</button>`).join('')}</div>`;
+  onModalClose=rerender;
+  modal(`<h2>어른 설정</h2><div class="set">
+    ${imgSection()}
+    <h3>⏰ 시계 단계</h3><div class="diffs">${LVL.map((d,i)=>`<button data-lvl="${i}" class="${lvl()===i?'on':''}"><span class="e">${d.e}</span><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
+    <p class="note">‘포켓몬의 하루’와 진화 시각에 쓰여요. 아날로그 시계가 처음이면 🐣 정각으로 시작해서 📚 시계 배우기를 함께 해 주세요. 단계를 바꾸면 하던 하루는 새로 시작해요.</p>
+    <h3>🔢 디지털 시계 같이 보기</h3>${seg('digital',[[true,'보여 주기'],[false,'숨기기']])}
+    <p class="note">시계 아래에 <span style="color:#e11d48">빨간 시</span>:<span style="color:#2563eb">파란 분</span>을 바늘 색과 맞춰 보여 줘요. 바늘과 숫자를 이어 주는 디딤돌이에요. 익숙해지면 숨겨 보세요. ‘몇 시일까?’ 문제에서는 정답을 맞힐 때까지 가려져요.</p>
+    <h3>🏷️ 바늘 이름표 (시 · 분)</h3>${seg('tags',[[true,'보여 주기'],[false,'숨기기']])}
+    <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}${voiceHTML()}
+    <p class="note">⏱️ 시간 제한은 없어요. 틀려도 별이 줄지 않아요. 💡 도와줘요를 누르면 숫자가 반짝이고, 한 번 더 누르면 흐린 바늘 모양이, 한 번 더 누르면 같이 맞춰 줘요.</p>
+    <div class="row" style="margin-top:18px"><button class="big-btn small alt" data-m="newday">새 하루로 바꾸기</button><button class="big-btn small alt" data-m="reset">처음부터 다시</button><button class="big-btn small" data-close>닫기</button></div></div>`,sh=>{
+    bindVoice(sh); bindImg(sh);
+    sh.querySelectorAll('[data-lvl]').forEach(b=>b.onclick=()=>{ if(lvl()!==+b.dataset.lvl){ S.set.lvl=+b.dataset.lvl; S.day=null; save(); }
+      sh.querySelectorAll('[data-lvl]').forEach(x=>x.classList.toggle('on',x===b)); });
+    sh.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ const k=b.dataset.k; S.set[k]=b.dataset.v==='true'; save();
+      b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
+    sh.querySelector('[data-m="newday"]').onclick=()=>{ S.day=null; save(); onModalClose=null; closeModal(); renderHome(); toast('새 하루를 준비했어요'); };
+    sh.querySelector('[data-m="reset"]').onclick=()=>modal(`<h2>처음부터 다시 할까요?</h2><p>짝꿍, 진화, 별, 배우기, 도감이 모두 처음으로 돌아가요.<br>설정과 받은 그림은 그대로 남아요.</p>
+      <div class="row"><button class="big-btn" data-m="yes">네, 다시 할래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
+      s2.querySelector('[data-m]').onclick=()=>{ const set=S.set; S=fresh(); S.set=set; S.welcomed=true; save(); onModalClose=null; closeModal(); renderHome(); };
+    });
+  });
+}
+// 홈 화면에 설치한 뒤 처음 열면: 어른에게 그림 받기를 먼저 권함
+function welcome(){
+  S.welcomed=true; save();
+  onModalClose=renderHome;
+  modal(`<h2>⏰ 포켓몬 시계에 온 걸 환영해요!</h2><div class="set">
+    <p class="note" style="font-size:17px">어른께: 아이가 놀기 전에 포켓몬 그림을 한 번 받아 두면 좋아요. 나중에 ⚙️ 버튼을 <b>꾹</b> 눌러서 받을 수도 있어요.</p>
+    ${imgSection()}
+    <div class="row" style="margin-top:14px"><button class="big-btn" data-close>시작하기</button></div></div>`,bindImg,{backdrop:false});
+}
+
+/* ======================================================================
+   눌렀을 때
+   ====================================================================== */
+$('#app').addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t) return;
+  const d=t.dataset;
+  if(d.filter){ pickFilter=d.filter; sfx.pop(); return renderPick(); }
+  if(d.pick!==undefined){ const i=+d.pick; S.partner=i; markSeen(curId()); save(); sfx.pop();
+    const nm=curName(); say(canEvo(i)?`${nm}! ${jo(nm,'은','는')} ${period(evoT(i))} ${tSay(evoT(i))}에 진화해요!`:`${nm}! 같이 놀자!`);
+    const f=afterPick; afterPick=null; return f?f():renderHome(); }
+  if(d.lesson!==undefined){ sfx.pop(); return startLesson(+d.lesson); }
+  if(d.say){ sfx.pop(); return say(d.say); }
+  switch(d.act){
+    case 'home': sfx.pop(); return renderHome();
+    case 'learn': sfx.pop(); renderLearn(); return say('시계 보는 법을 하나씩 배워 봐요!');
+    case 'day': sfx.pop(); return startDay();
+    case 'free': sfx.pop(); return startFree();
+    case 'pick': sfx.pop(); afterPick=null; renderPick(); return say('함께할 짝꿍을 골라요! 포켓몬마다 진화하는 시간이 달라요.');
+    case 'dex': sfx.pop(); renderDex(); return say('진화 도감이에요!');
+  }
+});
+let rz; addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ if(C&&document.contains(C.svg)) C.render(); },150); });
+const installed=()=>{ try{ return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true; }catch(e){ return false; } };
+(async function boot(){ await loadImages(); renderHome(); if(installed()&&!haveImages()&&!S.welcomed) welcome(); })();
+if('serviceWorker' in navigator&&location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

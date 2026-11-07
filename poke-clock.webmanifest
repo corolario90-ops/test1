@@ -1,0 +1,16 @@
+{
+  "id": "./poke-clock.html",
+  "name": "포켓몬 시계",
+  "short_name": "포켓몬 시계",
+  "start_url": "./poke-clock.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#cfe6ff",
+  "theme_color": "#cfe6ff",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/clock-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/clock-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
