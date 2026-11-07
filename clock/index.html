@@ -283,17 +283,25 @@ const LINES=[
   {ids:[909,910,911],ko:['뜨아거','악뜨거','라우드본'],c:'#ef4444',t:'fire'},
   {ids:[912,913,914],ko:['꾸왁스','아꾸왁','웨이니발'],c:'#3b82f6',t:'water'},
 ];
-// 진화 시각(하루 중 몇 분째): 포켓몬마다 다르게, 아침 9시 ~ 저녁 7시 반 사이
+// 메가진화: 마지막 모습 다음에 한 번 더 (두 가지 모습이면 아이가 고름) · PokeAPI 공식 일러스트 번호
+const MEGA={172:[[10304,'메가라이츄X'],[10305,'메가라이츄Y']],1:[[10033,'메가이상해꽃']],4:[[10034,'메가리자몽X'],[10035,'메가리자몽Y']],7:[[10036,'메가거북왕']],
+  16:[[10073,'메가피죤투']],173:[[10278,'메가픽시']],63:[[10037,'메가후딘']],92:[[10038,'메가팬텀']],129:[[10041,'메가갸라도스']],147:[[10281,'메가망나뇽']],
+  152:[[10282,'메가메가니움']],158:[[10283,'메가장크로다일']],179:[[10045,'메가전룡']],246:[[10049,'메가마기라스']],252:[[10065,'메가나무킹']],
+  255:[[10050,'메가번치코']],258:[[10064,'메가대짱이']],280:[[10051,'메가가디안']],371:[[10089,'메가보만다']],309:[[10055,'메가썬더볼트']],
+  447:[[10059,'메가루카리오']],443:[[10058,'메가한카리아스']],498:[[10286,'메가염무왕']],650:[[10292,'메가브리가론']],653:[[10293,'메가마폭시']],656:[[10294,'메가개굴닌자']]};
+LINES.forEach(L=>{ if(MEGA[L.ids[0]]) L.mega=MEGA[L.ids[0]]; });
+const maxStage=i=>LINES[i].eevee?1:LINES[i].ids.length-1+(LINES[i].mega?1:0);
+// 진화 시각(하루 중 몇 분째): 포켓몬마다 다르게. 1번째 아침 9시~낮 2시 반, 2번째 낮 3시~저녁 7시 반, 메가진화는 그 1시간 반 뒤(늦어도 저녁 8시 반)
+// 남은 진화는 모두 같은 날에 들어가서 하루에 세 번까지 진화할 수 있음
 LINES.forEach((L,i)=>{
-  const a=[9,10,11,13,14][i%5]*60+(i%3===1?30:0), b=[15,16,17,18,19][(i*2)%5]*60+(i%3===2?30:0);
-  L.evo=L.ids.length>=3?[a,b]:[a];
+  const a=[9,10,11,13,14][i%5]*60+(i%3===1?30:0), b=[15,16,17,18,19][(i*2)%5]*60+(i%3===2?30:0), m=Math.min(b+90,20*60+30);
+  L.evo=[a,b,m].slice(0,maxStage(i));
 });
 const EEVEE=[[134,'샤미드'],[135,'쥬피썬더'],[136,'부스터'],[196,'에브이'],[197,'블래키'],[470,'리피아'],[471,'글레이시아'],[700,'님피아']];
 const NAME={}, COLOR={};
-LINES.forEach(L=>L.ids.forEach((id,i)=>{ NAME[id]=L.ko[i]; COLOR[id]=L.c; }));
+LINES.forEach(L=>{ L.ids.forEach((id,i)=>{ NAME[id]=L.ko[i]; COLOR[id]=L.c; }); (L.mega||[]).forEach(([id,n])=>{ NAME[id]=n; COLOR[id]=L.c; }); });
 EEVEE.forEach(([id,n])=>{ NAME[id]=n; COLOR[id]='#c99a6b'; });
-const ALL_IDS=[...LINES.flatMap(L=>L.ids),...EEVEE.map(e=>e[0])];
-const maxStage=i=>LINES[i].eevee?1:LINES[i].ids.length-1;
+const ALL_IDS=[...LINES.flatMap(L=>[...L.ids,...(L.mega||[]).map(m=>m[0])]),...EEVEE.map(e=>e[0])];
 
 const idb=(()=>{
   let p;
@@ -421,7 +429,7 @@ const PRAISE=['딩동댕!','맞았어요!','최고예요!','잘했어요!','우�
    상태 · 단계
    ====================================================================== */
 const SKEY='pokeclock-v1';
-function fresh(){ return {partner:null,stages:{},eevee:null,stars:0,days:0,seen:[],day:null,lessons:{},welcomed:false,
+function fresh(){ return {partner:null,stages:{},eevee:null,mega:{},stars:0,days:0,seen:[],day:null,lessons:{},welcomed:false,
   set:{lvl:0,digital:true,tags:true,sound:true,voiceKo:'',voiceEn:'',slow:false,pitch:1}}; }
 let S=Object.assign(fresh(),store.get(SKEY,{}));
 S.set=Object.assign(fresh().set,S.set||{});
@@ -436,12 +444,20 @@ const LVL=[
 const lvl=()=>S.set.lvl;
 const pIdx=()=>S.partner??0;
 const stageOf=i=>S.stages[i]||0;
-function curId(i=pIdx()){ const L=LINES[i], s=stageOf(i); return L.eevee&&s>0?(S.eevee||134):L.ids[Math.min(s,L.ids.length-1)]; }
+function curId(i=pIdx()){ const L=LINES[i], s=stageOf(i);
+  if(L.eevee&&s>0) return S.eevee||134;
+  if(L.mega&&s>=L.ids.length) return (S.mega&&S.mega[i])||L.mega[0][0];
+  return L.ids[Math.min(s,L.ids.length-1)]; }
+// 다음 진화가 메가진화인지
+const isMega=(i=pIdx(),s=stageOf(i))=>!!LINES[i].mega&&s===LINES[i].ids.length-1;
+const evoWord=(i=pIdx(),s=stageOf(i))=>isMega(i,s)?'메가진화':'진화';
 const curName=(i=pIdx())=>NAME[curId(i)];
 function markSeen(id){ if(!S.seen.includes(id)) S.seen.push(id); }
 // 다음 진화 시각 (정각 단계에서는 '반'을 떼고 정각으로)
-function evoT(i=pIdx()){ const t=LINES[i].evo[Math.min(stageOf(i),LINES[i].evo.length-1)]; return lvl()===0?t-mm(t):t; }
+function evoT(i=pIdx(),s=stageOf(i)){ const t=LINES[i].evo[Math.min(s,LINES[i].evo.length-1)]; return lvl()===0?t-mm(t):t; }
 const canEvo=(i=pIdx())=>stageOf(i)<maxStage(i);
+// 오늘 남은 진화 시간들 (지금 단계부터 끝까지)
+function evoList(i=pIdx()){ const out=[]; for(let s=stageOf(i);s<maxStage(i);s++) out.push({k:isMega(i,s)?'mega':'evo',t:evoT(i,s)}); return out; }
 
 /* ======================================================================
    공통
@@ -675,10 +691,10 @@ function renderHome(){
       <button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
     <h1>포켓몬 시계</h1>
     ${has?`<div class="partner">${art(curId())}</div><div class="pname">짝꿍 ${curName()}</div>
-      ${canEvo()?`<button class="evocard" data-say="${jo(curName(),'은','는')} ${period(evoT())} ${tSay(evoT())}에 진화해요!">${miniClock(evoT(),LINES[pIdx()].c)}<span>✨ 진화 시간<br><b style="font-weight:normal;font-size:24px">${period(evoT())} ${tText(evoT())}</b></span></button>`
+      ${canEvo()?`<button class="evocard" data-say="${jo(curName(),'은','는')} ${period(evoT())} ${tSay(evoT())}에 ${evoWord()}해요!">${miniClock(evoT(),LINES[pIdx()].c)}<span>${isMega()?'💎 메가진화':'✨ 진화'} 시간${maxStage(pIdx())-stageOf(pIdx())>1?` <small style="font-size:15px;opacity:.7">(오늘 ${maxStage(pIdx())-stageOf(pIdx())}번 진화!)</small>`:''}<br><b style="font-weight:normal;font-size:24px">${period(evoT())} ${tText(evoT())}</b></span></button>`
         :'<div class="evocard">🎉 다 자랐어요! ☀️ 하루를 보내며 ⭐를 모아요</div>'}`
       :'<div class="partner" style="font-size:110px;display:grid;place-items:center">⏰</div><div class="pname">함께할 짝꿍을 골라요!</div>'}
-    ${haveImages()?'':'<div class="banner">🖼️ 포켓몬 그림이 아직 없어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 해 주세요. 그림 없이도 놀 수 있어요.</div>'}
+    ${haveImages()?(imgCount()<ALL_IDS.length?`<div class="banner">🆕 새 포켓몬 그림 ${ALL_IDS.length-imgCount()}장이 있어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 한 번 더 해 주세요.</div>`:''):'<div class="banner">🖼️ 포켓몬 그림이 아직 없어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 해 주세요. 그림 없이도 놀 수 있어요.</div>'}
     <div class="menu">
       <button class="big-btn${done<3?' pulse':''}" data-act="learn">📚 시계 배우기 <small style="font-size:17px;opacity:.85">${done}/${LESSONS.length}</small></button>
       <button class="big-btn" data-act="day">${S.day?'☀️ 하루 이어 하기':'☀️ 포켓몬의 하루'}</button>
@@ -697,8 +713,8 @@ function renderPick(){
   $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
     <h2>함께할 짝꿍은 누구?</h2>
     <div class="chips">${FILTERS.map(([k,t])=>`<button data-filter="${k}" class="${pickFilter===k?'on':''}">${t}</button>`).join('')}</div>
-    <div class="grid">${list.map(i=>`<button class="pcard${S.partner===i?' on':''}" data-pick="${i}"><div class="im">${art(curId(i))}</div>${curName(i)}
-      ${canEvo(i)?`<div class="evt">${miniClock(evoT(i),LINES[i].c)}<small>${period(evoT(i))} ${tText(evoT(i))}<br>진화</small></div>`:'<small>🎉 다 자랐어요</small>'}</button>`).join('')}</div></div>`;
+    <div class="grid">${list.map(i=>`<button class="pcard${S.partner===i?' on':''}" data-pick="${i}"><div class="im">${art(curId(i))}</div>${curName(i)}${LINES[i].mega?' 💎':''}
+      ${canEvo(i)?`<div class="evt">${miniClock(evoT(i),LINES[i].c)}<small>${period(evoT(i))} ${tText(evoT(i))}<br>${isMega(i)?'💎 메가진화':'진화'}</small></div>`:'<small>🎉 다 자랐어요</small>'}</button>`).join('')}</div></div>`;
 }
 function renderDex(){
   screen='dex'; playId++;
@@ -706,7 +722,7 @@ function renderDex(){
   $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
     <h2>📖 진화 도감 ${got} / ${ALL_IDS.length}</h2>
     <div class="grid">${ALL_IDS.map(id=>S.seen.includes(id)?`<button class="pcard" data-say="${NAME[id]}"><div class="im">${art(id)}</div>${NAME[id]}</button>`
-      :`<button class="pcard" data-say="진화 시간에 시계를 맞추면 만날 수 있어요"><div class="im">${art(id,'sil')}</div>???</button>`).join('')}</div></div>`;
+      :`<button class="pcard" data-say="${id>10000?'메가진화 시간에 시계를 맞추면 만날 수 있어요':'진화 시간에 시계를 맞추면 만날 수 있어요'}"><div class="im">${art(id,'sil')}</div>???</button>`).join('')}</div></div>`;
 }
 
 /* ======================================================================
@@ -870,15 +886,18 @@ const EVENTS=[
   {k:'brush',e:'🪥',t:20*60,a:'이를 닦아요',d:'이를 닦았어요'},
   {k:'sleep',e:'🌙',t:21*60,a:'잠을 자요',d:'쿨쿨 잠들었어요'},
 ];
-const EVO_EV={k:'evo',e:'✨',a:'진화해요',d:'진화했어요'};
-const evInfo=k=>k==='evo'?EVO_EV:EVENTS.find(e=>e.k===k);
+const EVO_EV={k:'evo',e:'✨',a:'진화해요',d:'진화했어요'}, MEGA_EV={k:'mega',e:'💎',a:'메가진화해요',d:'메가진화했어요'};
+const evInfo=k=>k==='evo'?EVO_EV:k==='mega'?MEGA_EV:EVENTS.find(e=>e.k===k);
+const isEvoEv=ev=>ev.k==='evo'||ev.k==='mega';
 function newDay(){
-  const L=lvl(), mid=shuffle(EVENTS.slice(1,-1)).slice(0,4);
+  // 진화가 여러 번이면 다른 일과를 조금 줄여서 하루가 너무 길어지지 않게
+  const L=lvl(), evos=evoList(), mid=shuffle(EVENTS.slice(1,-1)).slice(0,Math.max(2,5-evos.length));
   let ev=[EVENTS[0],...mid,EVENTS[EVENTS.length-1]].map(x=>({k:x.k,t:x.t}));
   ev.forEach(x=>{ if(L===1&&rnd(2)) x.t+=30; if(L===2) x.t+=5*rnd(12); });
-  if(canEvo()){ const et=evoT(); ev=ev.filter(x=>Math.floor(x.t/60)!==Math.floor(et/60)); ev.push({k:'evo',t:et}); }
+  const hrs=new Set(evos.map(e=>Math.floor(e.t/60)));
+  ev=ev.filter(x=>!hrs.has(Math.floor(x.t/60))).concat(evos);
   ev.sort((a,b)=>a.t-b.t);
-  let n=0; ev.forEach(x=>x.mode=x.k==='evo'?'set':(n++%2===0?'set':'read'));
+  let n=0; ev.forEach(x=>x.mode=isEvoEv(x)?'set':(n++%2===0?'set':'read'));
   S.day={ev,i:0,T:6*60,lvl:L,partner:pIdx()}; save();
 }
 function drawDots(){ const d=$('#dots'); if(!d||!S.day) return;
@@ -888,10 +907,12 @@ async function startDay(){
   if(S.day&&(S.day.lvl!==lvl()||S.day.partner!==pIdx())) S.day=null;
   const isNew=!S.day; if(isNew) newDay();
   renderPlay({screen:'day',title:`${curName()}의 하루`,dots:true,T:S.day.T});
-  const id=playId, nm=curName(), evo=S.day.ev.find(x=>x.k==='evo');
+  const id=playId, nm=curName(), evos=S.day.ev.filter(isEvoEv);
   drawDots();
-  if(isNew) await tell(`${jo(nm,'이랑','랑')} 함께 하루를 보내요! ☀️${evo?`<br>오늘 <b>${period(evo.t)} ${tText(evo.t)}</b>에는 ✨<b>진화 시간</b>이 있어요!`:''}`,
-    [K(`${jo(nm,'이랑','랑')} 함께 하루를 보내요!${evo?` 오늘 ${period(evo.t)} ${tSay(evo.t)}에는 진화 시간이 있어요!`:''}`)],'출발! ▶');
+  const evH=evos.map(e=>`${evInfo(e.k).e} <b>${period(e.t)} ${tText(e.t)}</b>`).join(', '), evS=evos.map(e=>`${period(e.t)} ${tSay(e.t)}`).join(', ');
+  const cnt=['','한','두','세'][evos.length]||evos.length;
+  if(isNew) await tell(`${jo(nm,'이랑','랑')} 함께 하루를 보내요! ☀️${evos.length?`<br>오늘은 진화 시간이 <b>${evos.length}번</b>! ${evH}`:''}`,
+    [K(`${jo(nm,'이랑','랑')} 함께 하루를 보내요!${evos.length?` 오늘은 진화 시간이 ${cnt} 번 있어요! ${evS}.`:''}`)],'출발! ▶');
   while(alive(id)&&S.day&&S.day.i<S.day.ev.length){ await runEvent(S.day.ev[S.day.i],id); }
   if(alive(id)&&S.day) dayEnd();
 }
@@ -899,12 +920,13 @@ async function runEvent(ev,id){
   const E=evInfo(ev.k), nm=curName(), L=lvl();
   drawDots(); $('#act').innerHTML='';
   if(ev.mode==='set'){
-    const html=ev.k==='evo'
-      ?`✨ <b>진화 시간</b>이에요!<br>시계를 <b class="tw">${tText(ev.t)}</b>에 맞추면 ${jo(nm,'이','가')} 진화해요!`
+    const W=ev.k==='mega'?'메가진화':'진화';
+    const html=isEvoEv(ev)
+      ?`${E.e} <b>${W} 시간</b>이에요!<br>시계를 <b class="tw">${tText(ev.t)}</b>에 맞추면 ${jo(nm,'이','가')} ${W}해요!`
       :`${E.e} ${jo(nm,'이','가')} <b>${period(ev.t)} ${tText(ev.t)}</b>에 ${E.a}.<br>시계를 <b class="tw">${tText(ev.t)}</b>에 맞춰 줄래?`;
-    const sy=ev.k==='evo'?[K(`진화 시간이에요! 시계를 ${period(ev.t)} ${tSay(ev.t)}에 맞추면 ${jo(nm,'이','가')} 진화해요!`)]
+    const sy=isEvoEv(ev)?[K(`${W} 시간이에요! 시계를 ${period(ev.t)} ${tSay(ev.t)}에 맞추면 ${jo(nm,'이','가')} ${W}해요!`)]
       :[K(`${jo(nm,'이','가')} ${period(ev.t)} ${tSay(ev.t)}에 ${E.a}. 시계를 ${tSay(ev.t)}에 맞춰 줄래?`)];
-    if(ev.k==='evo') sfx.sparkle();
+    if(isEvoEv(ev)) sfx.sparkle();
     await askSet(ev.t,{hourOnly:L===0,step:LVL[L].step,html,say:sy}); if(!alive(id)) return;
   } else {
     setPrompt(`${E.e} 시간이 흘러요…`,null); $('#ctrl').innerHTML='';
@@ -915,7 +937,7 @@ async function runEvent(ev,id){
   sfx.ok(); cheer(E.e); confetti(8);
   say(`${pick(PRAISE)} ${period(ev.t)} ${tSay(ev.t)}! ${jo(nm,'이','가')} ${E.d}!`);
   setPrompt(`${E.e} <b>${period(ev.t)} ${tText(ev.t)}</b><br>${jo(nm,'이','가')} ${E.d}!`,null);
-  if(ev.k==='evo'){ await sleep(1400); if(!alive(id)) return; await evolve(); if(!alive(id)) return; }
+  if(isEvoEv(ev)&&canEvo()){ await sleep(1400); if(!alive(id)) return; await evolve(); if(!alive(id)) return; }
   $('#ctrl').innerHTML=`<div class="row"><button class="big-btn pulse" data-q="next">${S.day.i<S.day.ev.length?'다음 ▶':'🌙 하루 끝'}</button></div>`;
   await new Promise(res=>{ $('#ctrl [data-q="next"]').onclick=()=>{ sfx.pop(); res(); }; });
 }
@@ -930,26 +952,27 @@ function dayEnd(){
   },{backdrop:false});
   say(`하루 끝! ${jo(nm,'이랑','랑')} 함께 멋진 하루를 보냈어요. 잘 자, ${nm}!`);
 }
-function chooseEevee(){
+function chooseForm(title,list){
   return new Promise(res=>{
-    modal(`<h2>이브이는 여러 모습으로 진화할 수 있어요!</h2><p>어떤 모습이 좋아?</p>
-      <div class="egrid">${EEVEE.map(([eid,n])=>`<button class="pcard" data-e="${eid}"><div class="im">${art(eid)}</div>${n}</button>`).join('')}</div>`,sh=>{
+    modal(`<h2>${title}</h2><p>어떤 모습이 좋아?</p>
+      <div class="egrid"${list.length===2?' style="grid-template-columns:repeat(2,1fr)"':''}>${list.map(([eid,n])=>`<button class="pcard" data-e="${eid}"><div class="im">${art(eid)}</div>${n}</button>`).join('')}</div>`,sh=>{
       sh.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{ closeModal(); res(+b.dataset.e); }); },{backdrop:false});
-    say('이브이는 여러 모습으로 진화할 수 있어요! 어떤 모습이 좋아?');
+    say(`${title} 어떤 모습이 좋아?`);
   });
 }
 async function evolve(){
-  const i=pIdx(), L=LINES[i], from=curId(), fromName=curName();
-  if(L.eevee) S.eevee=await chooseEevee();
+  const i=pIdx(), L=LINES[i], from=curId(), fromName=curName(), mega=isMega(i), W=mega?'메가진화':'진화';
+  if(L.eevee) S.eevee=await chooseForm('이브이는 여러 모습으로 진화할 수 있어요!',EEVEE);
+  if(mega&&L.mega.length>1){ S.mega=S.mega||{}; S.mega[i]=await chooseForm(`${jo(fromName,'은','는')} 두 가지 모습으로 메가진화할 수 있어요!`,L.mega); }
   S.stages[i]=stageOf(i)+1; const to=curId(), toName=curName(); markSeen(to); save();
   await new Promise(res=>{
-    modal(`<div class="reward">⏰✨</div><h2 id="evh">진화 시간! 어? ${fromName}의 모습이…!</h2><div class="evo" id="evo">${art(from)}</div>
+    modal(`<div class="reward">${mega?'💎🌈':'⏰✨'}</div><h2 id="evh">${W} 시간! 어? ${fromName}의 모습이…!</h2><div class="evo" id="evo">${art(from)}</div>
       <div class="row"><button class="big-btn" id="evb" hidden>계속하기</button></div>`,sh=>{ sh.querySelector('#evb').onclick=()=>{ closeModal(); res(); }; },{backdrop:false});
-    say(`진화 시간! 어? ${fromName}의 모습이...`); sfx.sparkle();
+    say(`${W} 시간! 어? ${fromName}의 모습이...`); sfx.sparkle();
     setTimeout(()=>{ const ev=$('#evo'); if(ev) ev.classList.add('flash'); },1800);
     setTimeout(()=>{ const ev=$('#evo'); if(!ev) return; ev.classList.remove('flash'); ev.innerHTML=art(to);
-      $('#evh').textContent=`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`; $('#evb').hidden=false;
-      sfx.win(); confetti(); say(`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`); },3600);
+      $('#evh').textContent=`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} ${W}했어요!`; $('#evb').hidden=false;
+      sfx.win(); confetti(mega?50:26); say(`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} ${W}했어요!`); },3600);
   });
   $('#pk').innerHTML=art(to); const w=document.querySelector('.who .im'); if(w) w.innerHTML=art(to);
   const sp=document.querySelector('.who span'); if(sp) sp.textContent=`${toName}의 하루`;
@@ -1044,7 +1067,7 @@ $('#app').addEventListener('click',e=>{
   const d=t.dataset;
   if(d.filter){ pickFilter=d.filter; sfx.pop(); return renderPick(); }
   if(d.pick!==undefined){ const i=+d.pick; S.partner=i; markSeen(curId()); save(); sfx.pop();
-    const nm=curName(); say(canEvo(i)?`${nm}! ${jo(nm,'은','는')} ${period(evoT(i))} ${tSay(evoT(i))}에 진화해요!`:`${nm}! 같이 놀자!`);
+    const nm=curName(); say(canEvo(i)?`${nm}! ${jo(nm,'은','는')} ${period(evoT(i))} ${tSay(evoT(i))}에 ${evoWord(i)}해요!`:`${nm}! 같이 놀자!`);
     const f=afterPick; afterPick=null; return f?f():renderHome(); }
   if(d.lesson!==undefined){ sfx.pop(); return startLesson(+d.lesson); }
   if(d.say){ sfx.pop(); return say(d.say); }
