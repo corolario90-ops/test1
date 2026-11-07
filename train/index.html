@@ -172,6 +172,10 @@ h1,h2,h3{font-weight:normal;margin:0}
   .route{font-size:18px} .route b{font-size:26px}
   .car{padding:6px 6px 12px}
 }
+.vrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.vrow span{width:58px;font-size:19px;flex:none}
+.vrow select{flex:1;min-width:0;font:inherit;font-size:17px;padding:10px 8px;border-radius:12px;border:2px solid rgba(0,0,0,.15);background:#fff;color:#26263a}
+.vrow .icon-btn{width:50px;height:50px;font-size:20px}
 </style>
 </head>
 <body>
@@ -291,11 +295,42 @@ const SKINS=[{id:'red',name:'빨강',c:'#ef4444'},{id:'blue',name:'파랑',c:'#3
 /* ======================================================================
    말 · 소리
    ====================================================================== */
+/* ---------- 목소리 고르기: 어른 설정에서 고른 목소리, 없으면 이 기기에서 가장 자연스러운 목소리 ---------- */
 let koV=null,enV=null;
-function pickVoices(){ try{ const vs=speechSynthesis.getVoices(); koV=vs.find(v=>/^ko/i.test(v.lang))||null;
-  enV=vs.find(v=>/^en[-_]US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null; }catch(e){} }
-if('speechSynthesis' in window){ pickVoices(); speechSynthesis.onvoiceschanged=pickVoices; }
-function utter(t,lang,rate){ const u=new SpeechSynthesisUtterance(t); u.lang=lang==='en'?'en-US':'ko-KR'; const v=lang==='en'?enV:koV; if(v) u.voice=v; u.rate=rate; u.pitch=1.1; return u; }
+const vesc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 맥·아이패드의 장난스러운 효과음 목소리는 목록에서 뺌
+const NOVELTY=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+function voiceList(lang){ try{ return speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().startsWith(lang)&&!NOVELTY.test(v.name)); }catch(e){ return []; } }
+// 고품질(Premium) > 향상된 품질(Enhanced) > Siri·Natural 목소리 순으로 점수
+function voiceScore(v){ const n=v.name; return (/premium|고품질/i.test(n)?6:0)+(/enhanced|향상/i.test(n)?4:0)+(/siri/i.test(n)?3:0)+(/natural|neural|online/i.test(n)?3:0)
+  +(/google/i.test(n)?1:0)+(/^(ko-kr|en-us)$/.test(v.lang.toLowerCase().replace('_','-'))?1:0); }
+const rankVoices=lang=>voiceList(lang).sort((a,b)=>voiceScore(b)-voiceScore(a));
+function pickVoices(){ let set={}; try{ set=S.set; }catch(e){ return; }
+  const pickOne=(lang,uri)=>{ const vs=rankVoices(lang); return (uri&&vs.find(v=>v.voiceURI===uri))||vs[0]||null; };
+  koV=pickOne('ko',set.voiceKo); enV=pickOne('en',set.voiceEn); }
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{ pickVoices(); const k=document.getElementById('vKo'), e=document.getElementById('vEn');
+  if(k) k.innerHTML=voiceOpts('ko',S.set.voiceKo); if(e) e.innerHTML=voiceOpts('en',S.set.voiceEn); };
+function voiceOpts(lang,cur){ const vs=rankVoices(lang);
+  return `<option value="">자동${vs[0]?` (${vesc(vs[0].name)})`:''}</option>`+vs.map(v=>`<option value="${vesc(v.voiceURI)}"${v.voiceURI===cur?' selected':''}>${vesc(v.name)}${voiceScore(v)>=4?' ⭐':''}</option>`).join(''); }
+const SAMPLE={ko:[['안녕하세요! 오늘도 같이 놀아요. 하나, 둘, 셋!','ko']],en:[["Hello! Let's play together. One, two, three!",'en']]};
+function voiceHTML(){
+  return `<h3>🗣️ 목소리</h3>
+    <div class="vrow"><span>한국어</span><select id="vKo">${voiceOpts('ko',S.set.voiceKo)}</select><button class="icon-btn" data-vtest="ko" aria-label="한국어 목소리 들어 보기">▶</button></div>
+    <div class="vrow"><span>영어</span><select id="vEn">${voiceOpts('en',S.set.voiceEn)}</select><button class="icon-btn" data-vtest="en" aria-label="영어 목소리 들어 보기">▶</button></div>
+    <h3>말 빠르기</h3><div class="seg"><button data-vslow="0" class="${S.set.slow?'':'on'}">보통</button><button data-vslow="1" class="${S.set.slow?'on':''}">조금 느리게</button></div>
+    <h3>목소리 높이</h3><div class="seg"><button data-vpitch="1" class="${S.set.pitch>1?'':'on'}">보통</button><button data-vpitch="1.15" class="${S.set.pitch>1?'on':''}">조금 높게</button></div>
+    <p class="note">⭐ 표시는 더 자연스러운 고품질 목소리예요. 고품질 목소리가 없으면 아이패드 <b>설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성</b>에서 한국어·영어의
+      ‘향상된 품질’ 또는 ‘고품질’ 목소리를 내려받은 뒤, 이 앱을 완전히 껐다가 다시 열어 주세요.${voiceList('ko').length?'':' 지금 이 기기에서는 한국어 목소리를 찾지 못했어요.'}</p>`;
+}
+function bindVoice(sh){
+  const pickSel=(id,key,lang)=>{ const el=sh.querySelector(id); if(el) el.onchange=()=>{ S.set[key]=el.value; save(); pickVoices(); sayList(SAMPLE[lang]); }; };
+  pickSel('#vKo','voiceKo','ko'); pickSel('#vEn','voiceEn','en');
+  sh.querySelectorAll('[data-vtest]').forEach(b=>b.onclick=()=>{ if(!S.set.sound){ toast('소리가 꺼져 있어요'); return; } sayList(SAMPLE[b.dataset.vtest]); });
+  const seg=(attr,apply)=>sh.querySelectorAll(`[${attr}]`).forEach(b=>b.onclick=()=>{ apply(b.getAttribute(attr)); save();
+    b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); sayList(SAMPLE.ko); });
+  seg('data-vslow',v=>S.set.slow=v==='1'); seg('data-vpitch',v=>S.set.pitch=+v);
+}
+function utter(t,lang,rate){ const u=new SpeechSynthesisUtterance(t); u.lang=lang==='en'?'en-US':'ko-KR'; const v=lang==='en'?enV:koV; if(v) u.voice=v; u.rate=rate*(S.set.slow?.85:1); u.pitch=S.set.pitch||1; return u; }
 function sayList(list,rate=.95){ if(!S.set.sound||!('speechSynthesis' in window)) return;
   try{ speechSynthesis.cancel(); list.forEach(([t,l])=>speechSynthesis.speak(utter(t,l||'ko',l==='en'?rate*.9:rate))); }catch(e){} }
 const say=(t,lang='ko',rate)=>sayList([[t,lang]],rate);
@@ -325,6 +360,8 @@ let S=Object.assign(fresh(),store.get(SKEY,{}));
 S.set=Object.assign(fresh().set,S.set||{});
 if(S.adj==null||S.adj>S.set.diff) S.adj=S.set.diff;
 const save=()=>store.set(SKEY,S);
+S.set=Object.assign({voiceKo:'',voiceEn:'',slow:false,pitch:1},S.set);
+pickVoices();
 const effD=()=>S.set.auto?Math.min(S.adj,S.set.diff):S.set.diff;
 function adapt(good,hard){
   if(!S.set.auto) return;
@@ -532,11 +569,12 @@ function settings(){
     <h3>난이도</h3><div class="diffs">${DIFF.map((d,i)=>`<button data-diff="${i}" class="${S.set.diff===i?'on':''}"><span class="e">${d.e}</span><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
     <h3>자동 맞춤</h3>${seg('auto',[[true,'켜기'],[false,'끄기']])}
     <p class="note">켜 두면 아이가 연달아 헤맬 때 몰래 한 단계 쉬워지고, 잘하면 위에서 고른 난이도까지 다시 올라가요. 아이에게는 알리지 않아요. 바뀐 난이도는 다음 배달부터 적용돼요.${S.set.auto&&E<S.set.diff?` 지금은 ${DIFF[E].e} ${DIFF[E].name}로 하고 있어요.`:''}</p>
-    <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}
+    <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}${voiceHTML()}
     <p class="note">⏱️ 시간 제한은 없어요. 기차는 아이가 출발을 누를 때만 움직이고, 틀려도 별이 줄지 않아요. 💡 도와줘요를 누르면 틀린 상자 절반이 흐려지고, 한 번 더 누르면 정답 상자가 반짝여요.</p>
     <div class="row" style="margin-top:20px"><button class="big-btn alt" data-m="reset" style="font-size:19px;min-height:48px">처음부터 다시</button><button class="big-btn" data-close style="font-size:19px;min-height:48px">닫기</button></div></div>`,sh=>{
+    bindVoice(sh);
     sh.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{ S.set.diff=+b.dataset.diff; S.adj=S.set.diff; S.good=S.hard=0; save(); settings(); });
-    sh.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+    sh.querySelectorAll('.seg button[data-k]').forEach(b=>b.onclick=()=>{
       const k=b.dataset.k; S.set[k]=b.dataset.v==='true';
       if(k==='auto'){ S.adj=S.set.diff; S.good=S.hard=0; }
       save(); b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));

@@ -1,6 +1,6 @@
 // 우주 택배 기차: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 기기에 보관
 // (별·우주 친구·기차 색깔은 앱 안의 저장소(localStorage)에 따로 있어서 여기서 다루지 않음)
-const CACHE = 'train-6d9663e29b';
+const CACHE = 'train-c4b11e2fdb';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/train-192.png", "icons/train-512.png", "../fonts/jua.woff2"];
 
 self.addEventListener('install', e => {

@@ -1,6 +1,6 @@
 // 꼬마 농장 가게: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 기기에 보관
 // (농장·코인 진행 상황은 앱 안의 저장소(localStorage)에 따로 있어서 여기서 다루지 않음)
-const CACHE = 'farm-4e5ad26140';
+const CACHE = 'farm-d16035d4de';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/farm-192.png", "icons/farm-512.png", "../fonts/jua.woff2"];
 
 self.addEventListener('install', e => {
