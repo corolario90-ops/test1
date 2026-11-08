@@ -61,17 +61,18 @@ h1,h2,h3{font-weight:normal;margin:0}
   box-shadow:inset 0 -6px 0 rgba(0,0,0,.18);text-shadow:0 2px 0 rgba(0,0,0,.2)}
 .noimg.sil{background:#888;opacity:.3}
 
-/* ---------- 돈 (실제 디자인이 아닌 단순한 그림) ---------- */
-.coin{display:inline-grid;place-items:center;flex:none;border-radius:50%;width:calc(var(--cw)*var(--k,1));height:calc(var(--cw)*var(--k,1));
-  font:800 calc(var(--cw)*var(--k,1)*.33)/1 system-ui,sans-serif;color:#4a3d28;letter-spacing:-.5px;
-  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.75) 0 14%,transparent 38%),var(--cc);
-  box-shadow:inset 0 0 0 calc(3px*var(--k,1)) rgba(0,0,0,.14),inset 0 calc(-4px*var(--k,1)) 0 rgba(0,0,0,.12),0 3px 0 rgba(0,0,0,.2)}
-.coin.d10{--cc:#d99a5e;--cw:44px} .coin.d50{--cc:#d9dee4;--cw:50px} .coin.d100{--cc:#c9d1d9;--cw:56px} .coin.d500{--cc:#e6eaee;--cw:64px;font-size:calc(64px*var(--k,1)*.3)}
-.bill{display:inline-flex;align-items:center;justify-content:center;gap:2px;flex:none;width:calc(104px*var(--k,1));height:calc(52px*var(--k,1));border-radius:calc(8px*var(--k,1));
-  font:800 calc(20px*var(--k,1))/1 system-ui,sans-serif;color:#26323a;background:var(--cc);
-  box-shadow:inset 0 0 0 calc(4px*var(--k,1)) rgba(255,255,255,.45),inset 0 0 0 calc(6px*var(--k,1)) rgba(0,0,0,.1),0 3px 0 rgba(0,0,0,.2)}
-.bill small{font-size:.65em}
-.bill.d1000{--cc:#9fcbee} .bill.d5000{--cc:#f4b48a} .bill.d10000{--cc:#a9da9c;width:calc(112px*var(--k,1))}
+/* ---------- 돈 (실제 한국 돈의 색·크기 비율을 본뜬 그림 또는 어른이 찍은 사진) ---------- */
+.coin{display:inline-block;flex:none;vertical-align:middle;border-radius:50%;width:calc(var(--cw)*var(--k,1));height:calc(var(--cw)*var(--k,1));filter:drop-shadow(0 2px 1px rgba(0,0,0,.3))}
+.coin.d10{--cw:44px} .coin.d50{--cw:52px} .coin.d100{--cw:58px} .coin.d500{--cw:64px}
+.bill{display:inline-block;flex:none;vertical-align:middle;width:calc(var(--bw)*var(--k,1));height:calc(50px*var(--k,1));border-radius:calc(4px*var(--k,1));filter:drop-shadow(0 2px 1px rgba(0,0,0,.3))}
+.bill.d1000{--bw:100px} .bill.d5000{--bw:104px} .bill.d10000{--bw:109px}
+img.photo{object-fit:cover;background:#ddd}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.mcell{background:var(--soft);border-radius:16px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:16px}
+.mcell .pile{min-height:70px}
+.mcell .row{gap:6px}
+.mcell button{border:none;border-radius:12px;background:var(--card);padding:6px 10px;font-size:16px;min-height:40px}
+.fact{font-size:20px;margin:6px 0}
 .pile{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;max-width:560px}
 .money{font-size:clamp(30px,6vmin,46px)}
 .money small{font-size:.6em}
@@ -155,6 +156,8 @@ h1,h2,h3{font-weight:normal;margin:0}
 .cbtn.glow{border-radius:12px}
 .tray{flex:none;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;background:var(--card);border-radius:24px;padding:12px;box-shadow:var(--shadow)}
 .tray .label{width:100%;text-align:center;font-size:18px;opacity:.7}
+.tray{max-height:40vh;overflow:auto}
+.pay>.row{flex-wrap:nowrap;flex:none}
 .tcoin{border:4px solid transparent;background:var(--soft);border-radius:18px;padding:6px 10px;display:flex;align-items:center;gap:8px;min-height:72px}
 .tcoin .n{font-size:22px}
 .tcoin.glow{border-color:var(--gold)}
@@ -205,6 +208,7 @@ h1,h2,h3{font-weight:normal;margin:0}
 @media (max-width:600px){
   .pill{font-size:19px;min-height:46px;padding:4px 12px} .icon-btn{width:48px;height:48px;font-size:22px}
   .menu .big-btn{font-size:21px;min-height:66px} .qc{min-height:76px} .grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .tray{--k:.8;gap:8px;padding:10px} .tcoin{min-height:60px;padding:4px 8px} .pay>.row .big-btn{font-size:17px;padding:8px 12px;min-height:52px}
   .scene .sign{display:none} .qch.n4{grid-template-columns:1fr 1fr} .egrid{grid-template-columns:repeat(2,1fr)} .wrow .cw{width:90px}
 }
 </style>
@@ -267,7 +271,7 @@ const idb=(()=>{
     t.oncomplete=()=>res(r&&r.result); t.onerror=t.onabort=()=>rej(t.error); }); };
   return {
     put:(k,v)=>tx('readwrite',o=>o.put(v,k)),
-    clear:()=>tx('readwrite',o=>o.clear()),
+    del:k=>tx('readwrite',o=>o.delete(k)),
     all:async()=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('img'), out=[], c=t.objectStore('img').openCursor();
       c.onsuccess=()=>{ const cur=c.result; if(cur){ out.push([cur.key,cur.value]); cur.continue(); } };
       t.oncomplete=()=>res(out); t.onerror=()=>rej(t.error); }); },
@@ -320,7 +324,85 @@ const wonSay=n=>sino(n)+' 원';
 const isBill=d=>d>=1000;
 const kindOf=d=>isBill(d)?'지폐':'동전';
 const coinName=d=>`${wonSay(d)}짜리 ${kindOf(d)}`;
-function coin(d){ return isBill(d)?`<span class="bill d${d}">${d.toLocaleString('ko-KR')}<small>원</small></span>`:`<span class="coin d${d}">${d}</span>`; }
+/* ---------- 돈 그림: 실제 한국 돈의 색·크기 비율·앞면 그림을 본뜬 그림 (어른이 찍은 진짜 사진이 있으면 그 사진) ---------- */
+const FACT={10:'다보탑',50:'벼 이삭',100:'이순신 장군',500:'학',1000:'퇴계 이황',5000:'율곡 이이',10000:'세종대왕'};
+const FACT2={1000:'뒤에는 명륜당과 매화',5000:'뒤에는 오죽헌과 대나무',10000:'뒤에는 해와 달과 다섯 봉우리 그림(일월오봉도)'};
+const MONEY_SVG=(()=>{
+  const F='font-family="system-ui,-apple-system,\'Apple SD Gothic Neo\',sans-serif" font-weight="800"';
+  // 50원: 휘어진 줄기를 따라 낟알
+  const bz=(t,p)=>{ const u=1-t; return [0,1].map(k=>u*u*u*p[0][k]+3*u*u*t*p[1][k]+3*u*t*t*p[2][k]+t*t*t*p[3][k]); };
+  const stem=[[44,72],[46,56],[52,40],[64,24]];
+  let grains='';
+  for(let i=0;i<9;i++){ const t=.42+i*.07, [x,y]=bz(t,stem), side=i%2?1:-1;
+    grains+=`<ellipse cx="${(x+side*3.4).toFixed(1)}" cy="${(y+1).toFixed(1)}" rx="2.1" ry="3.6" transform="rotate(${side*35+30} ${(x+side*3.4).toFixed(1)} ${(y+1).toFixed(1)})"/>`; }
+  const motif={
+    10:`<rect x="30" y="64" width="40" height="5"/><rect x="34" y="59" width="32" height="5"/><rect x="37" y="49" width="26" height="10"/>
+      <path d="M41 49v10M47 49v10M53 49v10M59 49v10" fill="none" stroke-width="1.4"/>
+      <polygon points="31,49 69,49 63,44 37,44"/><rect x="40" y="38" width="20" height="6"/><polygon points="35,38 65,38 60,34.5 40,34.5"/>
+      <rect x="43" y="29.5" width="14" height="5"/><polygon points="39,29.5 61,29.5 56,26.5 44,26.5"/><rect x="49" y="19.5" width="2" height="7"/><circle cx="50" cy="22" r="2"/>`,
+    50:`<path d="${'M'+stem[0]+' C'+stem[1]+' '+stem[2]+' '+stem[3]}" fill="none" stroke-width="2"/>${grains}
+      <path d="M44 72 C36 62 30 54 28 44 C36 52 42 60 46 66 Z"/><path d="M45 66 C54 60 60 58 68 58 C60 62 52 66 46 70 Z"/>`,
+    100:`<path d="M26 72 Q30 56 50 55 Q70 56 74 72 Z"/><path d="M44 55 L50 64 L56 55" fill="none" stroke-width="1.5"/>
+      <ellipse cx="50" cy="42" rx="9" ry="11"/><path d="M39 36 Q40 24 50 23 Q60 24 61 36 Z"/><rect x="37" y="34" width="26" height="3" rx="1.5"/>
+      <path d="M43 47 Q50 60 57 47 Q50 51 43 47 Z"/>`,
+    500:`<path d="M48 50 C40 34 30 26 16 24 C26 32 32 40 42 52 Z"/><path d="M52 48 C56 32 64 22 80 18 C72 28 66 38 58 50 Z"/>
+      <ellipse cx="50" cy="52" rx="13" ry="5" transform="rotate(-20 50 52)"/><path d="M60 48 Q68 42 72 34" fill="none" stroke-width="2.4"/>
+      <circle cx="72.5" cy="33" r="2.4"/><path d="M74 32 L82 30" fill="none" stroke-width="1.2"/><path d="M40 56 L22 64 M41 57.5 L24 67" fill="none" stroke-width="1.2"/>`,
+  };
+  const coinSym=(d,grad,ink)=>`<symbol id="m${d}" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="50" fill="${ink}" fill-opacity=".55"/><circle cx="50" cy="50" r="48" fill="url(#${grad})"/>
+    ${d>=100?`<circle cx="50" cy="50" r="48.5" fill="none" stroke="${ink}" stroke-opacity=".35" stroke-width="3" stroke-dasharray="1.2 1.4"/>`:''}
+    <circle cx="50" cy="50" r="43" fill="none" stroke="${ink}" stroke-opacity=".3" stroke-width="1.4"/><circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width=".8"/>
+    <text ${F} font-size="8.5" fill="${ink}" fill-opacity=".75" letter-spacing="1"><textPath href="#arcT" startOffset="50%" text-anchor="middle">한국은행</textPath></text>
+    <g fill="${ink}" fill-opacity=".42" stroke="${ink}" stroke-opacity=".5" stroke-width=".6">${motif[d]}</g>
+    <text x="50" y="89" text-anchor="middle" ${F} font-size="${d>=100?19:21}" fill="${ink}" stroke="#fff" stroke-opacity=".7" stroke-width="1" paint-order="stroke">${d}</text></symbol>`;
+  const flower=(x,y)=>[0,72,144,216,288].map(a=>`<circle cx="${(x+3*Math.cos(a*Math.PI/180)).toFixed(1)}" cy="${(y+3*Math.sin(a*Math.PI/180)).toFixed(1)}" r="2.2"/>`).join('')+`<circle cx="${x}" cy="${y}" r="1.3" fill="#e0a43a"/>`;
+  const house=(ink,x0,w)=>`<g fill="${ink}" fill-opacity=".42"><path d="M${x0-6} 58 Q${x0+w/2} 45 ${x0+w+6} 58 L${x0+w} 60 Q${x0+w/2} 52 ${x0} 60 Z"/>
+    <rect x="${x0+2}" y="60" width="${w-4}" height="14" fill-opacity=".28"/><path d="${[1,2,3,4].map(k=>`M${(x0+2+(w-4)*k/5).toFixed(1)} 60v14`).join('')}" fill="none" stroke="${ink}" stroke-opacity=".5" stroke-width="1.6"/>
+    <rect x="${x0-4}" y="74" width="${w+8}" height="4"/></g>`;
+  const bmotif={
+    1000:ink=>house(ink,78,40)+`<g fill="#fff" fill-opacity=".85">${flower(70,40)}${flower(120,38)}${flower(110,30)}${flower(64,30)}</g>`,
+    5000:ink=>house(ink,86,34)+`<g stroke="${ink}" stroke-opacity=".5" stroke-width="2.4" fill="none"><path d="M68 80V30M74 80V36M126 80V32"/></g>
+      <g stroke="#fff" stroke-opacity=".7" stroke-width="1"><path d="M66 44h4M66 58h4M72 50h4M72 64h4M124 46h4M124 62h4"/></g>`,
+    10000:ink=>`<circle cx="80" cy="40" r="6.5" fill="#e0573a"/><circle cx="114" cy="40" r="5.5" fill="#fff"/>
+      <path d="M62 80 L74 54 L84 66 L96 40 L108 66 L118 54 L130 80 Z" fill="${ink}" fill-opacity=".45"/>
+      <path d="M64 76 q4 -3 8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.2"/>`,
+  };
+  const hat={
+    1000:`<path d="M149 48 Q150 33 160 32 Q172 33 172 48 Q166 42 160 42 Q154 42 149 48Z"/><path d="M171 44 Q178 56 174 70 L170 56Z"/>`,
+    5000:`<path d="M150 44 L150 34 L155 30 L155 25 L165 25 L165 30 L170 34 L170 44 Z"/>`,
+    10000:`<path d="M149 46 Q149 32 160 31 Q171 32 171 46 Z"/><ellipse cx="151" cy="30" rx="4" ry="6.5" transform="rotate(-25 151 30)"/><ellipse cx="169" cy="30" rx="4" ry="6.5" transform="rotate(25 169 30)"/>`,
+  };
+  const label={1000:'천 원',5000:'오천 원',10000:'만 원'};
+  const billSym=(d,ink)=>`<symbol id="m${d}" viewBox="0 0 200 100"><rect width="200" height="100" rx="5" fill="url(#gb${d})"/>
+    <g fill="none" stroke="#fff" stroke-opacity=".22" stroke-width=".8">${[1,2,3,4,5,6,7].map(i=>`<ellipse cx="96" cy="50" rx="${12*i}" ry="${6*i}"/>`).join('')}</g>
+    <ellipse cx="34" cy="48" rx="22" ry="30" fill="#fff" fill-opacity=".45"/>
+    <rect x="3" y="3" width="194" height="94" rx="3" fill="none" stroke="${ink}" stroke-opacity=".35" stroke-width="1.2"/>
+    <text x="66" y="17" ${F} font-size="10" fill="${ink}">한국은행</text>
+    <text x="66" y="24" ${F} font-size="5" fill="${ink}" fill-opacity=".7" letter-spacing=".5">THE BANK OF KOREA</text>
+    <text x="194" y="16" text-anchor="end" ${F} font-size="12" fill="${ink}">${d}</text>
+    ${bmotif[d](ink)}
+    <ellipse cx="160" cy="54" rx="27" ry="36" fill="${ink}" fill-opacity=".12"/>
+    <g fill="${ink}"><path d="M136 94 Q140 70 160 67 Q180 70 184 94 Z" fill-opacity=".5"/><ellipse cx="160" cy="52" rx="9.5" ry="12" fill-opacity=".3"/>
+      <g fill-opacity=".75">${hat[d]}<path d="M154 58 Q160 74 166 58 Q160 63 154 58Z"/></g><path d="M154 68 L160 78 L166 68" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.4"/></g>
+    <text x="8" y="93" ${F} font-size="21" fill="${ink}" stroke="#fff" stroke-opacity=".5" stroke-width="1" paint-order="stroke">${d}</text>
+    <text x="104" y="93" text-anchor="middle" ${F} font-size="9" fill="${ink}">${label[d]}</text></symbol>`;
+  return `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <radialGradient id="gCu" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#f6cfa6"/><stop offset=".45" stop-color="#d08c5a"/><stop offset="1" stop-color="#9c5a32"/></radialGradient>
+    <radialGradient id="gAg" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#e1e5e9"/><stop offset="1" stop-color="#a6aeb6"/></radialGradient>
+    <linearGradient id="gb1000"><stop offset="0" stop-color="#cfe2f1"/><stop offset="1" stop-color="#8db3d5"/></linearGradient>
+    <linearGradient id="gb5000"><stop offset="0" stop-color="#f8dcaa"/><stop offset=".6" stop-color="#eeb07a"/><stop offset="1" stop-color="#df8a64"/></linearGradient>
+    <linearGradient id="gb10000"><stop offset="0" stop-color="#d6ecc6"/><stop offset="1" stop-color="#88bf80"/></linearGradient>
+    <path id="arcT" d="M15 52 A35 35 0 0 1 85 52"/>
+    ${coinSym(10,'gCu','#5e2f14')}${coinSym(50,'gAg','#3f464d')}${coinSym(100,'gAg','#3f464d')}${coinSym(500,'gAg','#3f464d')}
+    ${billSym(1000,'#24476b')}${billSym(5000,'#7a3516')}${billSym(10000,'#2c5a2a')}</defs></svg>`;
+})();
+document.body.insertAdjacentHTML('afterbegin',MONEY_SVG);
+function coin(d){
+  const ph=IMG.get('m'+d), cls=`${isBill(d)?'bill':'coin'} d${d}`;
+  if(ph) return `<img class="${cls} photo" src="${ph}" alt="${won(d)}" draggable="false">`;
+  return `<svg class="${cls}" viewBox="${isBill(d)?'0 0 200 100':'0 0 100 100'}" role="img" aria-label="${won(d)}"><use href="#m${d}"/></svg>`;
+}
 const pileHTML=(a,k)=>`<div class="pile"${k?` style="--k:${k}"`:''}>${a.slice().sort((x,y)=>y-x).map(coin).join('')}</div>`;
 const jong=w=>{ const c=w.charCodeAt(w.length-1); return c>=0xAC00&&c<=0xD7A3?(c-0xAC00)%28:0; };
 const jo=(w,a,b)=>w+(jong(w)?a:b);
@@ -849,13 +931,15 @@ function exchange(after){
 }
 function lessonEq(d){
   const i=DEN.indexOf(d), s=DEN[i-1];
-  if(!s) return `<p>${coin(d)}<br>${jo(coinName(d),'은','는')} 가장 작은 돈이에요.</p>`;
+  const big=`<div class="pile" style="--k:${isBill(d)?2.2:1.8};margin:0 auto">${coin(d)}</div>
+    <p class="fact">앞면에는 <b>${FACT[d]}</b>${FACT2[d]?` · ${FACT2[d]}`:''}</p>`;
+  if(!s) return big+`<p>${jo(coinName(d),'은','는')} 가장 작은 돈이에요.</p>`;
   const line=t=>`<div class="eqrow">${coin(d)}<span>=</span>${pileHTML(Array(d/t).fill(t),d/t>5?.62:.8)}</div><p>${won(d)} = ${won(t)} × ${d/t}</p>`;
-  return line(s)+(s!==100&&d>100&&d<=1000?line(100):'');
+  return big+line(s)+(s!==100&&d>100&&d<=1000?line(100):'');
 }
 function lesson(sel=100){
   const say1=d=>{ const s=DEN[DEN.indexOf(d)-1];
-    sayList([K(`${coinName(d)}!`),K(s?`${wonSay(d)}은 ${wonSay(s)} ${koCnt(d/s)} 개와 같아요.`:'가장 작은 돈이에요.')]); };
+    sayList([K(`${coinName(d)}!`),K(`앞면에는 ${jo(FACT[d],'이','가')} 있어요.`),K(s?`${wonSay(d)}은 ${wonSay(s)} ${koCnt(d/s)} 개와 같아요.`:'가장 작은 돈이에요.')]); };
   modal(`<h2>📚 돈 알아보기</h2><p>돈을 눌러 보세요!</p>
     <div class="lesson">${DEN.map(d=>`<button data-l="${d}" class="${d===sel?'on':''}" aria-label="${won(d)}">${coin(d)}</button>`).join('')}</div>
     <div id="leq" style="margin-top:10px">${lessonEq(sel)}</div><div class="row" style="margin-top:10px"><button class="big-btn" data-close>닫기</button></div>`,sh=>{
@@ -863,6 +947,69 @@ function lesson(sel=100){
       sh.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b)); sh.querySelector('#leq').innerHTML=lessonEq(d); sfx.coin(); say1(d); });
   });
   say1(sel);
+}
+
+/* ======================================================================
+   진짜 돈 사진 넣기: 사진을 끌고 키워서 동그라미(동전)·네모(지폐)에 맞추면 기기 안에만 저장
+   ====================================================================== */
+function pickMoneyPhoto(d){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) cropMoney(d,f).then(()=>settings()); };
+  inp.click();
+}
+async function cropMoney(d,file){
+  const bill=isBill(d), url=URL.createObjectURL(file), img=new Image(); img.src=url;
+  try{ await img.decode(); }catch(e){ URL.revokeObjectURL(url); toast('사진을 열 수 없어요'); return; }
+  // 큰 사진은 먼저 줄여서 다루기
+  const k0=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight)), src=document.createElement('canvas');
+  src.width=Math.round(img.naturalWidth*k0); src.height=Math.round(img.naturalHeight*k0); src.getContext('2d').drawImage(img,0,0,src.width,src.height); URL.revokeObjectURL(url);
+  const CW=600, CH=bill?400:600, mw=bill?520:440, mh=bill?260:440, mx=(CW-mw)/2, my=(CH-mh)/2;
+  let rot=0, ox=CW/2, oy=CH/2, z=1, base=1;
+  const fit=()=>{ const w=rot%2?src.height:src.width, h=rot%2?src.width:src.height; base=Math.max(mw/w,mh/h); z=1; ox=CW/2; oy=CH/2; };
+  fit();
+  const place=(c,s)=>{ c.translate(ox,oy); c.rotate(rot*Math.PI/2); c.scale(s,s); c.drawImage(src,-src.width/2,-src.height/2); };
+  const mask=c=>{ if(bill){ const r=14; c.moveTo(mx+r,my); c.arcTo(mx+mw,my,mx+mw,my+mh,r); c.arcTo(mx+mw,my+mh,mx,my+mh,r); c.arcTo(mx,my+mh,mx,my,r); c.arcTo(mx,my,mx+mw,my,r); c.closePath(); }
+    else { c.moveTo(CW/2+mw/2,CH/2); c.arc(CW/2,CH/2,mw/2,0,Math.PI*2); } };
+  return new Promise(res=>{
+    modal(`<h2>${won(d)} ${kindOf(d)} 사진 맞추기</h2>
+      <p style="font-size:17px">사진을 손가락으로 끌어서 ${bill?'지폐의 앞면이 노란 네모에 꽉 차게':'동전이 노란 동그라미에 꼭 맞게'} 맞춰요. 두 손가락이나 아래 막대로 크기를 바꿔요.</p>
+      <canvas id="crop" width="${CW}" height="${CH}" style="width:min(100%,${bill?520:400}px);touch-action:none;border-radius:16px;background:#222"></canvas>
+      <div class="vrow"><span>크기</span><input type="range" id="zm" min="0.5" max="5" step="0.01" value="1" style="flex:1"></div>
+      <div class="row"><button class="big-btn small alt" id="rot">↻ 돌리기</button><button class="big-btn small alt" id="cx">취소</button><button class="big-btn small" id="ok">✅ 저장</button></div>`,sh=>{
+      const cv=sh.querySelector('#crop'), ctx=cv.getContext('2d'), zm=sh.querySelector('#zm');
+      const draw=()=>{ ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,CW,CH); ctx.save(); place(ctx,base*z); ctx.restore();
+        ctx.fillStyle='rgba(0,0,0,.6)'; ctx.beginPath(); ctx.rect(0,0,CW,CH); mask(ctx); ctx.fill('evenodd');
+        ctx.lineWidth=5; ctx.strokeStyle='#ffcf33'; ctx.beginPath(); mask(ctx); ctx.stroke(); };
+      const pts=new Map(); let pinch=0;
+      const sc=()=>CW/cv.clientWidth;
+      cv.addEventListener('pointerdown',e=>{ cv.setPointerCapture(e.pointerId); pts.set(e.pointerId,[e.clientX,e.clientY]); pinch=0; });
+      cv.addEventListener('pointermove',e=>{ if(!pts.has(e.pointerId)) return; const [px,py]=pts.get(e.pointerId); pts.set(e.pointerId,[e.clientX,e.clientY]);
+        if(pts.size===1){ ox+=(e.clientX-px)*sc(); oy+=(e.clientY-py)*sc(); }
+        else { const [a,b]=[...pts.values()], dist=Math.hypot(a[0]-b[0],a[1]-b[1]); if(pinch){ z=Math.min(5,Math.max(.5,z*dist/pinch)); zm.value=z; } pinch=dist; }
+        draw(); });
+      const up=e=>{ pts.delete(e.pointerId); pinch=0; };
+      cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+      cv.addEventListener('wheel',e=>{ e.preventDefault(); z=Math.min(5,Math.max(.5,z*(e.deltaY<0?1.06:1/1.06))); zm.value=z; draw(); },{passive:false});
+      zm.oninput=()=>{ z=+zm.value; draw(); };
+      sh.querySelector('#rot').onclick=()=>{ rot=(rot+1)%4; fit(); zm.value=1; draw(); };
+      sh.querySelector('#cx').onclick=()=>res(false);
+      sh.querySelector('#ok').onclick=()=>{
+        const OW=bill?480:256, OH=bill?240:256, f=OW/mw, oc=document.createElement('canvas'); oc.width=OW; oc.height=OH;
+        const c=oc.getContext('2d');
+        if(!bill){ c.beginPath(); c.arc(OW/2,OH/2,OW/2,0,Math.PI*2); c.clip(); }
+        c.setTransform(f,0,0,f,-mx*f,-my*f); place(c,base*z);
+        oc.toBlob(async b=>{ if(!b){ res(false); return; }
+          try{ await idb.put('m'+d,b); }catch(e){ toast('저장하지 못했어요'); res(false); return; }
+          const old=IMG.get('m'+d); if(old) URL.revokeObjectURL(old); IMG.set('m'+d,URL.createObjectURL(b));
+          sfx.coin(); toast(`${won(d)} 사진을 넣었어요!`); res(true); },'image/png');
+      };
+      draw();
+    },{backdrop:false});
+  });
+}
+async function dropMoneyPhoto(d){
+  try{ await idb.del('m'+d); }catch(e){}
+  const u=IMG.get('m'+d); if(u) URL.revokeObjectURL(u); IMG.delete('m'+d);
 }
 
 /* ======================================================================
@@ -884,6 +1031,11 @@ function settings(){
     <p class="note">켜 두면 가게 문제를 연달아 어려워할 때 몰래 한 단계 쉬운 문제를 내고, 잘하면 위에서 고른 난이도까지 다시 올라가요.${S.set.auto&&E<S.set.diff?` 지금은 ${LV[E].e} ${LV[E].name} 문제를 내고 있어요.`:''}
       ${LV[S.set.diff].q.includes('change')?' 계산대에서 큰 돈을 내면 거스름돈 문제도 나와요(🐔 보통부터).':''}</p>
     <h3>계산대의 ‘낸 돈’ 합계</h3>${seg('total',[[true,'보여 주기'],[false,'숨기기 (스스로 세기)']])}
+    <h3>💰 진짜 돈 사진으로 바꾸기</h3>
+    <p class="note">게임 속 돈은 실제 한국 돈의 색·크기 비율·앞면 그림(다보탑, 이순신 장군, 세종대왕…)을 본떠 그렸어요. 집에 있는 진짜 동전·지폐의 <b>앞면</b>을 찍어 넣으면
+      게임 속 돈이 그 사진으로 바뀌어요. 사진은 <b>이 기기 안에만</b> 저장되고 어디에도 보내지 않아요. 가정 학습용으로만 써 주세요.</p>
+    <div class="mgrid">${DEN.map(d=>`<div class="mcell">${pileHTML([d],isBill(d)?1.15:1.1)}<span>${won(d)}</span>
+      <div class="row"><button data-photo="${d}">📷 ${IMG.has('m'+d)?'다시 찍기':'사진 넣기'}</button>${IMG.has('m'+d)?`<button data-unphoto="${d}" aria-label="그림으로 되돌리기">↺</button>`:''}</div></div>`).join('')}</div>
     <h3>💝 용돈 주기</h3><div class="row" style="justify-content:flex-start">${[1,5,10].map(k=>`<button class="big-btn small alt" data-gift="${k*u}">+ ${won(k*u)}</button>`).join('')}</div>
     <p class="note">집안일을 도왔을 때처럼 칭찬으로 지갑에 돈을 넣어 줄 수 있어요. 지금 지갑: <b id="wnow">${won(wTotal(S.wallet))}</b></p>
     <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}${voiceHTML()}
@@ -891,6 +1043,8 @@ function settings(){
       계산대에서도 💡를 누르면 다음에 낼 돈이 반짝여요.</p>
     <div class="row" style="margin-top:18px"><button class="big-btn small alt" data-m="reset">처음부터 다시</button><button class="big-btn small" data-close>닫기</button></div></div>`,sh=>{
     bindVoice(sh);
+    sh.querySelectorAll('[data-photo]').forEach(b=>b.onclick=()=>pickMoneyPhoto(+b.dataset.photo));
+    sh.querySelectorAll('[data-unphoto]').forEach(b=>b.onclick=async()=>{ await dropMoneyPhoto(+b.dataset.unphoto); toast('그림으로 되돌렸어요'); settings(); });
     sh.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{ S.set.diff=+b.dataset.diff; S.adj=S.set.diff; S.good=S.hard=0; save(); const f=onModalClose; settings(); onModalClose=f; });
     sh.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ const k=b.dataset.k; S.set[k]=b.dataset.v==='true';
       if(k==='auto'){ S.adj=S.set.diff; S.good=S.hard=0; } save(); b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
@@ -904,9 +1058,9 @@ function settings(){
       const m=$('#imgHave'); if(m) m.textContent=r.fail?`${r.total-r.fail}장 받았어요. ${r.fail}장은 받지 못했어요. 인터넷을 확인하고 한 번 더 눌러 주세요.`:`모두 받았어요! 🎉 (${imgN()} / ${ALL_IDS.length}장)`;
       dl.disabled=false;
     };
-    sh.querySelector('#clr').onclick=()=>modal(`<h2>받은 그림을 지울까요?</h2><p>포켓몬 그림만 지워지고, 지갑과 포켓몬 기록은 그대로예요.</p>
+    sh.querySelector('#clr').onclick=()=>modal(`<h2>받은 그림을 지울까요?</h2><p>포켓몬 그림만 지워지고, 돈 사진·지갑·포켓몬 기록은 그대로예요.</p>
       <div class="row"><button class="big-btn" data-m="yes">지울래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
-      s2.querySelector('[data-m]').onclick=async()=>{ try{ await idb.clear(); }catch(e){} IMG.forEach(v=>URL.revokeObjectURL(v)); IMG.clear(); closeModal(); toast('그림을 지웠어요'); };
+      s2.querySelector('[data-m]').onclick=async()=>{ for(const [k,v] of [...IMG]) if(k[0]==='n'){ try{ await idb.del(k); }catch(e){} URL.revokeObjectURL(v); IMG.delete(k); } closeModal(); toast('그림을 지웠어요'); };
     });
     sh.querySelector('[data-m="reset"]').onclick=()=>modal(`<h2>처음부터 다시 할까요?</h2><p>짝꿍, 모은 포켓몬, 진화, 지갑의 돈이 모두 처음으로 돌아가요.<br>설정과 받은 그림은 그대로 남아요.</p>
       <div class="row"><button class="big-btn" data-m="yes">네, 다시 할래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
