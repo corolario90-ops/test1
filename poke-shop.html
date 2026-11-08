@@ -60,6 +60,10 @@ h1,h2,h3{font-weight:normal;margin:0}
 .noimg{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--c,#f59e0b);color:#fff;font-size:calc(var(--sz,80px)*.42);
   box-shadow:inset 0 -6px 0 rgba(0,0,0,.18);text-shadow:0 2px 0 rgba(0,0,0,.2)}
 .noimg.sil{background:#888;opacity:.3}
+.shfb{filter:saturate(1.7) hue-rotate(35deg) drop-shadow(0 0 8px #ffd54a)}
+.spark{position:absolute;right:-4%;top:-4%;font-size:calc(var(--sz,80px)*.3);line-height:1;animation:pulse 1.2s ease-in-out infinite;pointer-events:none}
+.dots i.sh{border-radius:2px;transform:rotate(45deg) scale(.85)}
+.dots i.sh.on{background:#ffb703;box-shadow:0 0 6px #ffd54a}
 
 /* ---------- 돈 (실제 한국 돈의 색·크기 비율을 본뜬 그림 또는 어른이 찍은 사진) ---------- */
 .coin{display:inline-block;flex:none;vertical-align:middle;border-radius:50%;width:calc(var(--cw)*var(--k,1));height:calc(var(--cw)*var(--k,1));filter:drop-shadow(0 2px 1px rgba(0,0,0,.3))}
@@ -238,7 +242,7 @@ const FAM=[
   {ids:[7,8,9],ko:['꼬부기','어니부기','거북왕'],c:'#60a5fa',p:10,starter:1},
   {ids:[172,25,26],ko:['피츄','피카츄','라이츄'],c:'#facc15',p:10,starter:1},
   {ids:[133],ko:['이브이'],c:'#c99a6b',p:12,eevee:1,starter:1},
-  {ids:[129,130],ko:['잉어킹','갸라도스'],c:'#f87171',p:2,evo:[20]},
+  {ids:[129,130],ko:['잉어킹','갸라도스'],c:'#f87171',p:2,evo:[20,25]},
   {ids:[10,11,12],ko:['캐터피','단데기','버터플'],c:'#a3e635',p:3},
   {ids:[16,17,18],ko:['구구','피죤','피죤투'],c:'#d6a96b',p:4},
   {ids:[54,55],ko:['고라파덕','골덕'],c:'#fcd34d',p:5},
@@ -253,15 +257,70 @@ const FAM=[
   {ids:[446,143],ko:['먹고자','잠만보'],c:'#64748b',p:12},
   {ids:[447,448],ko:['리오르','루카리오'],c:'#3b82f6',p:14},
   {ids:[147,148,149],ko:['미뇽','신뇽','망나뇽'],c:'#818cf8',p:20},
-  {ids:[151],ko:['뮤'],c:'#f472b6',p:30},
+  {ids:[151],ko:['뮤'],c:'#f472b6',p:30,legend:1},
+  // ↓ 새로 늘어난 포켓몬 (저장된 기록이 안 섞이도록 항상 뒤에 붙이기)
+  {ids:[13,14,15],ko:['뿔충이','딱충이','독침붕'],c:'#facc15',p:3},
+  {ids:[29,30,31],ko:['니드런♀','니드리나','니드퀸'],c:'#93c5fd',p:5},
+  {ids:[32,33,34],ko:['니드런♂','니드리노','니드킹'],c:'#c084fc',p:5},
+  {ids:[41,42,169],ko:['주뱃','골뱃','크로뱃'],c:'#818cf8',p:4},
+  {ids:[43,44,45],ko:['뚜벅쵸','냄새꼬','라플레시아'],c:'#4ade80',p:4},
+  {ids:[69,70,71],ko:['모다피','우츠동','우츠보트'],c:'#a3e635',p:4},
+  {ids:[74,75,76],ko:['꼬마돌','데구리','딱구리'],c:'#a8a29e',p:5},
+  {ids:[298,183,184],ko:['루리리','마릴','마릴리'],c:'#60a5fa',p:5},
+  {ids:[81,82,462],ko:['코일','레어코일','자포코일'],c:'#9ca3af',p:6},
+  {ids:[66,67,68],ko:['알통몬','근육몬','괴력몬'],c:'#94a3b8',p:7},
+  {ids:[179,180,181],ko:['메리프','보송송','전룡'],c:'#fde047',p:7},
+  {ids:[403,404,405],ko:['꼬링크','럭시오','렌트라'],c:'#60a5fa',p:7},
+  {ids:[63,64,65],ko:['캐이시','윤겔라','후딘'],c:'#eab308',p:8},
+  {ids:[92,93,94],ko:['고오스','고우스트','팬텀'],c:'#7c3aed',p:8},
+  {ids:[58,59],ko:['가디','윈디'],c:'#f97316',p:8},
+  {ids:[280,281,282],ko:['랄토스','킬리아','가디안'],c:'#86efac',p:9},
+  {ids:[152,153,154],ko:['치코리타','베이리프','메가니움'],c:'#86efac',p:10},
+  {ids:[155,156,157],ko:['브케인','마그케인','블레이범'],c:'#f97316',p:10},
+  {ids:[158,159,160],ko:['리아코','엘리게이','장크로다일'],c:'#38bdf8',p:10},
+  {ids:[252,253,254],ko:['나무지기','나무돌이','나무킹'],c:'#22c55e',p:10},
+  {ids:[255,256,257],ko:['아차모','영치코','번치코'],c:'#fb923c',p:10},
+  {ids:[258,259,260],ko:['물짱이','늪짱이','대짱이'],c:'#3b82f6',p:10},
+  {ids:[387,388,389],ko:['모부기','수풀부기','토대부기'],c:'#65a30d',p:10},
+  {ids:[390,391,392],ko:['불꽃숭이','파이숭이','초염몽'],c:'#ef4444',p:10},
+  {ids:[393,394,395],ko:['팽도리','팽태자','엠페르트'],c:'#3b82f6',p:10},
+  {ids:[495,496,497],ko:['주리비얀','샤비','샤로다'],c:'#4ade80',p:10},
+  {ids:[498,499,500],ko:['뚜꾸리','차오꿀','염무왕'],c:'#f97316',p:10},
+  {ids:[501,502,503],ko:['수댕이','쌍검자비','대검귀'],c:'#38bdf8',p:10},
+  {ids:[650,651,652],ko:['도치마론','도치보구','브리가론'],c:'#84cc16',p:10},
+  {ids:[653,654,655],ko:['푸호꼬','테르나','마폭시'],c:'#f97316',p:10},
+  {ids:[656,657,658],ko:['개구마르','개굴반장','개굴닌자'],c:'#3b82f6',p:10},
+  {ids:[722,723,724],ko:['나몰빼미','빼미스로우','모크나이퍼'],c:'#a3e635',p:10},
+  {ids:[725,726,727],ko:['냐오불','냐오히트','어흥염'],c:'#ef4444',p:10},
+  {ids:[728,729,730],ko:['누리공','키요공','누리레느'],c:'#60a5fa',p:10},
+  {ids:[810,811,812],ko:['흥나숭','채키몽','고릴타'],c:'#22c55e',p:10},
+  {ids:[813,814,815],ko:['염버니','래비풋','에이스번'],c:'#f87171',p:10},
+  {ids:[816,817,818],ko:['울머기','누겔레온','인텔리레온'],c:'#38bdf8',p:10},
+  {ids:[906,907,908],ko:['나오하','나로테','마스카나'],c:'#4ade80',p:10},
+  {ids:[909,910,911],ko:['뜨아거','악어드','라우드본'],c:'#f97316',p:10},
+  {ids:[912,913,914],ko:['꾸왁스','아꾸왁','웨이니발'],c:'#60a5fa',p:10},
+  {ids:[131],ko:['라프라스'],c:'#38bdf8',p:15},
+  {ids:[246,247,248],ko:['애버라스','데기라스','마기라스'],c:'#65a30d',p:20},
+  {ids:[371,372,373],ko:['아공이','쉘곤','보만다'],c:'#60a5fa',p:20},
+  {ids:[374,375,376],ko:['메탕','메탕구','메타그로스'],c:'#64748b',p:20},
+  {ids:[443,444,445],ko:['딥상어동','한바이트','한카리아스'],c:'#6366f1',p:20},
+  {ids:[150],ko:['뮤츠'],c:'#c4b5fd',p:35,legend:1},
+  {ids:[249],ko:['루기아'],c:'#cbd5e1',p:35,legend:1},
+  {ids:[250],ko:['칠색조'],c:'#f59e0b',p:35,legend:1},
+  {ids:[384],ko:['레쿠쟈'],c:'#16a34a',p:40,legend:1},
 ];
 const EEVEE=[[134,'샤미드'],[135,'쥬피썬더'],[136,'부스터'],[196,'에브이'],[197,'블래키'],[470,'리피아'],[471,'글레이시아'],[700,'님피아']];
 const NAME={}, COLOR={};
 FAM.forEach(f=>f.ids.forEach((id,i)=>{ NAME[id]=f.ko[i]; COLOR[id]=f.c; }));
 EEVEE.forEach(([id,n])=>{ NAME[id]=n; COLOR[id]='#c99a6b'; });
 const ALL_IDS=[...FAM.flatMap(f=>f.ids),...EEVEE.map(e=>e[0])];
-const maxStage=i=>FAM[i].eevee?1:FAM[i].ids.length-1;
-const evoUnits=i=>{ const f=FAM[i], s=S.own[i]||0; return f.evo?f.evo[s]:Math.round(f.p*(s?2.5:1.5)); };
+// 진화 단계: 0 → … → 마지막 모습 → ✨ 빛나는 모습(이로치)까지
+const baseStage=i=>FAM[i].eevee?1:FAM[i].ids.length-1;
+const maxStage=i=>baseStage(i)+1;
+const evoUnits=i=>{ const f=FAM[i], s=S.own[i]||0; return f.evo&&f.evo[s]!=null?f.evo[s]:Math.round(f.p*(1.5+s)); };
+// 빛나는 모습 그림은 마지막 모습과 이브이 진화형만 받기
+const SHINY_IDS=[...FAM.filter(f=>!f.eevee).map(f=>f.ids[f.ids.length-1]),...EEVEE.map(e=>e[0])];
+const IMG_JOBS=[...ALL_IDS.map(id=>['n'+id,id,'']),...SHINY_IDS.map(id=>['s'+id,id,'shiny/'])];
 
 const idb=(()=>{
   let p;
@@ -279,7 +338,7 @@ const idb=(()=>{
 })();
 const IMG=new Map();
 async function loadImages(){ try{ for(const [k,b] of await idb.all()) if(!IMG.has(k)&&b) IMG.set(k,URL.createObjectURL(b)); }catch(e){} }
-const ART=id=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const ART=(id,dir='')=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${dir}${id}.png`;
 async function shrink(blob){ // 기기에 저장하기 전에 256px로 줄이기
   const u=URL.createObjectURL(blob);
   try{ const im=new Image(); im.src=u; await im.decode();
@@ -290,20 +349,22 @@ async function shrink(blob){ // 기기에 저장하기 전에 256px로 줄이기
   } finally{ URL.revokeObjectURL(u); }
 }
 async function downloadImages(progress){
-  const jobs=ALL_IDS.filter(id=>!IMG.has('n'+id)), total=jobs.length; let done=0, fail=0;
-  const worker=async()=>{ while(jobs.length){ const id=jobs.shift();
-    try{ const r=await fetch(ART(id)); if(!r.ok) throw new Error(r.status); const b=await shrink(await r.blob()); await idb.put('n'+id,b); IMG.set('n'+id,URL.createObjectURL(b)); }
+  const jobs=IMG_JOBS.filter(([k])=>!IMG.has(k)), total=jobs.length; let done=0, fail=0;
+  const worker=async()=>{ while(jobs.length){ const [k,id,dir]=jobs.shift();
+    try{ const r=await fetch(ART(id,dir)); if(!r.ok) throw new Error(r.status); const b=await shrink(await r.blob()); await idb.put(k,b); IMG.set(k,URL.createObjectURL(b)); }
     catch(e){ fail++; }
     progress(++done,total); } };
   await Promise.all([worker(),worker(),worker(),worker()]);
   return {total,fail};
 }
 const haveImages=()=>ALL_IDS.some(id=>IMG.has('n'+id));
+const missingImages=()=>IMG_JOBS.some(([k])=>!IMG.has(k));
 // 그림이 없으면 이름 첫 글자를 넣은 동그라미
-function art(id,cls=''){
-  const u=IMG.get('n'+id);
-  if(u) return `<img class="pic ${cls}" src="${u}" alt="" draggable="false">`;
-  return `<div class="noimg ${cls}" style="--c:${COLOR[id]||'#f59e0b'}">${cls==='sil'?'?':(NAME[id]||'?')[0]}</div>`;
+// shiny: 빛나는 모습 (그 그림이 없으면 보통 그림을 금빛으로)
+function art(id,cls='',shiny=false){
+  const sp=shiny?'<span class="spark">✨</span>':'', su=shiny&&IMG.get('s'+id), u=su||IMG.get('n'+id);
+  if(u) return `<img class="pic ${cls}${shiny&&!su?' shfb':''}" src="${u}" alt="" draggable="false">${sp}`;
+  return `<div class="noimg ${cls}${shiny?' shfb':''}" style="--c:${COLOR[id]||'#f59e0b'}">${cls==='sil'?'?':(NAME[id]||'?')[0]}</div>${sp}`;
 }
 
 /* ======================================================================
@@ -500,7 +561,9 @@ const priceOf=i=>FAM[i].p*unit();
 const evoPrice=i=>evoUnits(i)*unit();
 const stageOf=i=>S.own[i]||0;
 function curId(i){ const f=FAM[i], s=stageOf(i); return f.eevee&&s>0?(S.eevee||134):f.ids[Math.min(s,f.ids.length-1)]; }
-const curName=i=>NAME[curId(i)];
+const isShiny=i=>stageOf(i)>baseStage(i);
+const curName=i=>(isShiny(i)?'빛나는 ':'')+NAME[curId(i)];
+const famArt=(i,cls='')=>art(curId(i),cls,isShiny(i));
 const ownedList=()=>FAM.map((_,i)=>i).filter(i=>S.own[i]!=null);
 
 /* ---------- 지갑 ---------- */
@@ -650,14 +713,14 @@ function ask(box,Q){
 let screen='home', WTOK=null;
 function goal(){
   const i=S.partner;
-  if(i!=null&&stageOf(i)<maxStage(i)) return {txt:`${curName(i)} 진화`,price:evoPrice(i),id:curId(i)};
+  if(i!=null&&stageOf(i)<maxStage(i)) return {txt:`${curName(i)} ${stageOf(i)<baseStage(i)?'진화':'✨ 빛나게'}`,price:evoPrice(i),art:famArt(i)};
   const c=FAM.map((_,j)=>j).filter(j=>S.own[j]==null).sort((a,b)=>FAM[a].p-FAM[b].p)[0];
-  if(c!=null) return {txt:`${NAME[FAM[c].ids[0]]} 데려오기`,price:priceOf(c),id:FAM[c].ids[0]};
+  if(c!=null) return {txt:`${NAME[FAM[c].ids[0]]} 데려오기`,price:priceOf(c),art:art(FAM[c].ids[0])};
   const e=ownedList().filter(j=>stageOf(j)<maxStage(j)).sort((a,b)=>evoPrice(a)-evoPrice(b))[0];
-  return e!=null?{txt:`${curName(e)} 진화`,price:evoPrice(e),id:curId(e)}:null;
+  return e!=null?{txt:`${curName(e)} ${stageOf(e)<baseStage(e)?'진화':'✨ 빛나게'}`,price:evoPrice(e),art:famArt(e)}:null;
 }
 function goalHTML(g){ const have=wTotal(S.wallet), pct=Math.min(100,have/g.price*100);
-  return `<div class="goal"><div class="im">${art(g.id)}</div><div class="gt">🎯 ${g.txt} · ${won(g.price)}
+  return `<div class="goal"><div class="im">${g.art}</div><div class="gt">🎯 ${g.txt} · ${won(g.price)}
     <small>${have>=g.price?'돈이 다 모였어요! 🎉':`${won(g.price-have)} 더 모으면 돼요`}</small><div class="gbar"><i style="width:${pct}%"></i></div></div></div>`; }
 function renderHome(){
   screen='home'; WTOK=null;
@@ -667,8 +730,9 @@ function renderHome(){
     <div class="bar" style="width:100%">${walletPill()}<div class="pill">🎒 ${ownedList().length}</div><div class="sp"></div>
       <button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
     <h1>포켓몬 동전 가게</h1>
-    <div class="partner im">${art(curId(S.partner))}</div><div class="pname">가게 주인 ${curName(S.partner)}</div>
-    ${haveImages()?'':'<div class="banner">🖼️ 포켓몬 그림이 아직 없어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 해 주세요. 그림 없이도 놀 수 있어요.</div>'}
+    <div class="partner im">${famArt(S.partner)}</div><div class="pname">가게 주인 ${curName(S.partner)}</div>
+    ${!haveImages()?'<div class="banner">🖼️ 포켓몬 그림이 아직 없어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 해 주세요. 그림 없이도 놀 수 있어요.</div>'
+      :missingImages()?'<div class="banner">🆕 새 포켓몬과 ✨ 빛나는 모습 그림이 생겼어요! 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 한 번 더 해 주세요.</div>':''}
     ${g?goalHTML(g):''}
     <div class="menu">
       <button class="big-btn wide" data-act="work">🏪 가게에서 일하기</button>
@@ -711,7 +775,7 @@ function renderWork(){
       <div class="dayn" aria-label="오늘 손님">${Array.from({length:DAY},(_,i)=>`<i class="${i<S.served?'on':''}"></i>`).join('')}</div><div class="sp"></div>
       ${walletPill()}<button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
     <div class="scene"><div class="sign">🏪 ${curName(S.partner)}네 가게</div>
-      <div class="im keeper">${art(me)}</div><div class="bubble">${Q.bubble}</div><div class="im guest">${art(guest)}</div></div>
+      <div class="im keeper">${famArt(S.partner)}</div><div class="bubble">${Q.bubble}</div><div class="im guest">${art(guest)}</div></div>
     <div class="qbox" id="qbox"></div></div>`;
   holdBtn($('#setBtn'),settings);
   ask($('#qbox'),Q).then(async()=>{
@@ -732,7 +796,7 @@ function earn(coins){
 function dayEnd(){
   const e=S.dayEarn||0; S.served=0; S.dayEarn=0; S.days++; save(); sfx.win(); confetti(40); WTOK=null;
   const g=goal();
-  modal(`<h2>오늘 장사 끝! 🎉</h2><div class="evo im">${art(curId(S.partner))}</div>
+  modal(`<h2>오늘 장사 끝! 🎉</h2><div class="evo im">${famArt(S.partner)}</div>
     <p style="font-size:26px">오늘 번 돈 <b>${won(e)}</b> · 지갑에 <b>${won(wTotal(S.wallet))}</b></p>${g?goalHTML(g):''}
     <div class="row" style="margin-top:12px"><button class="big-btn" data-m="again">🏪 한 번 더</button><button class="big-btn alt" data-m="mart">🛒 포켓몬 마트</button><button class="big-btn alt" data-m="home">🏠 처음으로</button></div>`,sh=>{
     sh.querySelector('[data-m="again"]').onclick=()=>{ closeModal(); renderWork(); };
@@ -745,24 +809,28 @@ function dayEnd(){
 /* ======================================================================
    화면: 포켓몬 마트 · 내 포켓몬
    ====================================================================== */
+let MART_F='all';
 function renderMart(){
   screen='mart'; WTOK=null;
-  const have=wTotal(S.wallet), list=FAM.map((_,i)=>i).filter(i=>S.own[i]==null).sort((a,b)=>FAM[a].p-FAM[b].p);
+  const have=wTotal(S.wallet), all=FAM.map((_,i)=>i).filter(i=>S.own[i]==null).sort((a,b)=>FAM[a].p-FAM[b].p);
+  const F={all:['전체',()=>true],can:['💰 살 수 있어요',i=>priceOf(i)<=have],three:['🌱 세 번 진화',i=>FAM[i].ids.length>=3],legend:['🌟 전설',i=>FAM[i].legend]};
+  const list=all.filter(F[MART_F][1]);
+  const tabs=`<div class="seg" style="max-width:640px;margin:0 auto 12px">${Object.entries(F).map(([k,[t,f]])=>`<button data-mf="${k}" class="${MART_F===k?'on':''}">${t} ${all.filter(f).length}</button>`).join('')}</div>`;
   $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div>${walletPill()}</div>
-    <h2>🛒 포켓몬 마트</h2><div class="sub">모은 돈을 내고 새 포켓몬을 데려와요</div>
+    <h2>🛒 포켓몬 마트</h2><div class="sub">모은 돈을 내고 새 포켓몬을 데려와요</div>${tabs}
     <div class="grid">${list.length?list.map(i=>{ const p=priceOf(i), can=have>=p, id=FAM[i].ids[0];
       return `<button class="mcard${can?' can':''}" data-buy="${i}"><div class="im">${art(id)}</div>${NAME[id]}<span class="tag">${won(p)}</span>
         ${can?'<span class="need">살 수 있어요! 🎉</span>':`<span class="need">${won(p-have)} 더 모아요</span><div class="gbar"><i style="width:${have/p*100}%"></i></div>`}</button>`; }).join('')
-      :'<p style="grid-column:1/-1;text-align:center;font-size:24px">모든 포켓몬을 데려왔어요! 🎉</p>'}</div></div>`;
+      :`<p style="grid-column:1/-1;text-align:center;font-size:24px">${all.length?(MART_F==='can'?'가게에서 조금 더 벌어 와요! 💪':'여기는 모두 데려왔어요! 🎉'):'모든 포켓몬을 데려왔어요! 🎉'}</p>`}</div></div>`;
 }
 function renderBox(){
   screen='box'; WTOK=null;
   $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div>${walletPill()}</div>
-    <h2>🎒 내 포켓몬 ${ownedList().length} / ${FAM.length}</h2><div class="sub">진화의 돌을 사서 진화시켜요 · 가게 짝꿍도 바꿀 수 있어요</div>
+    <h2>🎒 내 포켓몬 ${ownedList().length} / ${FAM.length}</h2><div class="sub">💎 진화의 돌로 진화하고, 다 자라면 ✨ 반짝 별가루로 빛나는 모습이 돼요</div>
     <div class="grid">${ownedList().map(i=>{ const s=stageOf(i), m=maxStage(i), done=s>=m, p=done?0:evoPrice(i), can=wTotal(S.wallet)>=p;
-      return `<div class="pcard${S.partner===i?' on':''}"><div class="im">${art(curId(i))}</div>${curName(i)}
-        <div class="dots">${Array.from({length:m+1},(_,k)=>`<i class="${k<=s?'on':''}"></i>`).join('')}</div>
-        ${done?'<button disabled>다 자랐어요 🌟</button>':`<button class="evob${can?'':' far'}" data-evo="${i}">✨ 진화 ${won(p)}</button>`}
+      return `<div class="pcard${S.partner===i?' on':''}"><div class="im">${famArt(i)}</div>${curName(i)}
+        <div class="dots">${Array.from({length:m+1},(_,k)=>`<i class="${k<=s?'on':''}${k===m?' sh':''}"></i>`).join('')}</div>
+        ${done?'<button disabled>다 자랐어요 🌟</button>':`<button class="evob${can?'':' far'}" data-evo="${i}">${s<baseStage(i)?'💎 진화':'✨ 빛나게'} ${won(p)}</button>`}
         ${S.partner===i?'<button disabled>⭐ 가게 짝꿍</button>':`<button data-partner="${i}">가게 짝꿍 하기</button>`}</div>`; }).join('')}</div></div>`;
 }
 async function doBuy(i){
@@ -795,26 +863,29 @@ async function doEvolve(i){
   const p=evoPrice(i), have=wTotal(S.wallet), nm=curName(i);
   if(have<p){ sfx.no(); toast(`${won(p-have)} 더 모아요`);
     sayList([K(`진화의 돌은 ${wonSay(p)}이에요.`),K(`지금 ${wonSay(have)}이 있으니까 ${wonSay(p-have)} 더 모아야 해요.`)]); return; }
+  const toShiny=stageOf(i)===baseStage(i);
   let target=null;
-  if(FAM[i].eevee){ target=await pickEevee(); if(!target) return; }
+  if(FAM[i].eevee&&!toShiny){ target=await pickEevee(); if(!target) return; }
   const next=target||FAM[i].ids[stageOf(i)+1];
-  const ok=await pay({title:`${nm} 진화의 돌 💎`,price:p,id:next,sil:true,say:`${jo(nm,'을','를')} 진화시키려면`});
+  const ok=await pay(toShiny?{title:`${nm} 반짝 별가루 ✨`,price:p,art:art(curId(i),'',true),say:`${jo(nm,'을','를')} 빛나게 하려면`}
+    :{title:`${nm} 진화의 돌 💎`,price:p,art:art(next,'sil'),say:`${jo(nm,'을','를')} 진화시키려면`});
   if(!ok) return renderBox();
   await evolveAnim(i,target);
   renderBox();
 }
 function evolveAnim(i,target){
-  const from=curId(i), fromName=curName(i);
+  const from=famArt(i), fromName=curName(i), base=NAME[curId(i)];
   S.own[i]=stageOf(i)+1; if(target) S.eevee=target;
-  const to=curId(i), toName=curName(i); save();
+  const to=famArt(i), toName=curName(i), shiny=isShiny(i); save();
+  const msg=shiny?`반짝반짝! ${jo(base,'이','가')} 빛나는 모습이 되었어요!`:`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`;
   return new Promise(res=>{
-    modal(`<div class="reward">💎</div><h2 id="evh">어? ${fromName}의 모습이…!</h2><div class="evo im" id="evo">${art(from)}</div>
+    modal(`<div class="reward">${S.own[i]>baseStage(i)?'✨':'💎'}</div><h2 id="evh">어? ${fromName}의 모습이…!</h2><div class="evo im" id="evo">${from}</div>
       <div class="row"><button class="big-btn" id="evb" hidden>좋아요!</button></div>`,sh=>{ sh.querySelector('#evb').onclick=()=>{ closeModal(); res(); }; },{backdrop:false});
     say(`어? ${fromName}의 모습이...`); sfx.sparkle();
     setTimeout(()=>{ const ev=$('#evo'); if(ev) ev.classList.add('flash'); },1500);
-    setTimeout(()=>{ const ev=$('#evo'); if(!ev) return; ev.classList.remove('flash'); ev.innerHTML=art(to);
-      $('#evh').textContent=`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`; $('#evb').hidden=false;
-      sfx.win(); confetti(); say(`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`); },3300);
+    setTimeout(()=>{ const ev=$('#evo'); if(!ev) return; ev.classList.remove('flash'); ev.innerHTML=to;
+      $('#evh').textContent=msg; $('#evb').hidden=false;
+      sfx.win(); if(shiny) sfx.sparkle(); confetti(shiny?50:26); say(msg); },3300);
   });
 }
 
@@ -835,7 +906,7 @@ function renderPay(){
   const P=PAY, tot=wTotal(P.cnt), left=avail(), g=P.glow||{};
   $('#app').innerHTML=`<div class="pay">
     <div class="bar"><button class="icon-btn" data-act="paycancel" aria-label="그만하기">✖</button><div class="sp"></div><div class="pill">👛 ${won(wTotal(left))}</div></div>
-    <div class="payhead"><div class="im">${art(P.id,P.sil?'sil':'')}</div><div><div class="ptitle">${P.title}</div><div class="ptag">${moneyHTML(P.price)}</div></div></div>
+    <div class="payhead"><div class="im">${P.art||art(P.id)}</div><div><div class="ptitle">${P.title}</div><div class="ptag">${moneyHTML(P.price)}</div></div></div>
     <div class="counter"><div class="clabel">🧾 낸 돈 <b>${S.set.total?won(tot):'?'}</b></div>
       <div class="pile">${counterCoins().map(d=>`<button class="cbtn${g.ret===d?' glow':''}" data-ret="${d}" aria-label="${won(d)} 돌려받기">${coin(d)}</button>`).join('')
         ||'<span style="color:#fff;font-size:20px;opacity:.9">여기에 돈을 올려요</span>'}</div></div>
@@ -1017,13 +1088,13 @@ async function dropMoneyPhoto(d){
    ====================================================================== */
 function settings(){
   const E=effD(), seg=(k,opts)=>`<div class="seg">${opts.map(([v,t])=>`<button data-k="${k}" data-v="${v}" class="${S.set[k]===v?'on':''}">${t}</button>`).join('')}</div>`;
-  const imgN=()=>ALL_IDS.filter(id=>IMG.has('n'+id)).length, u=unit();
+  const imgN=()=>IMG_JOBS.filter(([k])=>IMG.has(k)).length, u=unit();
   onModalClose=()=>{ ({home:renderHome,pick:renderPick,work:renderWork,mart:renderMart,box:renderBox,wallet:renderWallet,pay:renderPay})[screen](); };
   modal(`<h2>어른 설정</h2><div class="set">
     <h3>🖼️ 포켓몬 그림 받기</h3>
-    <p class="note">이 앱에는 포켓몬 그림이 들어 있지 않아요. 버튼을 누르면 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)의 공식 일러스트 ${ALL_IDS.length}장을 받아
+    <p class="note">이 앱에는 포켓몬 그림이 들어 있지 않아요. 버튼을 누르면 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)의 공식 일러스트 ${IMG_JOBS.length}장(빛나는 모습 포함)을 받아
       작게 줄인 뒤 <b>기기 안에만</b> 저장해요. 한 번 받으면 인터넷 없이도 보여요. 그림의 저작권은 Nintendo·Creatures·GAME FREAK에 있으니 가정에서만 써 주세요.</p>
-    <p class="note" id="imgHave">받은 그림 ${imgN()} / ${ALL_IDS.length}장</p><div class="dlbar"><i id="dlbar"></i></div>
+    <p class="note" id="imgHave">받은 그림 ${imgN()} / ${IMG_JOBS.length}장</p><div class="dlbar"><i id="dlbar"></i></div>
     <div class="row" style="justify-content:flex-start"><button class="big-btn small" id="dl">⬇️ 그림 받기</button><button class="big-btn small alt" id="clr">🗑️ 받은 그림 지우기</button></div>
     <h3>난이도</h3><div class="diffs">${LV.map((d,i)=>`<button data-diff="${i}" class="${S.set.diff===i?'on':''}"><span class="e">${d.e}</span><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
     <p class="note">포켓몬 값은 🐣·🐥·🐔에서는 백 원 단위, 🦅 어려움에서는 천 원 단위(10배)예요. 지갑의 돈은 난이도를 바꿔도 그대로예요.</p>
@@ -1051,16 +1122,16 @@ function settings(){
     sh.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{ const v=+b.dataset.gift; addCoins(S.wallet,greedy(v)); save(); sfx.coin();
       sh.querySelector('#wnow').textContent=won(wTotal(S.wallet)); toast(`용돈 ${won(v)}을 넣었어요`); });
     sh.querySelector('#dl').onclick=async()=>{
-      if(ALL_IDS.every(id=>IMG.has('n'+id))){ toast('이미 다 받았어요!'); return; }
+      if(IMG_JOBS.every(([k])=>IMG.has(k))){ toast('이미 다 받았어요!'); return; }
       try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
       const dl=sh.querySelector('#dl'); dl.disabled=true;
       const r=await downloadImages((d,t)=>{ const b=$('#dlbar'), m=$('#imgHave'); if(b) b.style.width=(d/t*100)+'%'; if(m) m.textContent=`받는 중… ${d} / ${t}`; });
-      const m=$('#imgHave'); if(m) m.textContent=r.fail?`${r.total-r.fail}장 받았어요. ${r.fail}장은 받지 못했어요. 인터넷을 확인하고 한 번 더 눌러 주세요.`:`모두 받았어요! 🎉 (${imgN()} / ${ALL_IDS.length}장)`;
+      const m=$('#imgHave'); if(m) m.textContent=r.fail?`${r.total-r.fail}장 받았어요. ${r.fail}장은 받지 못했어요. 인터넷을 확인하고 한 번 더 눌러 주세요.`:`모두 받았어요! 🎉 (${imgN()} / ${IMG_JOBS.length}장)`;
       dl.disabled=false;
     };
     sh.querySelector('#clr').onclick=()=>modal(`<h2>받은 그림을 지울까요?</h2><p>포켓몬 그림만 지워지고, 돈 사진·지갑·포켓몬 기록은 그대로예요.</p>
       <div class="row"><button class="big-btn" data-m="yes">지울래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
-      s2.querySelector('[data-m]').onclick=async()=>{ for(const [k,v] of [...IMG]) if(k[0]==='n'){ try{ await idb.del(k); }catch(e){} URL.revokeObjectURL(v); IMG.delete(k); } closeModal(); toast('그림을 지웠어요'); };
+      s2.querySelector('[data-m]').onclick=async()=>{ for(const [k,v] of [...IMG]) if(k[0]==='n'||k[0]==='s'){ try{ await idb.del(k); }catch(e){} URL.revokeObjectURL(v); IMG.delete(k); } closeModal(); toast('그림을 지웠어요'); };
     });
     sh.querySelector('[data-m="reset"]').onclick=()=>modal(`<h2>처음부터 다시 할까요?</h2><p>짝꿍, 모은 포켓몬, 진화, 지갑의 돈이 모두 처음으로 돌아가요.<br>설정과 받은 그림은 그대로 남아요.</p>
       <div class="row"><button class="big-btn" data-m="yes">네, 다시 할래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
@@ -1078,6 +1149,7 @@ $('#app').addEventListener('click',e=>{
   if(d.give) return give(+d.give);
   if(d.ret) return ret(+d.ret);
   if(d.starter!==undefined){ sfx.pop(); return chooseStarter(+d.starter); }
+  if(d.mf){ MART_F=d.mf; sfx.pop(); return renderMart(); }
   if(d.buy!==undefined){ sfx.pop(); return doBuy(+d.buy); }
   if(d.evo!==undefined){ sfx.pop(); return doEvolve(+d.evo); }
   if(d.partner!==undefined){ S.partner=+d.partner; save(); sfx.pop(); say(`${jo(curName(S.partner),'이','가')} 가게 짝꿍이에요!`); return renderBox(); }
