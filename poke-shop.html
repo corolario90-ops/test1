@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>포켓몬 동전 가게</title>
+<meta name="theme-color" content="#ffe39a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="동전 가게">
+<link rel="manifest" href="poke-shop.webmanifest">
+<link rel="apple-touch-icon" href="icons/shop-192.png">
+<link rel="icon" href="icons/shop-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#ffe39a; --bg2:#fff7e2; --ink:#2e2a24; --card:#ffffff; --soft:#fff3d6; --line:rgba(0,0,0,.1);
+  --accent:#f2672e; --good:#22c55e; --gold:#ffcf33; --shadow:0 6px 0 rgba(0,0,0,.14); --wood:#c98a4b; --tag:#fff0b8; --tagink:#5b4500;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg1:#3a2e16; --bg2:#231f2e; --ink:#f6efe2; --card:#3a3428; --soft:#2d2820; --line:rgba(255,255,255,.14); --wood:#8a5a2c; --tag:#5b4a1c; --tagink:#ffe9a8; }
+}
+:root[data-theme="dark"]{ --bg1:#3a2e16; --bg2:#231f2e; --ink:#f6efe2; --card:#3a3428; --soft:#2d2820; --line:rgba(255,255,255,.14); --wood:#8a5a2c; --tag:#5b4a1c; --tagink:#ffe9a8; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%}
+body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--bg1);background-image:linear-gradient(var(--bg1),var(--bg2));overflow:hidden;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+h1,h2,h3{font-weight:normal;margin:0}
+#app{height:100dvh;display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.big-btn{font-size:24px;padding:12px 24px;border:none;border-radius:20px;background:var(--accent);color:#fff;box-shadow:var(--shadow);min-height:60px}
+.big-btn.alt{background:var(--card);color:var(--ink)}
+.big-btn.small{font-size:19px;padding:8px 16px;min-height:52px}
+.big-btn:disabled{opacity:.45}
+.big-btn.pulse,.glow-btn{animation:pulse 1s ease-in-out infinite}
+.big-btn:active:not(:disabled),.icon-btn:active,.qc:active,.tcoin:active,.cbtn:active,.pcard button:active,.mcard:active{transform:translateY(3px)}
+.icon-btn{font-size:26px;width:56px;height:56px;border:none;border-radius:18px;background:var(--card);box-shadow:var(--shadow);position:relative;overflow:hidden;flex:none}
+.icon-btn.holding::after{content:"";position:absolute;left:0;bottom:0;height:6px;background:var(--accent);animation:hold 1s linear forwards}
+.pill{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:999px;padding:4px 16px 4px 12px;font-size:24px;min-height:52px;box-shadow:0 4px 0 rgba(0,0,0,.12);white-space:nowrap}
+.pill.bump{animation:pop .4s}
+.bar{display:flex;align-items:center;gap:10px;flex:none}
+.sp{flex:1}
+@keyframes hold{from{width:0}to{width:100%}}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@keyframes flash{0%,100%{filter:brightness(1)}50%{filter:brightness(0) invert(1)}}
+@keyframes rise{from{transform:translate(-50%,0);opacity:1}to{transform:translate(-50%,-90px);opacity:0}}
+@keyframes walkin{from{transform:translateX(60vw)}to{transform:none}}
+
+/* ---------- 포켓몬 그림 ---------- */
+.im{position:relative}
+.pic{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;pointer-events:none}
+.pic.sil{filter:brightness(0);opacity:.3}
+.noimg{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--c,#f59e0b);color:#fff;font-size:calc(var(--sz,80px)*.42);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.18);text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.noimg.sil{background:#888;opacity:.3}
+
+/* ---------- 돈 (실제 디자인이 아닌 단순한 그림) ---------- */
+.coin{display:inline-grid;place-items:center;flex:none;border-radius:50%;width:calc(var(--cw)*var(--k,1));height:calc(var(--cw)*var(--k,1));
+  font:800 calc(var(--cw)*var(--k,1)*.33)/1 system-ui,sans-serif;color:#4a3d28;letter-spacing:-.5px;
+  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.75) 0 14%,transparent 38%),var(--cc);
+  box-shadow:inset 0 0 0 calc(3px*var(--k,1)) rgba(0,0,0,.14),inset 0 calc(-4px*var(--k,1)) 0 rgba(0,0,0,.12),0 3px 0 rgba(0,0,0,.2)}
+.coin.d10{--cc:#d99a5e;--cw:44px} .coin.d50{--cc:#d9dee4;--cw:50px} .coin.d100{--cc:#c9d1d9;--cw:56px} .coin.d500{--cc:#e6eaee;--cw:64px;font-size:calc(64px*var(--k,1)*.3)}
+.bill{display:inline-flex;align-items:center;justify-content:center;gap:2px;flex:none;width:calc(104px*var(--k,1));height:calc(52px*var(--k,1));border-radius:calc(8px*var(--k,1));
+  font:800 calc(20px*var(--k,1))/1 system-ui,sans-serif;color:#26323a;background:var(--cc);
+  box-shadow:inset 0 0 0 calc(4px*var(--k,1)) rgba(255,255,255,.45),inset 0 0 0 calc(6px*var(--k,1)) rgba(0,0,0,.1),0 3px 0 rgba(0,0,0,.2)}
+.bill small{font-size:.65em}
+.bill.d1000{--cc:#9fcbee} .bill.d5000{--cc:#f4b48a} .bill.d10000{--cc:#a9da9c;width:calc(112px*var(--k,1))}
+.pile{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;max-width:560px}
+.money{font-size:clamp(30px,6vmin,46px)}
+.money small{font-size:.6em}
+
+/* ---------- 처음 화면 ---------- */
+.home{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.home h1{font-size:clamp(36px,7vw,64px);text-shadow:0 4px 0 rgba(0,0,0,.08)}
+.partner{width:clamp(140px,26vmin,230px);aspect-ratio:1;--sz:clamp(140px,26vmin,230px);animation:bob 1.8s ease-in-out infinite}
+.pname{font-size:26px}
+.menu{display:grid;gap:12px;width:min(560px,100%);grid-template-columns:1fr 1fr}
+.menu .big-btn{font-size:26px;min-height:80px}
+.menu .big-btn.wide{grid-column:1/-1}
+.banner{background:#fff3c4;color:#5b4500;border-radius:18px;padding:12px 16px;max-width:560px;font-size:18px;line-height:1.5}
+.goal{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:20px;padding:8px 14px;box-shadow:0 4px 0 rgba(0,0,0,.1);width:min(560px,100%);text-align:left}
+.goal .im{width:56px;height:56px;--sz:56px;flex:none}
+.goal .gt{flex:1;font-size:20px}
+.goal .gt small{display:block;font-size:16px;opacity:.7}
+.gbar{height:14px;background:var(--soft);border-radius:8px;overflow:hidden;margin-top:4px}
+.gbar i{display:block;height:100%;background:var(--good);border-radius:8px}
+
+/* ---------- 목록 화면 ---------- */
+.list{flex:1;overflow-y:auto}
+.list h2{font-size:28px;margin:6px 0 4px;text-align:center}
+.list .sub{text-align:center;font-size:18px;opacity:.7;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding-bottom:12px}
+.pcard,.mcard{border:4px solid transparent;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:21px;text-align:center}
+.pcard .im,.mcard .im{width:100px;height:100px;--sz:100px}
+.pcard small,.mcard small{font-size:15px;opacity:.65}
+.pcard.on{border-color:var(--accent)}
+.pcard button{border:none;border-radius:14px;background:var(--soft);font-size:17px;padding:8px 10px;width:100%;min-height:44px}
+.pcard button.evob{background:var(--accent);color:#fff}
+.pcard button.evob.far{background:var(--soft);color:var(--ink)}
+.dots{display:flex;gap:4px}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--gold)}
+.tag{display:inline-block;background:var(--tag);color:var(--tagink);border-radius:12px;padding:3px 12px;font-size:20px}
+.mcard.can .tag{background:#c9f5d6;color:#14532d}
+.mcard .need{font-size:15px;opacity:.75}
+.mcard .gbar{width:90%}
+
+/* ---------- 가게 ---------- */
+.work{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0}
+.scene{flex:none;position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;background:linear-gradient(#bfe6ff,#e9f6ff);border-radius:24px;padding:10px 16px 0;overflow:hidden;height:clamp(150px,27vh,230px)}
+:root[data-theme="dark"] .scene{background:linear-gradient(#26405a,#1d2d3d)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .scene{background:linear-gradient(#26405a,#1d2d3d)} }
+.scene::after{content:"";position:absolute;left:0;right:0;bottom:0;height:24%;background:var(--wood);box-shadow:inset 0 6px 0 rgba(255,255,255,.25)}
+.scene .keeper,.scene .guest{position:relative;z-index:1;flex:none;width:clamp(76px,min(24%,18vh),150px);aspect-ratio:1;margin-bottom:4%;--sz:clamp(76px,14vh,140px)}
+.scene .guest{animation:walkin .6s ease-out}
+.scene .sign{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:var(--card);border-radius:14px;padding:4px 14px;font-size:18px;z-index:2;white-space:nowrap}
+.bubble{position:relative;z-index:2;align-self:center;background:#fff;color:#2e2a24;border-radius:20px;padding:10px 16px;font-size:clamp(20px,3.6vmin,28px);box-shadow:0 4px 0 rgba(0,0,0,.12);max-width:46%;text-align:center;animation:pop .3s}
+.bubble .ie{font-size:1.5em;line-height:1}
+.dayn{display:flex;gap:6px}
+.dayn i{width:16px;height:16px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 2px var(--line)}
+.dayn i.on{background:var(--good)}
+.qbox{flex:1;min-height:0;overflow:auto;background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:12px;text-align:center;display:flex;flex-direction:column;gap:10px}
+.qline{font-size:clamp(22px,4vmin,30px)}
+.qq{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--soft);border-radius:22px;padding:12px}
+.qq .note{font-size:18px;opacity:.65}
+.qq .eqn{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;font-size:clamp(26px,5vmin,40px)}
+.qq .ie{font-size:clamp(50px,9vmin,72px);line-height:1}
+.qch{display:grid;gap:10px;grid-template-columns:repeat(var(--n,3),1fr)}
+.qc{border:4px solid transparent;background:#fff6dc;color:#3a2d10;border-radius:22px;min-height:90px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px}
+.qc .cm{font-weight:normal;font-size:clamp(28px,5.4vmin,44px)} .qc .cm small{font-size:.6em}
+.qc .ie{font-size:48px;line-height:1}
+.qc .pile{--k:.78}
+.qc.dim{opacity:.25;filter:grayscale(1)}
+.qc.glow,.glow{border-color:var(--gold)!important;box-shadow:0 0 0 4px var(--gold),0 0 24px var(--gold)!important;animation:pulse 1s ease-in-out infinite}
+.qc.ok{background:#c9f5d6;border-color:var(--good)}
+.plus{position:fixed;left:50%;top:40%;font-size:44px;color:#15803d;text-shadow:0 3px 0 #fff;z-index:65;animation:rise 1.4s ease-out forwards;pointer-events:none}
+
+/* ---------- 계산대 (돈 내기) ---------- */
+.pay{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0}
+.payhead{display:flex;align-items:center;justify-content:center;gap:14px;flex:none}
+.payhead .im{width:clamp(80px,15vmin,130px);height:clamp(80px,15vmin,130px);--sz:110px}
+.payhead .ptitle{font-size:clamp(22px,4vmin,30px)}
+.payhead .ptag{font-size:clamp(34px,7vmin,54px);color:var(--accent)}
+.counter{flex:1;min-height:110px;overflow:auto;background:var(--wood);border-radius:24px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:inset 0 6px 0 rgba(255,255,255,.2)}
+.clabel{background:var(--card);border-radius:14px;padding:4px 14px;font-size:22px}
+.clabel b{font-weight:normal;color:var(--accent)}
+.cbtn{border:none;background:none;padding:0;border-radius:50%}
+.cbtn.glow{border-radius:12px}
+.tray{flex:none;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;background:var(--card);border-radius:24px;padding:12px;box-shadow:var(--shadow)}
+.tray .label{width:100%;text-align:center;font-size:18px;opacity:.7}
+.tcoin{border:4px solid transparent;background:var(--soft);border-radius:18px;padding:6px 10px;display:flex;align-items:center;gap:8px;min-height:72px}
+.tcoin .n{font-size:22px}
+.tcoin.glow{border-color:var(--gold)}
+
+/* ---------- 지갑 · 바꾸기 ---------- */
+.wrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:18px;padding:8px 14px;box-shadow:0 4px 0 rgba(0,0,0,.1);margin:0 auto 10px;max-width:560px;font-size:22px}
+.wrow .cw{width:120px;display:grid;place-items:center}
+.wrow .sum{margin-left:auto;opacity:.8}
+.wtotal{text-align:center;font-size:clamp(30px,6vmin,46px);margin:6px 0 12px}
+.xrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;background:var(--soft);border-radius:18px;padding:8px;margin:8px 0}
+.xrow .big-btn{font-size:17px;min-height:48px;padding:6px 12px}
+.eqrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font-size:30px;margin:6px 0}
+.lesson{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.lesson button{border:4px solid transparent;background:var(--soft);border-radius:18px;padding:10px;min-height:80px;display:grid;place-items:center}
+.lesson button.on{border-color:var(--accent)}
+
+/* ---------- 창 ---------- */
+#modal{position:fixed;inset:0;background:rgba(25,20,10,.5);display:grid;place-items:center;z-index:50;padding:14px}
+.sheet{background:var(--card);border-radius:28px;padding:18px;max-width:700px;width:100%;max-height:92dvh;overflow:auto;box-shadow:0 10px 0 rgba(0,0,0,.2);text-align:center;animation:pop .25s}
+.sheet h2{font-size:30px;margin-bottom:10px}
+.sheet p{font-size:20px;line-height:1.5;margin:8px 0}
+.sheet .qbox{box-shadow:none;padding:0}
+.evo{width:clamp(160px,34vmin,260px);aspect-ratio:1;margin:8px auto;--sz:clamp(160px,34vmin,260px)}
+.evo.flash{animation:flash .35s linear infinite}
+.reward{font-size:80px;line-height:1.1}
+.egrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.egrid button{border:4px solid transparent;background:var(--soft);border-radius:18px;padding:6px;font-size:16px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.egrid .im{width:70px;height:70px;--sz:70px}
+.set{text-align:left}
+.set h3{font-size:21px;margin:16px 0 6px}
+.seg{display:flex;background:var(--soft);border-radius:16px;padding:4px;gap:4px}
+.seg button{flex:1;border:none;background:none;border-radius:12px;padding:10px 6px;font-size:19px}
+.seg button.on{background:var(--accent);color:#fff}
+.set .note{font-size:15px;opacity:.7;margin:4px 2px;line-height:1.5}
+.diffs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.diffs button{border:3px solid transparent;background:var(--soft);border-radius:16px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.diffs .e{font-size:34px;line-height:1.1} .diffs b{font-weight:normal;font-size:20px} .diffs small{font-size:14px;opacity:.7;text-align:center}
+.diffs button.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--soft))}
+.dlbar{height:14px;background:var(--soft);border-radius:8px;overflow:hidden;margin:8px 0}
+.dlbar i{display:block;height:100%;width:0;background:var(--good);transition:width .2s}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti{position:fixed;top:-60px;font-size:34px;animation:fall 1.8s linear forwards}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:var(--card);font-size:22px;padding:12px 20px;border-radius:18px;z-index:70;max-width:90vw;text-align:center;animation:pop .2s}
+.vrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.vrow span{width:58px;font-size:19px;flex:none}
+.vrow select{flex:1;min-width:0;font:inherit;font-size:17px;padding:10px 8px;border-radius:12px;border:2px solid rgba(0,0,0,.15);background:#fff;color:#26263a}
+.vrow .icon-btn{width:50px;height:50px;font-size:20px}
+@media (max-width:600px){
+  .pill{font-size:19px;min-height:46px;padding:4px 12px} .icon-btn{width:48px;height:48px;font-size:22px}
+  .menu .big-btn{font-size:21px;min-height:66px} .qc{min-height:76px} .grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .scene .sign{display:none} .qch.n4{grid-template-columns:1fr 1fr} .egrid{grid-template-columns:repeat(2,1fr)} .wrow .cw{width:90px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" hidden></div>
+<div id="fx"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)];
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const sum=a=>a.reduce((s,v)=>s+v,0);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+
+/* ======================================================================
+   포켓몬 (그림은 앱에 들어 있지 않음: 어른 설정에서 기기로 받음)
+   p: 데려오는 값(단위 수) · evo: 진화 값(없으면 p로 계산) · starter: 처음에 고를 수 있음
+   ====================================================================== */
+const FAM=[
+  {ids:[1,2,3],ko:['이상해씨','이상해풀','이상해꽃'],c:'#4ade80',p:10,starter:1},
+  {ids:[4,5,6],ko:['파이리','리자드','리자몽'],c:'#fb923c',p:10,starter:1},
+  {ids:[7,8,9],ko:['꼬부기','어니부기','거북왕'],c:'#60a5fa',p:10,starter:1},
+  {ids:[172,25,26],ko:['피츄','피카츄','라이츄'],c:'#facc15',p:10,starter:1},
+  {ids:[133],ko:['이브이'],c:'#c99a6b',p:12,eevee:1,starter:1},
+  {ids:[129,130],ko:['잉어킹','갸라도스'],c:'#f87171',p:2,evo:[20]},
+  {ids:[10,11,12],ko:['캐터피','단데기','버터플'],c:'#a3e635',p:3},
+  {ids:[16,17,18],ko:['구구','피죤','피죤투'],c:'#d6a96b',p:4},
+  {ids:[54,55],ko:['고라파덕','골덕'],c:'#fcd34d',p:5},
+  {ids:[50,51],ko:['디그다','닥트리오'],c:'#a16207',p:5},
+  {ids:[52,53],ko:['나옹','페르시온'],c:'#e9c46a',p:6},
+  {ids:[174,39,40],ko:['푸푸린','푸린','푸크린'],c:'#f9a8d4',p:6},
+  {ids:[173,35,36],ko:['삐','삐삐','픽시'],c:'#f5a3c7',p:6},
+  {ids:[60,61,62],ko:['발챙이','슈륙챙이','강챙이'],c:'#93c5fd',p:7},
+  {ids:[37,38],ko:['식스테일','나인테일'],c:'#f97316',p:8},
+  {ids:[175,176,468],ko:['토게피','토게틱','토게키스'],c:'#e7c873',p:9},
+  {ids:[132],ko:['메타몽'],c:'#c4b5fd',p:9},
+  {ids:[446,143],ko:['먹고자','잠만보'],c:'#64748b',p:12},
+  {ids:[447,448],ko:['리오르','루카리오'],c:'#3b82f6',p:14},
+  {ids:[147,148,149],ko:['미뇽','신뇽','망나뇽'],c:'#818cf8',p:20},
+  {ids:[151],ko:['뮤'],c:'#f472b6',p:30},
+];
+const EEVEE=[[134,'샤미드'],[135,'쥬피썬더'],[136,'부스터'],[196,'에브이'],[197,'블래키'],[470,'리피아'],[471,'글레이시아'],[700,'님피아']];
+const NAME={}, COLOR={};
+FAM.forEach(f=>f.ids.forEach((id,i)=>{ NAME[id]=f.ko[i]; COLOR[id]=f.c; }));
+EEVEE.forEach(([id,n])=>{ NAME[id]=n; COLOR[id]='#c99a6b'; });
+const ALL_IDS=[...FAM.flatMap(f=>f.ids),...EEVEE.map(e=>e[0])];
+const maxStage=i=>FAM[i].eevee?1:FAM[i].ids.length-1;
+const evoUnits=i=>{ const f=FAM[i], s=S.own[i]||0; return f.evo?f.evo[s]:Math.round(f.p*(s?2.5:1.5)); };
+
+const idb=(()=>{
+  let p;
+  const open=()=>p||(p=new Promise((res,rej)=>{ const r=indexedDB.open('pokeshop',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('img'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }));
+  const tx=async(mode,fn)=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('img',mode), r=fn(t.objectStore('img'));
+    t.oncomplete=()=>res(r&&r.result); t.onerror=t.onabort=()=>rej(t.error); }); };
+  return {
+    put:(k,v)=>tx('readwrite',o=>o.put(v,k)),
+    clear:()=>tx('readwrite',o=>o.clear()),
+    all:async()=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('img'), out=[], c=t.objectStore('img').openCursor();
+      c.onsuccess=()=>{ const cur=c.result; if(cur){ out.push([cur.key,cur.value]); cur.continue(); } };
+      t.oncomplete=()=>res(out); t.onerror=()=>rej(t.error); }); },
+  };
+})();
+const IMG=new Map();
+async function loadImages(){ try{ for(const [k,b] of await idb.all()) if(!IMG.has(k)&&b) IMG.set(k,URL.createObjectURL(b)); }catch(e){} }
+const ART=id=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+async function shrink(blob){ // 기기에 저장하기 전에 256px로 줄이기
+  const u=URL.createObjectURL(blob);
+  try{ const im=new Image(); im.src=u; await im.decode();
+    const Z=256, c=document.createElement('canvas'); c.width=c.height=Z;
+    const k=Math.min(Z/im.naturalWidth,Z/im.naturalHeight), w=im.naturalWidth*k, h=im.naturalHeight*k;
+    c.getContext('2d').drawImage(im,(Z-w)/2,(Z-h)/2,w,h);
+    return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('toBlob')),'image/png'));
+  } finally{ URL.revokeObjectURL(u); }
+}
+async function downloadImages(progress){
+  const jobs=ALL_IDS.filter(id=>!IMG.has('n'+id)), total=jobs.length; let done=0, fail=0;
+  const worker=async()=>{ while(jobs.length){ const id=jobs.shift();
+    try{ const r=await fetch(ART(id)); if(!r.ok) throw new Error(r.status); const b=await shrink(await r.blob()); await idb.put('n'+id,b); IMG.set('n'+id,URL.createObjectURL(b)); }
+    catch(e){ fail++; }
+    progress(++done,total); } };
+  await Promise.all([worker(),worker(),worker(),worker()]);
+  return {total,fail};
+}
+const haveImages=()=>ALL_IDS.some(id=>IMG.has('n'+id));
+// 그림이 없으면 이름 첫 글자를 넣은 동그라미
+function art(id,cls=''){
+  const u=IMG.get('n'+id);
+  if(u) return `<img class="pic ${cls}" src="${u}" alt="" draggable="false">`;
+  return `<div class="noimg ${cls}" style="--c:${COLOR[id]||'#f59e0b'}">${cls==='sil'?'?':(NAME[id]||'?')[0]}</div>`;
+}
+
+/* ======================================================================
+   돈 · 낱말
+   ====================================================================== */
+const DEN=[10,50,100,500,1000,5000,10000];
+const won=n=>n.toLocaleString('ko-KR')+'원';
+const moneyHTML=n=>`${n.toLocaleString('ko-KR')}<small>원</small>`;
+// 숫자를 한자어 수로 읽기: 1500 → 천오백, 25000 → 이만오천
+function sino(n){
+  if(n===0) return '영';
+  const D=['','일','이','삼','사','오','육','칠','팔','구'];
+  const part=x=>[[1000,'천'],[100,'백'],[10,'십'],[1,'']].map(([u,w])=>{ const d=Math.floor(x/u)%10; return d?(d===1&&u>1?'':D[d])+w:''; }).join('');
+  const man=Math.floor(n/10000), rest=n%10000;
+  return (man?(man===1?'':part(man))+'만':'')+part(rest);
+}
+const wonSay=n=>sino(n)+' 원';
+const isBill=d=>d>=1000;
+const kindOf=d=>isBill(d)?'지폐':'동전';
+const coinName=d=>`${wonSay(d)}짜리 ${kindOf(d)}`;
+function coin(d){ return isBill(d)?`<span class="bill d${d}">${d.toLocaleString('ko-KR')}<small>원</small></span>`:`<span class="coin d${d}">${d}</span>`; }
+const pileHTML=(a,k)=>`<div class="pile"${k?` style="--k:${k}"`:''}>${a.slice().sort((x,y)=>y-x).map(coin).join('')}</div>`;
+const jong=w=>{ const c=w.charCodeAt(w.length-1); return c>=0xAC00&&c<=0xD7A3?(c-0xAC00)%28:0; };
+const jo=(w,a,b)=>w+(jong(w)?a:b);
+const ITEMS=[['사과','🍎'],['바나나','🍌'],['주먹밥','🍙'],['빵','🍞'],['주스','🧃'],['아이스크림','🍦'],['도넛','🍩'],['쿠키','🍪'],['풍선','🎈'],
+  ['곰인형','🧸'],['공책','📒'],['연필','✏️'],['사탕','🍭'],['우유','🥛'],['딸기','🍓'],['포도','🍇'],['케이크','🍰'],['모자','🧢'],['공','⚽'],['꽃','🌸'],
+  ['수박','🍉'],['당근','🥕'],['옥수수','🌽'],['치즈','🧀'],['피자','🍕'],['열쇠고리','🔑'],['장난감 차','🚗'],['크레파스','🖍️']].map(([n,e])=>({n,e}));
+
+/* ---------- 목소리 고르기: 어른 설정에서 고른 목소리, 없으면 이 기기에서 가장 자연스러운 목소리 ---------- */
+let koV=null,enV=null;
+const vesc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 맥·아이패드의 장난스러운 효과음 목소리는 목록에서 뺌
+const NOVELTY=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+function voiceList(lang){ try{ return speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().startsWith(lang)&&!NOVELTY.test(v.name)); }catch(e){ return []; } }
+// 고품질(Premium) > 향상된 품질(Enhanced) > Siri·Natural 목소리 순으로 점수
+function voiceScore(v){ const n=v.name; return (/premium|고품질/i.test(n)?6:0)+(/enhanced|향상/i.test(n)?4:0)+(/siri/i.test(n)?3:0)+(/natural|neural|online/i.test(n)?3:0)
+  +(/google/i.test(n)?1:0)+(/^(ko-kr|en-us)$/.test(v.lang.toLowerCase().replace('_','-'))?1:0); }
+const rankVoices=lang=>voiceList(lang).sort((a,b)=>voiceScore(b)-voiceScore(a));
+function pickVoices(){ let set={}; try{ set=S.set; }catch(e){ return; }
+  const pickOne=(lang,uri)=>{ const vs=rankVoices(lang); return (uri&&vs.find(v=>v.voiceURI===uri))||vs[0]||null; };
+  koV=pickOne('ko',set.voiceKo); enV=pickOne('en',set.voiceEn); }
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{ pickVoices(); const k=document.getElementById('vKo'), e=document.getElementById('vEn');
+  if(k) k.innerHTML=voiceOpts('ko',S.set.voiceKo); if(e) e.innerHTML=voiceOpts('en',S.set.voiceEn); };
+function voiceOpts(lang,cur){ const vs=rankVoices(lang);
+  return `<option value="">자동${vs[0]?` (${vesc(vs[0].name)})`:''}</option>`+vs.map(v=>`<option value="${vesc(v.voiceURI)}"${v.voiceURI===cur?' selected':''}>${vesc(v.name)}${voiceScore(v)>=4?' ⭐':''}</option>`).join(''); }
+const SAMPLE={ko:[['안녕하세요! 오늘도 같이 놀아요. 하나, 둘, 셋!','ko']],en:[["Hello! Let's play together. One, two, three!",'en']]};
+function voiceHTML(){
+  return `<h3>🗣️ 목소리</h3>
+    <div class="vrow"><span>한국어</span><select id="vKo">${voiceOpts('ko',S.set.voiceKo)}</select><button class="icon-btn" data-vtest="ko" aria-label="한국어 목소리 들어 보기">▶</button></div>
+    <div class="vrow"><span>영어</span><select id="vEn">${voiceOpts('en',S.set.voiceEn)}</select><button class="icon-btn" data-vtest="en" aria-label="영어 목소리 들어 보기">▶</button></div>
+    <h3>말 빠르기</h3><div class="seg"><button data-vslow="0" class="${S.set.slow?'':'on'}">보통</button><button data-vslow="1" class="${S.set.slow?'on':''}">조금 느리게</button></div>
+    <h3>목소리 높이</h3><div class="seg"><button data-vpitch="1" class="${S.set.pitch>1?'':'on'}">보통</button><button data-vpitch="1.15" class="${S.set.pitch>1?'on':''}">조금 높게</button></div>
+    <p class="note">⭐ 표시는 더 자연스러운 고품질 목소리예요. 고품질 목소리가 없으면 아이패드 <b>설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성</b>에서 한국어·영어의
+      ‘향상된 품질’ 또는 ‘고품질’ 목소리를 내려받은 뒤, 이 앱을 완전히 껐다가 다시 열어 주세요.${voiceList('ko').length?'':' 지금 이 기기에서는 한국어 목소리를 찾지 못했어요.'}</p>`;
+}
+function bindVoice(sh){
+  const pickSel=(id,key,lang)=>{ const el=sh.querySelector(id); if(el) el.onchange=()=>{ S.set[key]=el.value; save(); pickVoices(); sayList(SAMPLE[lang]); }; };
+  pickSel('#vKo','voiceKo','ko'); pickSel('#vEn','voiceEn','en');
+  sh.querySelectorAll('[data-vtest]').forEach(b=>b.onclick=()=>{ if(!S.set.sound){ toast('소리가 꺼져 있어요'); return; } sayList(SAMPLE[b.dataset.vtest]); });
+  const seg=(attr,apply)=>sh.querySelectorAll(`[${attr}]`).forEach(b=>b.onclick=()=>{ apply(b.getAttribute(attr)); save();
+    b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); sayList(SAMPLE.ko); });
+  seg('data-vslow',v=>S.set.slow=v==='1'); seg('data-vpitch',v=>S.set.pitch=+v);
+}
+function utter(t,lang,rate){ const u=new SpeechSynthesisUtterance(t); u.lang=lang==='en'?'en-US':'ko-KR'; const v=lang==='en'?enV:koV; if(v) u.voice=v; u.rate=rate*(S.set.slow?.85:1); u.pitch=S.set.pitch||1; return u; }
+function sayList(list,rate=.95){ if(!S.set.sound||!('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel(); list.forEach(([t,l])=>speechSynthesis.speak(utter(t,l||'ko',l==='en'?rate*.9:rate))); }catch(e){} }
+const say=(t,lang='ko',rate)=>sayList([[t,lang]],rate);
+const K=t=>[t,'ko'], N=t=>[t,'en'];
+let AC=null;
+function tone(f,d=.12,type='sine',vol=.14,when=0){
+  if(!S.set.sound) return;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+    const t=AC.currentTime+when, o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d+.02); }catch(e){} }
+const sfx={
+  pop:()=>tone(700,.08,'triangle'),
+  coin:()=>{ tone(1900,.07,'triangle',.08); tone(2600,.14,'triangle',.07,.06); },
+  ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,'triangle',.13,i*.1)),
+  no:()=>{ tone(587,.12,'sine',.07); tone(494,.2,'sine',.07,.11); },     // 혼내는 느낌 없는 부드러운 '음?'
+  sparkle:()=>[1568,1760,2093,2349,2637].forEach((f,i)=>tone(f,.14,'sine',.07,i*.07)),
+  win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.25,'triangle',.12,i*.12)),
+};
+const KO_UNIT=['','하나','둘','셋','넷','다섯','여섯','일곱','여덟','아홉'];
+const KO_TEN=['','열','스물','서른','마흔','쉰','예순','일흔','여든','아흔'];
+const koNum=n=>(n<=0||n>=100)?String(n):KO_TEN[Math.floor(n/10)]+KO_UNIT[n%10];
+const koCnt=n=>n===20?'스무':koNum(n).replace(/하나$/,'한').replace(/둘$/,'두').replace(/셋$/,'세').replace(/넷$/,'네');
+const ro=w=>w+(jong(w)&&jong(w)!==8?'으로':'로');
+
+/* ======================================================================
+   상태 · 난이도
+   ====================================================================== */
+const SKEY='pokeshop-v1';
+function fresh(){ return {own:{},partner:null,eevee:null,wallet:{},earned:0,served:0,dayEarn:0,days:0,
+  set:{diff:1,auto:true,sound:true,total:true,voiceKo:'',voiceEn:'',slow:false,pitch:1},adj:1,good:0,hard:0}; }
+let S=Object.assign(fresh(),store.get(SKEY,{}));
+S.set=Object.assign(fresh().set,S.set||{});
+if(S.adj==null||S.adj>S.set.diff) S.adj=S.set.diff;
+const save=()=>store.set(SKEY,S);
+pickVoices();
+// den: 이 단계에서 쓰는 돈 · q: 가게 문제 종류 · n: 보기 수 · unit: 포켓몬 값의 단위
+const LV=[
+  {e:'🐣',name:'아주 쉬움',desc:'100원 동전 세기 · 1000원 알기',den:[100,1000],q:['count','count','find'],n:3,unit:100},
+  {e:'🐥',name:'쉬움',desc:'100원·500원 섞어 세기 · 더 많은 돈 고르기',den:[100,500,1000],q:['count','count','more','find'],n:3,unit:100},
+  {e:'🐔',name:'보통',desc:'10원~1000원 세기 · 1000원 거스름돈 · 살 수 있는 것',den:[10,50,100,500,1000],q:['count','more','change','afford'],n:3,unit:100},
+  {e:'🦅',name:'어려움',desc:'만 원까지 · 큰 거스름돈 · 포켓몬 값 천 원 단위',den:[10,50,100,500,1000,5000,10000],q:['count','change','change','afford'],n:4,unit:1000},
+];
+const effD=()=>S.set.auto?Math.min(S.adj,S.set.diff):S.set.diff;
+function adapt(good,hard){
+  if(!S.set.auto) return;
+  if(good){ S.good++; S.hard=0; if(S.good>=4&&S.adj<S.set.diff){ S.adj++; S.good=0; } }
+  else { S.good=0; if(hard){ S.hard++; if(S.hard>=2&&S.adj>0){ S.adj--; S.hard=0; } } }
+}
+const unit=()=>LV[S.set.diff].unit;
+const priceOf=i=>FAM[i].p*unit();
+const evoPrice=i=>evoUnits(i)*unit();
+const stageOf=i=>S.own[i]||0;
+function curId(i){ const f=FAM[i], s=stageOf(i); return f.eevee&&s>0?(S.eevee||134):f.ids[Math.min(s,f.ids.length-1)]; }
+const curName=i=>NAME[curId(i)];
+const ownedList=()=>FAM.map((_,i)=>i).filter(i=>S.own[i]!=null);
+
+/* ---------- 지갑 ---------- */
+const wTotal=w=>DEN.reduce((s,d)=>s+d*(w[d]||0),0);
+const addCoins=(w,a)=>a.forEach(d=>w[d]=(w[d]||0)+1);
+// 큰 돈부터 채워서 동전·지폐 목록 만들기 (이 단계의 돈으로)
+function greedy(amount,dens=LV[S.set.diff].den){ const out=[];
+  for(const d of [...dens].sort((a,b)=>b-a)) while(amount>=d){ out.push(d); amount-=d; }
+  for(const d of [...DEN].reverse()) while(amount>=d){ out.push(d); amount-=d; }
+  return out; }
+// 가진 돈으로 amount를 딱 맞게 내는 가장 적은 개수 (없으면 null)
+function solve(amount,have){
+  if(amount===0) return {}; if(amount<0||amount%10) return null;
+  const N=amount/10; let best=new Array(N+1).fill(Infinity); best[0]=0; const layers=[];
+  for(const d of DEN){ const c=have[d]||0, u=d/10; if(!c||u>N) continue;
+    const prev=best.slice(), take=new Uint16Array(N+1);
+    for(let a=u;a<=N;a++) for(let k=1;k<=c&&k*u<=a;k++){ const v=prev[a-k*u]+k; if(v<best[a]){ best[a]=v; take[a]=k; } }
+    layers.push([d,take]); }
+  if(best[N]===Infinity) return null;
+  const out={}; let a=N;
+  for(let i=layers.length-1;i>=0;i--){ const [d,take]=layers[i], k=take[a]; if(k){ out[d]=k; a-=k*d/10; } }
+  return out;
+}
+
+/* ======================================================================
+   공통
+   ====================================================================== */
+function toast(t,ms=2200){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),ms); }
+let onModalClose=null;
+function modal(html,setup,{backdrop=true}={}){
+  const m=$('#modal'); m.innerHTML=`<div class="sheet">${html}</div>`; m.hidden=false;
+  m.onclick=e=>{ if(backdrop&&e.target===m) closeModal(); };
+  m.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal());
+  if(setup) setup(m.querySelector('.sheet'));
+}
+function closeModal(){ $('#modal').hidden=true; $('#modal').innerHTML=''; const f=onModalClose; onModalClose=null; if(f) f(); }
+function confetti(n=26){ for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='confetti'; d.textContent=pick(['🪙','⭐','✨','🎉','💰','🎈']);
+  d.style.left=rnd(100)+'vw'; d.style.animationDelay=(Math.random()*.5)+'s'; $('#fx').appendChild(d); setTimeout(()=>d.remove(),2500); } }
+function holdBtn(b,fn){ let t; const stop=()=>{ clearTimeout(t); b.classList.remove('holding'); };
+  b.addEventListener('pointerdown',()=>{ b.classList.add('holding'); t=setTimeout(()=>{ stop(); fn(); },1000); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));
+  b.addEventListener('click',()=>{ if($('#modal').hidden) toast('어른 설정은 꾹 눌러 주세요'); }); }
+const walletPill=(id='wal')=>`<div class="pill" id="${id}">👛 <span>${won(wTotal(S.wallet))}</span></div>`;
+
+/* ======================================================================
+   가게 문제 (시간 제한 없음 · 틀려도 잃는 것 없음)
+   ====================================================================== */
+function makePile(E){
+  let p=[]; const add=(d,k)=>{ for(let i=0;i<k;i++) p.push(d); };
+  if(E===0) add(100,1+rnd(9));
+  else if(E===1){ do{ p=[]; if(!rnd(4)) add(1000,1); add(500,rnd(3)); add(100,rnd(6)); }while(p.length<2||new Set(p).size<2); }
+  else if(E===2){ do{ p=[]; add(500,rnd(2)); add(100,rnd(5)); add(50,rnd(2)); add(10,rnd(5)); }while(new Set(p).size<2||p.length<3); }
+  else { do{ p=[]; add(10000,rnd(2)); add(5000,rnd(2)); add(1000,rnd(5)); add(500,rnd(2)); add(100,rnd(5)); }while(new Set(p).size<3); }
+  return p.sort((a,b)=>b-a);
+}
+function moneyOpts(ans,n,cands,step){ const s=[ans];
+  for(const v of cands){ if(s.length>=n) break; if(v>0&&!s.includes(v)) s.push(v); }
+  for(let k=1;s.length<n;k++) for(const v of [ans+k*step,ans-k*step]) if(s.length<n&&v>0&&!s.includes(v)) s.push(v);
+  return shuffle(s); }
+const cM=v=>`<b class="cm">${moneyHTML(v)}</b>`;
+const moneyChoices=(ans,list)=>list.map(v=>({h:cM(v),ok:v===ans,read:[K(wonSay(v))]}));
+const running=p=>p.map((_,i)=>sino(sum(p.slice(0,i+1)))).join(', ')+' 원!';
+function countUp(P,pay){ const seq=[]; let c=P;
+  while(c<pay&&seq.length<16){ let st=c%100?10:c%1000?100:1000; while(c+st>pay) st/=10; c+=st; seq.push(c); }
+  return [K(`${wonSay(P)}에서 ${wonSay(pay)}까지 세어 봐요.`),K(seq.map(sino).join(', '))]; }
+function changeQ(P,paid,n,it){
+  const pay=sum(paid), ans=pay-P, step=ans%100?10:ans%1000||pay<5000?100:1000;
+  const cands=shuffle([ans+step,ans-step,ans+2*step]); if(P!==ans) cands.unshift(P);
+  return {item:it,bubble:it?`<span class="ie">${it.e}</span> ${it.n} 주세요!`:'',ask:'거스름돈은 얼마일까요?',
+    q:`<div class="eqn">${it?`<span class="ie">${it.e}</span>`:''}<span class="tag">${won(P)}</span><span>⬅️</span>${pileHTML(paid,.9)}</div>
+       <div class="note">${won(P)}짜리를 사고 ${won(pay)}을 냈어요</div>`,
+    say:[K(`${it?it.n+' 값은 ':''}${wonSay(P)}. ${wonSay(pay)}을 냈어요. 거스름돈은 얼마일까요?`)],
+    choices:moneyChoices(ans,moneyOpts(ans,n,cands,step)),name:[K(`${wonSay(pay)}에서 ${wonSay(P)}을 빼면 ${wonSay(ans)}!`)],
+    hint:countUp(P,pay),earn:greedy(P)};
+}
+const QB={
+  count:(E,n)=>{ const p=makePile(E), t=sum(p), it=pick(ITEMS), lo=Math.min(...p), step=lo>=1000?1000:lo>=100?100:10;
+    const cands=shuffle([t+step,t-step,t+(p[0]>=1000?1000:100),t-(p[0]>=1000?1000:100)]);
+    const naive=p.length*lo; if(naive!==t) cands.unshift(naive);   // 동전 개수만 세는 실수
+    return {item:it,bubble:`<span class="ie">${it.e}</span> ${it.n} 주세요!`,ask:'손님이 낸 돈은 모두 얼마일까요?',q:pileHTML(p),
+      say:[K(`${it.n} 주세요! 여기 돈이요.`),K('손님이 낸 돈은 모두 얼마일까요?')],choices:moneyChoices(t,moneyOpts(t,n,cands,step)),
+      name:[K(`모두 ${wonSay(t)}!`)],hint:[K(new Set(p).size>1?'큰 돈부터 차례로 더해 봐요.':'하나씩 세어 봐요.'),K(running(p))],earn:p}; },
+  find:(E,n)=>{ const t=E===0?pick([100,100,1000]):pick(LV[E].den), pool=E===0?[10,50,100,500,1000]:DEN.slice(0,E>=3?7:5), it=pick(ITEMS);
+    const list=shuffle([t,...shuffle(pool.filter(d=>d!==t)).slice(0,n-1)]);
+    return {item:it,bubble:`<span class="ie">${it.e}</span> ${won(t)}이에요!`,ask:`${jo(coinName(t),'은','는')} 어느 것일까요?`,
+      q:`<div class="money">${moneyHTML(t)}</div><div class="note">돈에 적힌 숫자를 잘 봐요</div>`,
+      say:[K(`${it.n} 값은 ${wonSay(t)}이에요.`),K(`${jo(coinName(t),'은','는')} 어느 것일까요?`)],
+      choices:list.map(d=>({h:`<div class="pile" style="--k:1.15">${coin(d)}</div>`,ok:d===t,read:[K(coinName(d))]})),
+      name:[K(jo(coinName(t),'이에요!','예요!'))],hint:[K(`${sino(t)}이라고 적힌 돈을 찾아요.`)],earn:[t]}; },
+  more:(E,n)=>{ let a,b;
+    if(E<=1){ a=pick([[500],[500],[500,100],[1000]]); const ta=sum(a);
+      const ks=(ta===1000?[3,4,6,7,8,9]:[2,3,4,7,8,9]).filter(k=>k*100!==ta); b=Array(pick(ks)).fill(100); }
+    else { do{ a=makePile(E).slice(0,4); b=makePile(E).slice(-5); }while(sum(a)===sum(b)); }
+    if(rnd(2)) [a,b]=[b,a];
+    const ta=sum(a), tb=sum(b);
+    return {item:null,bubble:'누가 돈을 더 많이 냈을까요?',ask:'어느 쪽 돈이 더 많을까요?',q:'<div class="note">개수가 아니라 돈에 적힌 숫자를 봐요</div>',noDim:true,
+      say:[K('두 손님이 돈을 냈어요. 어느 쪽 돈이 더 많을까요?')],
+      choices:[{h:pileHTML(a),ok:ta>tb,read:[K(`이쪽은 ${wonSay(ta)}`)]},{h:pileHTML(b),ok:tb>ta,read:[K(`이쪽은 ${wonSay(tb)}`)]}],
+      name:[K(`${wonSay(Math.max(ta,tb))}이 더 많아요!`)],
+      hint:[K('오백 원 동전 하나는 백 원 동전 다섯 개와 같아요.'),K(`왼쪽은 ${running(a)}`),K(`오른쪽은 ${running(b)}`)],earn:ta>tb?a:b}; },
+  change:(E,n)=>{ let pay,P; const r=E>=3?rnd(3):0;
+    if(r===0){ pay=1000; P=100*(1+rnd(9)); } else if(r===1){ pay=5000; P=100*(10+rnd(40)); } else { pay=10000; P=1000*(1+rnd(9)); }
+    return changeQ(P,[pay],n,pick(ITEMS)); },
+  afford:(E,n)=>{ const u=E>=3?1000:100, X=u*(3+rnd(7)), okP=u*(1+rnd(X/u));
+    const items=shuffle(ITEMS).slice(0,n), prices=[okP,...shuffle([1,2,3,4,5]).slice(0,n-1).map(k=>X+k*u)];
+    const ch=items.map((it,i)=>({h:`<span class="ie">${it.e}</span><span class="tag">${won(prices[i])}</span>`,ok:i===0,read:[K(`${it.n}, ${wonSay(prices[i])}`)]}));
+    return {item:null,bubble:`나는 ${won(X)} 있어요!`,ask:`${won(X)}으로 살 수 있는 것은?`,
+      q:`${pileHTML(greedy(X),.85)}<div class="note">값이 ${won(X)}보다 적거나 같아야 살 수 있어요</div>`,
+      say:[K(`손님은 ${wonSay(X)}이 있어요. 살 수 있는 것은 무엇일까요?`)],choices:shuffle(ch),
+      name:[K(`${items[0].n}! ${wonSay(okP)}이니까 살 수 있어요.`)],hint:[K(`${wonSay(X)}보다 값이 작거나 같은 것을 찾아요.`)],earn:greedy(okP)}; },
+};
+function makeQ(){ const E=effD(), L=LV[E], kind=pick(L.q); return Object.assign(QB[kind](E,L.n),{kind,miss:0,help:0}); }
+
+// 문제 그리기: 맞힐 때까지 기다리고, 틀린 보기는 흐려지기만 함
+function ask(box,Q){
+  return new Promise(res=>{
+    let done=false;
+    const draw=()=>{ const n=Q.choices.length;
+      box.innerHTML=`<div class="qline">${Q.ask}</div><div class="qq">${Q.q}</div>
+        <div class="qch${n>=4?' n4':''}" style="--n:${n}">${Q.choices.map((c,i)=>`<button class="qc${c.dim?' dim':''}${c.glow?' glow':''}${c.okd?' ok':''}" data-c="${i}">${c.h}</button>`).join('')}</div>
+        <div class="row"><button class="icon-btn" data-q="hear" aria-label="다시 듣기">🔊</button>
+          <button class="big-btn alt small${Q.miss>=2&&!Q.help?' pulse':''}" data-q="help">${Q.help?'🤝 정답 보기':'💡 도와줘요'}</button></div>`;
+      box.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>choose(+b.dataset.c));
+      box.querySelector('[data-q="hear"]').onclick=()=>sayList(Q.say);
+      box.querySelector('[data-q="help"]').onclick=help; };
+    const choose=i=>{
+      if(done) return; const c=Q.choices[i]; if(c.dim) return;
+      if(c.ok){ done=true; c.okd=true; draw(); sfx.ok(); confetti(12);
+        adapt(!Q.miss&&!Q.help,Q.miss>=2||Q.help>=2); save();
+        sayList([K('맞았어요!'),...Q.name,...(Q.after||[])]); res(); return; }
+      Q.miss++; c.dim=true; sfx.no(); draw();
+      sayList([K('음, 이건'),...c.read,K(Q.miss>=2?'괜찮아요! 다시 골라 봐요. 도와줘요를 눌러도 돼요.':'다시 골라 봐요!')]);
+    };
+    const help=()=>{
+      if(done) return; Q.help++;
+      if(Q.help===1){ if(!Q.noDim){ const wrong=shuffle(Q.choices.filter(c=>!c.ok&&!c.dim)); wrong.slice(0,Math.max(1,Math.floor(wrong.length/2))).forEach(c=>c.dim=true); }
+        draw(); sayList([...Q.say,...(Q.hint||[])],.85); }
+      else { Q.choices.forEach(c=>{ if(c.ok) c.glow=true; }); draw(); sayList([...Q.name,K('반짝이는 걸 눌러요!')],.85); }
+    };
+    draw(); setTimeout(()=>sayList(Q.say),300);
+  });
+}
+
+/* ======================================================================
+   화면: 처음 · 짝꿍 고르기
+   ====================================================================== */
+let screen='home', WTOK=null;
+function goal(){
+  const i=S.partner;
+  if(i!=null&&stageOf(i)<maxStage(i)) return {txt:`${curName(i)} 진화`,price:evoPrice(i),id:curId(i)};
+  const c=FAM.map((_,j)=>j).filter(j=>S.own[j]==null).sort((a,b)=>FAM[a].p-FAM[b].p)[0];
+  if(c!=null) return {txt:`${NAME[FAM[c].ids[0]]} 데려오기`,price:priceOf(c),id:FAM[c].ids[0]};
+  const e=ownedList().filter(j=>stageOf(j)<maxStage(j)).sort((a,b)=>evoPrice(a)-evoPrice(b))[0];
+  return e!=null?{txt:`${curName(e)} 진화`,price:evoPrice(e),id:curId(e)}:null;
+}
+function goalHTML(g){ const have=wTotal(S.wallet), pct=Math.min(100,have/g.price*100);
+  return `<div class="goal"><div class="im">${art(g.id)}</div><div class="gt">🎯 ${g.txt} · ${won(g.price)}
+    <small>${have>=g.price?'돈이 다 모였어요! 🎉':`${won(g.price-have)} 더 모으면 돼요`}</small><div class="gbar"><i style="width:${pct}%"></i></div></div></div>`; }
+function renderHome(){
+  screen='home'; WTOK=null;
+  if(S.partner==null) return renderPick();
+  const g=goal();
+  $('#app').innerHTML=`<div class="home">
+    <div class="bar" style="width:100%">${walletPill()}<div class="pill">🎒 ${ownedList().length}</div><div class="sp"></div>
+      <button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <h1>포켓몬 동전 가게</h1>
+    <div class="partner im">${art(curId(S.partner))}</div><div class="pname">가게 주인 ${curName(S.partner)}</div>
+    ${haveImages()?'':'<div class="banner">🖼️ 포켓몬 그림이 아직 없어요. 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 해 주세요. 그림 없이도 놀 수 있어요.</div>'}
+    ${g?goalHTML(g):''}
+    <div class="menu">
+      <button class="big-btn wide" data-act="work">🏪 가게에서 일하기</button>
+      <button class="big-btn alt" data-act="mart">🛒 포켓몬 마트</button>
+      <button class="big-btn alt" data-act="box">🎒 내 포켓몬</button>
+      <button class="big-btn alt wide" data-act="wallet">👛 내 지갑 · 돈 알아보기</button>
+    </div></div>`;
+  holdBtn($('#setBtn'),settings);
+}
+function renderPick(){
+  screen='pick'; WTOK=null;
+  $('#app').innerHTML=`<div class="list"><div class="bar"><div class="sp"></div><button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <h2>가게를 함께 할 짝꿍을 골라요!</h2><div class="sub">처음 한 마리는 선물이에요 🎁</div>
+    ${haveImages()?'':'<div class="banner" style="margin:0 auto 12px">🖼️ 어른이 ⚙️를 꾹 눌러 <b>그림 받기</b>를 하면 포켓몬 그림이 보여요.</div>'}
+    <div class="grid">${FAM.map((f,i)=>f.starter?`<button class="mcard" data-starter="${i}"><div class="im">${art(f.ids[0])}</div>${f.ko[0]}</button>`:'').join('')}</div></div>`;
+  holdBtn($('#setBtn'),settings);
+}
+function chooseStarter(i){
+  S.own[i]=0; S.partner=i; const gift=greedy(3*unit()); addCoins(S.wallet,gift); save();
+  sfx.win(); confetti(30);
+  const nm=NAME[FAM[i].ids[0]];
+  onModalClose=renderHome;
+  modal(`<h2>${jo(nm,'이','가')} 짝꿍이 되었어요! 🎉</h2><div class="evo im">${art(FAM[i].ids[0])}</div>
+    <p>가게를 열라고 용돈 <b>${won(sum(gift))}</b>을 받았어요!</p>${pileHTML(gift)}
+    <div class="row" style="margin-top:12px"><button class="big-btn" data-close>좋아요!</button></div>`,null,{backdrop:false});
+  sayList([K(`${jo(nm,'이','가')} 짝꿍이 되었어요!`),K(`용돈 ${wonSay(sum(gift))}을 받았어요. 가게에서 일해서 돈을 모으면 새 포켓몬을 데려오고 진화도 시킬 수 있어요!`)]);
+}
+
+/* ======================================================================
+   화면: 가게 (손님에게 팔고 돈 벌기)
+   ====================================================================== */
+const DAY=5;
+function renderWork(){
+  if(S.partner==null) return renderPick();
+  screen='work'; const tok={}; WTOK=tok;
+  const Q=makeQ(), me=curId(S.partner), guest=pick(ALL_IDS.filter(id=>id!==me)), got=sum(Q.earn);
+  Q.after=[K(`${wonSay(got)}을 벌었어요!`)];
+  $('#app').innerHTML=`<div class="work">
+    <div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button>
+      <div class="dayn" aria-label="오늘 손님">${Array.from({length:DAY},(_,i)=>`<i class="${i<S.served?'on':''}"></i>`).join('')}</div><div class="sp"></div>
+      ${walletPill()}<button class="icon-btn" id="setBtn" aria-label="어른 설정 (꾹 누르기)">⚙️</button></div>
+    <div class="scene"><div class="sign">🏪 ${curName(S.partner)}네 가게</div>
+      <div class="im keeper">${art(me)}</div><div class="bubble">${Q.bubble}</div><div class="im guest">${art(guest)}</div></div>
+    <div class="qbox" id="qbox"></div></div>`;
+  holdBtn($('#setBtn'),settings);
+  ask($('#qbox'),Q).then(async()=>{
+    if(WTOK!==tok) return;
+    earn(Q.earn); S.served++; save();
+    const dots=document.querySelectorAll('.dayn i'); if(dots[S.served-1]) dots[S.served-1].classList.add('on');
+    await sleep(2600);
+    if(WTOK!==tok||screen!=='work'||!$('#modal').hidden) return;
+    if(S.served>=DAY) dayEnd(); else renderWork();
+  });
+}
+function earn(coins){
+  const t=sum(coins); addCoins(S.wallet,coins); S.earned+=t; S.dayEarn=(S.dayEarn||0)+t; save();
+  sfx.coin(); setTimeout(sfx.coin,180);
+  const d=document.createElement('div'); d.className='plus'; d.textContent='+'+won(t); document.body.appendChild(d); setTimeout(()=>d.remove(),1500);
+  const w=$('#wal'); if(w){ w.querySelector('span').textContent=won(wTotal(S.wallet)); w.classList.remove('bump'); void w.offsetWidth; w.classList.add('bump'); }
+}
+function dayEnd(){
+  const e=S.dayEarn||0; S.served=0; S.dayEarn=0; S.days++; save(); sfx.win(); confetti(40); WTOK=null;
+  const g=goal();
+  modal(`<h2>오늘 장사 끝! 🎉</h2><div class="evo im">${art(curId(S.partner))}</div>
+    <p style="font-size:26px">오늘 번 돈 <b>${won(e)}</b> · 지갑에 <b>${won(wTotal(S.wallet))}</b></p>${g?goalHTML(g):''}
+    <div class="row" style="margin-top:12px"><button class="big-btn" data-m="again">🏪 한 번 더</button><button class="big-btn alt" data-m="mart">🛒 포켓몬 마트</button><button class="big-btn alt" data-m="home">🏠 처음으로</button></div>`,sh=>{
+    sh.querySelector('[data-m="again"]').onclick=()=>{ closeModal(); renderWork(); };
+    sh.querySelector('[data-m="mart"]').onclick=()=>{ closeModal(); renderMart(); };
+    sh.querySelector('[data-m="home"]').onclick=()=>{ closeModal(); renderHome(); };
+  },{backdrop:false});
+  sayList([K(`오늘 장사 끝! 오늘 ${wonSay(e)}을 벌었어요.`),K(`지갑에는 모두 ${wonSay(wTotal(S.wallet))}이 있어요.`)]);
+}
+
+/* ======================================================================
+   화면: 포켓몬 마트 · 내 포켓몬
+   ====================================================================== */
+function renderMart(){
+  screen='mart'; WTOK=null;
+  const have=wTotal(S.wallet), list=FAM.map((_,i)=>i).filter(i=>S.own[i]==null).sort((a,b)=>FAM[a].p-FAM[b].p);
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div>${walletPill()}</div>
+    <h2>🛒 포켓몬 마트</h2><div class="sub">모은 돈을 내고 새 포켓몬을 데려와요</div>
+    <div class="grid">${list.length?list.map(i=>{ const p=priceOf(i), can=have>=p, id=FAM[i].ids[0];
+      return `<button class="mcard${can?' can':''}" data-buy="${i}"><div class="im">${art(id)}</div>${NAME[id]}<span class="tag">${won(p)}</span>
+        ${can?'<span class="need">살 수 있어요! 🎉</span>':`<span class="need">${won(p-have)} 더 모아요</span><div class="gbar"><i style="width:${have/p*100}%"></i></div>`}</button>`; }).join('')
+      :'<p style="grid-column:1/-1;text-align:center;font-size:24px">모든 포켓몬을 데려왔어요! 🎉</p>'}</div></div>`;
+}
+function renderBox(){
+  screen='box'; WTOK=null;
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div>${walletPill()}</div>
+    <h2>🎒 내 포켓몬 ${ownedList().length} / ${FAM.length}</h2><div class="sub">진화의 돌을 사서 진화시켜요 · 가게 짝꿍도 바꿀 수 있어요</div>
+    <div class="grid">${ownedList().map(i=>{ const s=stageOf(i), m=maxStage(i), done=s>=m, p=done?0:evoPrice(i), can=wTotal(S.wallet)>=p;
+      return `<div class="pcard${S.partner===i?' on':''}"><div class="im">${art(curId(i))}</div>${curName(i)}
+        <div class="dots">${Array.from({length:m+1},(_,k)=>`<i class="${k<=s?'on':''}"></i>`).join('')}</div>
+        ${done?'<button disabled>다 자랐어요 🌟</button>':`<button class="evob${can?'':' far'}" data-evo="${i}">✨ 진화 ${won(p)}</button>`}
+        ${S.partner===i?'<button disabled>⭐ 가게 짝꿍</button>':`<button data-partner="${i}">가게 짝꿍 하기</button>`}</div>`; }).join('')}</div></div>`;
+}
+async function doBuy(i){
+  const p=priceOf(i), have=wTotal(S.wallet), id=FAM[i].ids[0], nm=NAME[id];
+  if(have<p){ sfx.no(); toast(`${won(p-have)} 더 모아요`);
+    sayList([K(`${jo(nm,'은','는')} ${wonSay(p)}이에요.`),K(`지금 ${wonSay(have)}이 있으니까 ${wonSay(p-have)} 더 모아야 해요.`)]); return; }
+  const ok=await pay({title:`${nm} 데려오기`,price:p,id,say:`${jo(nm,'을','를')} 데려오려면`});
+  if(!ok) return renderMart();
+  S.own[i]=0; save(); sfx.win(); confetti(30);
+  modal(`<h2>${jo(nm,'이','가')} 친구가 되었어요! 🎉</h2><div class="evo im">${art(id)}</div>
+    <div class="row"><button class="big-btn" data-m="partner">⭐ 가게 짝꿍 하기</button><button class="big-btn alt" data-m="box">🎒 내 포켓몬</button><button class="big-btn alt" data-m="mart">🛒 마트로</button></div>`,sh=>{
+    sh.querySelector('[data-m="partner"]').onclick=()=>{ S.partner=i; save(); closeModal(); renderHome(); };
+    sh.querySelector('[data-m="box"]').onclick=()=>{ closeModal(); renderBox(); };
+    sh.querySelector('[data-m="mart"]').onclick=()=>{ closeModal(); renderMart(); };
+  },{backdrop:false});
+  say(`${jo(nm,'이','가')} 친구가 되었어요!`);
+}
+function pickEevee(){
+  return new Promise(res=>{
+    onModalClose=()=>res(null);
+    modal(`<h2>이브이를 어떤 모습으로 진화시킬까요?</h2><div class="egrid">${EEVEE.map(([id,n])=>`<button data-e="${id}"><div class="im">${art(id)}</div>${n}</button>`).join('')}</div>
+      <div class="row"><button class="big-btn alt small" data-close>그만</button></div>`,sh=>{
+      sh.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{ onModalClose=null; closeModal(); res(+b.dataset.e); });
+    });
+    say('이브이를 어떤 모습으로 진화시킬까요?');
+  });
+}
+async function doEvolve(i){
+  if(stageOf(i)>=maxStage(i)) return;
+  const p=evoPrice(i), have=wTotal(S.wallet), nm=curName(i);
+  if(have<p){ sfx.no(); toast(`${won(p-have)} 더 모아요`);
+    sayList([K(`진화의 돌은 ${wonSay(p)}이에요.`),K(`지금 ${wonSay(have)}이 있으니까 ${wonSay(p-have)} 더 모아야 해요.`)]); return; }
+  let target=null;
+  if(FAM[i].eevee){ target=await pickEevee(); if(!target) return; }
+  const next=target||FAM[i].ids[stageOf(i)+1];
+  const ok=await pay({title:`${nm} 진화의 돌 💎`,price:p,id:next,sil:true,say:`${jo(nm,'을','를')} 진화시키려면`});
+  if(!ok) return renderBox();
+  await evolveAnim(i,target);
+  renderBox();
+}
+function evolveAnim(i,target){
+  const from=curId(i), fromName=curName(i);
+  S.own[i]=stageOf(i)+1; if(target) S.eevee=target;
+  const to=curId(i), toName=curName(i); save();
+  return new Promise(res=>{
+    modal(`<div class="reward">💎</div><h2 id="evh">어? ${fromName}의 모습이…!</h2><div class="evo im" id="evo">${art(from)}</div>
+      <div class="row"><button class="big-btn" id="evb" hidden>좋아요!</button></div>`,sh=>{ sh.querySelector('#evb').onclick=()=>{ closeModal(); res(); }; },{backdrop:false});
+    say(`어? ${fromName}의 모습이...`); sfx.sparkle();
+    setTimeout(()=>{ const ev=$('#evo'); if(ev) ev.classList.add('flash'); },1500);
+    setTimeout(()=>{ const ev=$('#evo'); if(!ev) return; ev.classList.remove('flash'); ev.innerHTML=art(to);
+      $('#evh').textContent=`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`; $('#evb').hidden=false;
+      sfx.win(); confetti(); say(`축하해요! ${jo(fromName,'이','가')} ${ro(toName)} 진화했어요!`); },3300);
+  });
+}
+
+/* ======================================================================
+   화면: 계산대 (지갑에서 돈을 골라 내기)
+   ====================================================================== */
+let PAY=null;
+function pay(o){
+  return new Promise(res=>{
+    PAY=Object.assign({cnt:{},res,glow:null},o); renderPay();
+    sayList([K(`${o.say} ${wonSay(o.price)}이 필요해요.`),K('지갑의 돈을 눌러서 계산대에 올려요.')]);
+  });
+}
+function avail(){ const a={}; DEN.forEach(d=>a[d]=(S.wallet[d]||0)-(PAY&&PAY.cnt[d]||0)); return a; }
+const counterCoins=()=>DEN.slice().reverse().flatMap(d=>Array(PAY.cnt[d]||0).fill(d));
+function renderPay(){
+  screen='pay'; WTOK=null;
+  const P=PAY, tot=wTotal(P.cnt), left=avail(), g=P.glow||{};
+  $('#app').innerHTML=`<div class="pay">
+    <div class="bar"><button class="icon-btn" data-act="paycancel" aria-label="그만하기">✖</button><div class="sp"></div><div class="pill">👛 ${won(wTotal(left))}</div></div>
+    <div class="payhead"><div class="im">${art(P.id,P.sil?'sil':'')}</div><div><div class="ptitle">${P.title}</div><div class="ptag">${moneyHTML(P.price)}</div></div></div>
+    <div class="counter"><div class="clabel">🧾 낸 돈 <b>${S.set.total?won(tot):'?'}</b></div>
+      <div class="pile">${counterCoins().map(d=>`<button class="cbtn${g.ret===d?' glow':''}" data-ret="${d}" aria-label="${won(d)} 돌려받기">${coin(d)}</button>`).join('')
+        ||'<span style="color:#fff;font-size:20px;opacity:.9">여기에 돈을 올려요</span>'}</div></div>
+    <div class="tray"><div class="label">👛 내 지갑 — 누르면 계산대에 올라가요 · 계산대의 돈을 누르면 돌아와요</div>
+      ${DEN.slice().reverse().filter(d=>left[d]>0).map(d=>`<button class="tcoin${g.give===d?' glow':''}" data-give="${d}" aria-label="${won(d)} 내기">${coin(d)}<span class="n">× ${left[d]}</span></button>`).join('')
+        ||'<div class="label">지갑이 비었어요</div>'}</div>
+    <div class="row"><button class="big-btn alt small" data-act="exch">💱 바꾸기</button><button class="big-btn alt small" data-act="payhelp">💡 도와줘요</button>
+      <button class="big-btn${g.go?' pulse':''}" data-act="paygo">✅ 내기</button></div></div>`;
+}
+function give(d){
+  if(!PAY||avail()[d]<=0) return;
+  PAY.cnt[d]=(PAY.cnt[d]||0)+1; PAY.glow=null; sfx.coin(); renderPay();
+  say(S.set.total?wonSay(wTotal(PAY.cnt)):wonSay(d));
+}
+function ret(d){
+  if(!PAY||!PAY.cnt[d]) return;
+  PAY.cnt[d]--; PAY.glow=null; sfx.pop(); renderPay();
+  say(S.set.total?`${wonSay(d)} 빼고, ${wonSay(wTotal(PAY.cnt))}`:`${wonSay(d)} 빼기`);
+}
+function payHelp(){
+  const P=PAY, tot=wTotal(P.cnt), rem=P.price-tot, left=avail();
+  if(rem<0){
+    const d=DEN.slice().reverse().find(d=>P.cnt[d]&&tot-d>=P.price);
+    if(d){ P.glow={ret:d}; renderPay(); say(`너무 많아요. 반짝이는 ${coinName(d)}을 빼 봐요.`); return; }
+    P.glow={go:true}; renderPay(); say(`${wonSay(tot)}을 냈어요. 내기를 누르면 거스름돈 ${wonSay(-rem)}을 받아요.`); return;
+  }
+  if(rem===0){ P.glow={go:true}; renderPay(); say('딱 맞아요! 내기를 눌러요.'); return; }
+  const sol=solve(rem,left);
+  if(sol){ const d=Math.max(...Object.keys(sol).map(Number)); P.glow={give:d}; renderPay();
+    sayList([K(`${wonSay(rem)} 더 내야 해요.`),K(`반짝이는 ${coinName(d)}을 눌러 봐요.`)]); return; }
+  if(wTotal(left)<rem){ say(`돈이 ${wonSay(rem-wTotal(left))} 모자라요. 그만하고 가게에서 더 벌어 올까요?`); return; }
+  const big=DEN.find(d=>d>=rem&&left[d]>0);
+  if(big){ P.glow={give:big}; renderPay(); sayList([K(`${wonSay(rem)}을 딱 맞게 낼 동전이 없어요.`),K(`${coinName(big)}을 내고 거스름돈을 받아요. 바꾸기를 해도 돼요.`)]); return; }
+  const d=DEN.slice().reverse().find(d=>left[d]>0); P.glow={give:d}; renderPay();
+  say(`${wonSay(rem)} 더 내야 해요. ${coinName(d)}부터 내 봐요.`);
+}
+async function payGo(){
+  const P=PAY, tot=wTotal(P.cnt);
+  if(tot===0){ say('지갑의 돈을 눌러서 계산대에 올려요.'); return; }
+  if(tot<P.price){ sfx.no(); toast(`${won(P.price-tot)} 모자라요`); say(`${wonSay(P.price-tot)}이 모자라요. 조금 더 내 볼까요?`); return; }
+  if(tot>P.price){ const extra=DEN.slice().reverse().find(d=>P.cnt[d]&&tot-d>=P.price);
+    if(extra){ sfx.no(); P.glow={ret:extra}; renderPay(); say(`너무 많이 냈어요! ${coinName(extra)} 하나는 빼도 돼요.`); return; } }
+  const change=tot-P.price, paid=counterCoins();
+  if(change>0&&effD()>=2){   // 거스름돈 문제 하나 (맞힐 때까지 기다림)
+    const Q=Object.assign(changeQ(P.price,paid,LV[effD()].n,null),{miss:0,help:0});
+    await new Promise(r=>modal('<div class="qbox" id="mq"></div>',sh=>ask(sh.querySelector('#mq'),Q).then(()=>setTimeout(()=>{ closeModal(); r(); },2800)),{backdrop:false}));
+  }
+  DEN.forEach(d=>S.wallet[d]=(S.wallet[d]||0)-(P.cnt[d]||0));
+  const back=change>0?greedy(change):[]; addCoins(S.wallet,back); save(); sfx.ok();
+  if(change>0) await new Promise(r=>{ onModalClose=r;
+    modal(`<h2>거스름돈 ${won(change)}을 받았어요</h2>${pileHTML(back)}<p>${won(tot)} − ${won(P.price)} = <b>${won(change)}</b></p>
+      <div class="row"><button class="big-btn" data-close>좋아요!</button></div>`,null,{backdrop:false});
+    say(`${wonSay(tot)}을 내고, 거스름돈 ${wonSay(change)}을 받았어요.`); });
+  const res=P.res; PAY=null; res(true);
+}
+
+/* ======================================================================
+   지갑 · 돈 바꾸기 · 돈 알아보기
+   ====================================================================== */
+function renderWallet(){
+  screen='wallet'; WTOK=null;
+  const w=S.wallet, rows=DEN.slice().reverse().filter(d=>w[d]>0)
+    .map(d=>`<div class="wrow"><div class="cw">${coin(d)}</div><span>× ${w[d]}</span><span class="sum">${won(d*w[d])}</span></div>`).join('');
+  $('#app').innerHTML=`<div class="list"><div class="bar"><button class="icon-btn" data-act="home" aria-label="처음으로">🏠</button><div class="sp"></div></div>
+    <h2>👛 내 지갑</h2><div class="wtotal">모두 ${moneyHTML(wTotal(w))}</div>
+    ${rows||'<div class="sub">지갑이 비었어요. 가게에서 일해 봐요!</div>'}
+    <div class="row"><button class="big-btn alt" data-act="wcount">🔊 같이 세기</button><button class="big-btn alt" data-act="exch">💱 바꾸기</button><button class="big-btn" data-act="lesson">📚 돈 알아보기</button></div>
+    <div class="sub" style="margin-top:14px">지금까지 번 돈 ${won(S.earned)} · 장사한 날 ${S.days}일</div></div>`;
+}
+function walletCount(){
+  const w=S.wallet, parts=DEN.slice().reverse().filter(d=>w[d]>0).map(d=>K(`${coinName(d)} ${koCnt(w[d])} 개, ${wonSay(d*w[d])}.`));
+  sayList(parts.length?[...parts,K(`모두 ${wonSay(wTotal(w))}!`)]:[K('지갑이 비었어요.')],.9);
+}
+function exchange(after){
+  const lv=LV[S.set.diff].den;
+  const smaller=d=>{ const s=lv.filter(x=>x<d); return s.length?Math.max(...s):(DEN.filter(x=>x<d).pop()||0); };
+  const bigger=d=>{ const b=lv.filter(x=>x>d); return b.length?Math.min(...b):0; };
+  const left=PAY?avail():Object.assign({},S.wallet);
+  const rows=DEN.slice().reverse().filter(d=>left[d]>0).map(d=>{ const s=smaller(d), b=bigger(d), need=b?b/d:0;
+    return `<div class="xrow">${coin(d)}<span style="font-size:22px">× ${left[d]}</span>
+      ${s?`<button class="big-btn small" data-x="down" data-d="${d}">⬇️ ${won(d)} 1개 → ${won(s)} ${d/s}개</button>`:''}
+      ${b&&left[d]>=need?`<button class="big-btn small alt" data-x="up" data-d="${d}">⬆️ ${won(d)} ${need}개 → ${won(b)} 1개</button>`:''}</div>`; }).join('');
+  onModalClose=after;
+  modal(`<h2>💱 돈 바꾸기</h2><p>큰 돈 하나를 작은 돈 여러 개로, 작은 돈 여러 개를 큰 돈 하나로 바꿔요.<br>바꿔도 돈의 양은 똑같아요!</p>
+    ${rows||'<p>바꿀 돈이 없어요</p>'}<div class="row" style="margin-top:10px"><button class="big-btn" data-close>다 했어요</button></div>`,sh=>{
+    sh.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ const d=+b.dataset.d;
+      if(b.dataset.x==='down'){ const s=smaller(d), k=d/s; S.wallet[d]--; S.wallet[s]=(S.wallet[s]||0)+k;
+        say(`${coinName(d)} 하나는 ${coinName(s)} ${koCnt(k)} 개와 같아요!`); }
+      else { const bb=bigger(d), k=bb/d; S.wallet[d]-=k; S.wallet[bb]=(S.wallet[bb]||0)+1;
+        say(`${coinName(d)} ${koCnt(k)} 개는 ${coinName(bb)} 하나와 같아요!`); }
+      save(); sfx.coin(); if(PAY) PAY.glow=null; exchange(after); });
+  });
+}
+function lessonEq(d){
+  const i=DEN.indexOf(d), s=DEN[i-1];
+  if(!s) return `<p>${coin(d)}<br>${jo(coinName(d),'은','는')} 가장 작은 돈이에요.</p>`;
+  const line=t=>`<div class="eqrow">${coin(d)}<span>=</span>${pileHTML(Array(d/t).fill(t),d/t>5?.62:.8)}</div><p>${won(d)} = ${won(t)} × ${d/t}</p>`;
+  return line(s)+(s!==100&&d>100&&d<=1000?line(100):'');
+}
+function lesson(sel=100){
+  const say1=d=>{ const s=DEN[DEN.indexOf(d)-1];
+    sayList([K(`${coinName(d)}!`),K(s?`${wonSay(d)}은 ${wonSay(s)} ${koCnt(d/s)} 개와 같아요.`:'가장 작은 돈이에요.')]); };
+  modal(`<h2>📚 돈 알아보기</h2><p>돈을 눌러 보세요!</p>
+    <div class="lesson">${DEN.map(d=>`<button data-l="${d}" class="${d===sel?'on':''}" aria-label="${won(d)}">${coin(d)}</button>`).join('')}</div>
+    <div id="leq" style="margin-top:10px">${lessonEq(sel)}</div><div class="row" style="margin-top:10px"><button class="big-btn" data-close>닫기</button></div>`,sh=>{
+    sh.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ const d=+b.dataset.l;
+      sh.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b)); sh.querySelector('#leq').innerHTML=lessonEq(d); sfx.coin(); say1(d); });
+  });
+  say1(sel);
+}
+
+/* ======================================================================
+   어른 설정 (꾹 누르기)
+   ====================================================================== */
+function settings(){
+  const E=effD(), seg=(k,opts)=>`<div class="seg">${opts.map(([v,t])=>`<button data-k="${k}" data-v="${v}" class="${S.set[k]===v?'on':''}">${t}</button>`).join('')}</div>`;
+  const imgN=()=>ALL_IDS.filter(id=>IMG.has('n'+id)).length, u=unit();
+  onModalClose=()=>{ ({home:renderHome,pick:renderPick,work:renderWork,mart:renderMart,box:renderBox,wallet:renderWallet,pay:renderPay})[screen](); };
+  modal(`<h2>어른 설정</h2><div class="set">
+    <h3>🖼️ 포켓몬 그림 받기</h3>
+    <p class="note">이 앱에는 포켓몬 그림이 들어 있지 않아요. 버튼을 누르면 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)의 공식 일러스트 ${ALL_IDS.length}장을 받아
+      작게 줄인 뒤 <b>기기 안에만</b> 저장해요. 한 번 받으면 인터넷 없이도 보여요. 그림의 저작권은 Nintendo·Creatures·GAME FREAK에 있으니 가정에서만 써 주세요.</p>
+    <p class="note" id="imgHave">받은 그림 ${imgN()} / ${ALL_IDS.length}장</p><div class="dlbar"><i id="dlbar"></i></div>
+    <div class="row" style="justify-content:flex-start"><button class="big-btn small" id="dl">⬇️ 그림 받기</button><button class="big-btn small alt" id="clr">🗑️ 받은 그림 지우기</button></div>
+    <h3>난이도</h3><div class="diffs">${LV.map((d,i)=>`<button data-diff="${i}" class="${S.set.diff===i?'on':''}"><span class="e">${d.e}</span><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
+    <p class="note">포켓몬 값은 🐣·🐥·🐔에서는 백 원 단위, 🦅 어려움에서는 천 원 단위(10배)예요. 지갑의 돈은 난이도를 바꿔도 그대로예요.</p>
+    <h3>자동 맞춤</h3>${seg('auto',[[true,'켜기'],[false,'끄기']])}
+    <p class="note">켜 두면 가게 문제를 연달아 어려워할 때 몰래 한 단계 쉬운 문제를 내고, 잘하면 위에서 고른 난이도까지 다시 올라가요.${S.set.auto&&E<S.set.diff?` 지금은 ${LV[E].e} ${LV[E].name} 문제를 내고 있어요.`:''}
+      ${LV[S.set.diff].q.includes('change')?' 계산대에서 큰 돈을 내면 거스름돈 문제도 나와요(🐔 보통부터).':''}</p>
+    <h3>계산대의 ‘낸 돈’ 합계</h3>${seg('total',[[true,'보여 주기'],[false,'숨기기 (스스로 세기)']])}
+    <h3>💝 용돈 주기</h3><div class="row" style="justify-content:flex-start">${[1,5,10].map(k=>`<button class="big-btn small alt" data-gift="${k*u}">+ ${won(k*u)}</button>`).join('')}</div>
+    <p class="note">집안일을 도왔을 때처럼 칭찬으로 지갑에 돈을 넣어 줄 수 있어요. 지금 지갑: <b id="wnow">${won(wTotal(S.wallet))}</b></p>
+    <h3>소리 · 목소리</h3>${seg('sound',[[true,'켜기'],[false,'끄기']])}${voiceHTML()}
+    <p class="note">⏱️ 시간 제한은 없어요. 문제는 맞힐 때까지 기다리고, 틀려도 돈이 줄지 않아요. 💡 도와줘요를 누르면 틀린 보기가 흐려지고, 한 번 더 누르면 정답이 반짝여요.
+      계산대에서도 💡를 누르면 다음에 낼 돈이 반짝여요.</p>
+    <div class="row" style="margin-top:18px"><button class="big-btn small alt" data-m="reset">처음부터 다시</button><button class="big-btn small" data-close>닫기</button></div></div>`,sh=>{
+    bindVoice(sh);
+    sh.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{ S.set.diff=+b.dataset.diff; S.adj=S.set.diff; S.good=S.hard=0; save(); const f=onModalClose; settings(); onModalClose=f; });
+    sh.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ const k=b.dataset.k; S.set[k]=b.dataset.v==='true';
+      if(k==='auto'){ S.adj=S.set.diff; S.good=S.hard=0; } save(); b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
+    sh.querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{ const v=+b.dataset.gift; addCoins(S.wallet,greedy(v)); save(); sfx.coin();
+      sh.querySelector('#wnow').textContent=won(wTotal(S.wallet)); toast(`용돈 ${won(v)}을 넣었어요`); });
+    sh.querySelector('#dl').onclick=async()=>{
+      if(ALL_IDS.every(id=>IMG.has('n'+id))){ toast('이미 다 받았어요!'); return; }
+      try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+      const dl=sh.querySelector('#dl'); dl.disabled=true;
+      const r=await downloadImages((d,t)=>{ const b=$('#dlbar'), m=$('#imgHave'); if(b) b.style.width=(d/t*100)+'%'; if(m) m.textContent=`받는 중… ${d} / ${t}`; });
+      const m=$('#imgHave'); if(m) m.textContent=r.fail?`${r.total-r.fail}장 받았어요. ${r.fail}장은 받지 못했어요. 인터넷을 확인하고 한 번 더 눌러 주세요.`:`모두 받았어요! 🎉 (${imgN()} / ${ALL_IDS.length}장)`;
+      dl.disabled=false;
+    };
+    sh.querySelector('#clr').onclick=()=>modal(`<h2>받은 그림을 지울까요?</h2><p>포켓몬 그림만 지워지고, 지갑과 포켓몬 기록은 그대로예요.</p>
+      <div class="row"><button class="big-btn" data-m="yes">지울래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
+      s2.querySelector('[data-m]').onclick=async()=>{ try{ await idb.clear(); }catch(e){} IMG.forEach(v=>URL.revokeObjectURL(v)); IMG.clear(); closeModal(); toast('그림을 지웠어요'); };
+    });
+    sh.querySelector('[data-m="reset"]').onclick=()=>modal(`<h2>처음부터 다시 할까요?</h2><p>짝꿍, 모은 포켓몬, 진화, 지갑의 돈이 모두 처음으로 돌아가요.<br>설정과 받은 그림은 그대로 남아요.</p>
+      <div class="row"><button class="big-btn" data-m="yes">네, 다시 할래요</button><button class="big-btn alt" data-close>아니요</button></div>`,s2=>{
+      s2.querySelector('[data-m]').onclick=()=>{ const set=S.set; S=fresh(); S.set=set; S.adj=set.diff; PAY=null; save(); onModalClose=null; closeModal(); renderPick(); };
+    });
+  });
+}
+
+/* ======================================================================
+   눌렀을 때
+   ====================================================================== */
+$('#app').addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t||t.disabled) return;
+  const d=t.dataset;
+  if(d.give) return give(+d.give);
+  if(d.ret) return ret(+d.ret);
+  if(d.starter!==undefined){ sfx.pop(); return chooseStarter(+d.starter); }
+  if(d.buy!==undefined){ sfx.pop(); return doBuy(+d.buy); }
+  if(d.evo!==undefined){ sfx.pop(); return doEvolve(+d.evo); }
+  if(d.partner!==undefined){ S.partner=+d.partner; save(); sfx.pop(); say(`${jo(curName(S.partner),'이','가')} 가게 짝꿍이에요!`); return renderBox(); }
+  switch(d.act){
+    case 'home': sfx.pop(); return renderHome();
+    case 'work': sfx.pop(); return renderWork();
+    case 'mart': sfx.pop(); renderMart(); return say('포켓몬 마트예요! 어떤 포켓몬을 데려올까요?');
+    case 'box': sfx.pop(); renderBox(); return say('내 포켓몬이에요!');
+    case 'wallet': sfx.pop(); renderWallet(); return say(`지갑에 ${wonSay(wTotal(S.wallet))}이 있어요.`);
+    case 'wcount': return walletCount();
+    case 'lesson': sfx.pop(); return lesson();
+    case 'exch': sfx.pop(); exchange(screen==='pay'?renderPay:renderWallet); return say('돈을 바꿔 볼까요?');
+    case 'payhelp': return payHelp();
+    case 'paygo': return payGo();
+    case 'paycancel': { sfx.pop(); const r=PAY&&PAY.res; PAY=null; if(r) r(false); return; }
+  }
+});
+
+(async function boot(){ await loadImages(); renderHome(); })();
+if('serviceWorker' in navigator&&location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
