@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>포켓몬 영어 쓰기</title>
+<meta name="theme-color" content="#bfe3ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="영어 쓰기">
+<meta name="robots" content="noindex, nofollow, noimageindex, noarchive">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/abc-192.png">
+<link rel="icon" href="icons/abc-192.png">
+<style>
+@font-face{font-family:"Jua";font-weight:400;font-style:normal;font-display:swap;src:url("../fonts/jua.woff2") format("woff2")}
+@font-face{font-family:"Andika";font-weight:400;font-style:normal;font-display:swap;src:url("../fonts/andika.woff2") format("woff2")}
+:root{
+  --bg1:#fff3b0; --bg2:#ffe0e9; --ink:#2b2b3a; --card:#ffffff; --soft:#f4f5f9; --accent:#ef4444; --line:#d7dbe4;
+  --sheet:#5f6470; --sheet2:#4c515c; --shadow:0 6px 0 rgba(0,0,0,.14); --ok:#22c55e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg1:#1f2240; --bg2:#2b2350; --ink:#f4f3ff; --card:#2f3157; --soft:#272a4a; --sheet:#3a3e58; --sheet2:#30344c; }
+}
+:root[data-theme="dark"]{ --bg1:#1f2240; --bg2:#2b2350; --ink:#f4f3ff; --card:#2f3157; --soft:#272a4a; --sheet:#3a3e58; --sheet2:#30344c; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%}
+body{font-family:'Jua',system-ui,sans-serif;color:var(--ink);background-color:var(--bg1);
+  background-image:linear-gradient(var(--bg1),var(--bg2));background-attachment:fixed;overflow-x:hidden;min-height:100dvh;touch-action:manipulation}
+button,input,select{font:inherit;color:inherit}
+input[type=search]{-webkit-user-select:text;user-select:text}
+[hidden]{display:none!important}
+.page{max-width:1100px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 16px 40px}
+
+.top{display:flex;align-items:center;gap:10px;padding:0 0 12px}
+.icon-btn{font-size:26px;width:58px;height:58px;flex:none;border-radius:18px;border:none;background:var(--card);box-shadow:var(--shadow);cursor:pointer;position:relative;overflow:hidden}
+.icon-btn:active,.big-btn:active,.card:active,.tab:active,.menu-btn:active{transform:translateY(3px)}
+.icon-btn:disabled{opacity:.35}
+.icon-btn.holding::after{content:"";position:absolute;left:0;bottom:0;height:6px;background:var(--accent);animation:hold 1.2s linear forwards}
+@keyframes hold{from{width:0}to{width:100%}}
+.title{flex:1;font-size:clamp(20px,4.5vw,30px);text-align:center;margin:0;font-weight:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spacer{width:58px;flex:none}
+h2{font-weight:normal;font-size:22px;margin:22px 0 10px}
+.logo{text-align:center;margin:6px 0 14px;font-weight:normal;font-size:clamp(34px,7vw,58px);line-height:1.1;color:#ef4444;
+  text-shadow:3px 3px 0 #ffd54a,6px 6px 0 rgba(0,0,0,.12)}
+.logo small{display:block;font-size:.42em;color:var(--ink);text-shadow:none;opacity:.75;margin-top:6px}
+
+.big-btn{border:none;background:#ffd54a;color:#3a2a00;border-radius:20px;padding:12px 20px;font-size:20px;box-shadow:var(--shadow);cursor:pointer;display:inline-block}
+.big-btn.alt{background:var(--card);color:var(--ink)}
+.big-btn.go{background:var(--ok);color:#fff}
+.big-btn.red{background:#ef4444;color:#fff}
+.big-btn.small{font-size:16px;padding:9px 14px;border-radius:14px}
+.big-btn:disabled{opacity:.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note{font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;opacity:.85}
+.opt{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin-bottom:14px;font-size:18px}
+.opt label{display:flex;align-items:center;gap:10px;margin:6px 0;cursor:pointer}
+.opt input[type=checkbox],.opt input[type=radio]{width:24px;height:24px;flex:none}
+.opt select{font-size:17px;padding:8px 10px;border-radius:12px;border:2px solid #cbd5e1;background:var(--soft)}
+.bar{height:14px;border-radius:8px;background:var(--soft);overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#84cc16);width:0;transition:width .3s}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1f2340;color:#fff;border-radius:20px;
+  padding:12px 20px;font-size:20px;z-index:60;box-shadow:0 6px 0 rgba(0,0,0,.25);max-width:90vw;text-align:center;animation:pop .25s}
+@keyframes pop{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+
+/* ---------- 그림 ---------- */
+img.art{object-fit:contain;display:block}
+img.art.ph{opacity:.55}
+img.shadow{filter:brightness(0);opacity:.28}
+img.shadow.ph{filter:grayscale(1);opacity:.35}
+
+/* ---------- 첫 화면 ---------- */
+.home{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:760px){ .home{grid-template-columns:1.1fr 1fr} }
+.partner{background:var(--card);border-radius:30px;box-shadow:var(--shadow);padding:18px;text-align:center;position:relative}
+.partner .pimg{width:min(300px,70vw);height:min(300px,70vw);margin:0 auto;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle,#fff 55%,#f1f3f8 56%,#f1f3f8 62%,#fff 63%);border-radius:50%}
+.partner .pimg img{width:86%;height:86%}
+.partner h3{font-weight:normal;font-size:clamp(28px,5vw,40px);margin:10px 0 2px}
+.partner .lv{display:inline-block;background:#ef4444;color:#fff;border-radius:14px;padding:2px 12px;font-size:20px;margin-right:6px;vertical-align:middle}
+.partner p{font-size:20px;margin:6px 0}
+.dots{display:flex;gap:8px;justify-content:center;margin:10px 0 4px;flex-wrap:wrap}
+.dots i{width:30px;height:30px;border-radius:50%;background:var(--soft);border:3px solid var(--line);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:16px}
+.dots i.on{background:#ffd54a;border-color:#f59e0b}
+.menu{display:flex;flex-direction:column;gap:14px}
+.menu-btn{border:none;border-radius:26px;padding:18px;font-size:clamp(24px,4vw,32px);box-shadow:var(--shadow);cursor:pointer;background:var(--card);display:flex;align-items:center;gap:14px;text-align:left}
+.menu-btn .em{font-size:1.5em}
+.menu-btn small{display:block;font-size:.55em;opacity:.7}
+.menu-btn.main{background:#ef4444;color:#fff}
+.banner{background:#fff7d6;color:#5a4300;border:3px dashed #f59e0b;border-radius:20px;padding:12px 14px;font-size:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner span{flex:1;min-width:200px}
+.other{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit;background:var(--card);border-radius:18px;box-shadow:var(--shadow);height:58px;padding:0 16px;font-size:20px}
+
+/* ---------- 목록 ---------- */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}
+.tab{flex:none;border:3px solid transparent;border-radius:16px;padding:8px 14px;font-size:22px;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.12);background:var(--card)}
+.tab.on{background:#ef4444;color:#fff;border-color:#fff}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filters .tab{font-size:17px;padding:6px 12px}
+.filters input{flex:1;min-width:140px;font-size:18px;padding:8px 12px;border-radius:14px;border:2px solid var(--line);background:var(--card)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.card{border:none;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:8px;cursor:pointer;position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:4px;content-visibility:auto;contain-intrinsic-size:150px 190px}
+.card .thumb{width:100%;aspect-ratio:1;background:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card .thumb img{width:88%;height:88%}
+.card b{font-weight:normal;font-size:clamp(18px,2.6vw,22px)}
+.card small{font-size:13px;opacity:.6}
+.card .st{position:absolute;top:6px;right:8px;font-size:15px}
+.card.done{outline:4px solid #86efac}
+.card.locked{cursor:default;background:var(--soft);box-shadow:0 4px 0 rgba(0,0,0,.08)}
+.card.locked .thumb{background:transparent}
+.card.locked b{opacity:.45}
+.card.today{outline:5px solid #ef4444;animation:glow 1.4s ease-in-out infinite alternate}
+.card .badge{position:absolute;top:4px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;border-radius:12px;padding:2px 10px;font-size:14px;white-space:nowrap;z-index:1}
+@keyframes glow{from{box-shadow:0 6px 0 rgba(0,0,0,.14)}to{box-shadow:0 0 0 8px rgba(239,68,68,.25),0 6px 0 rgba(0,0,0,.14)}}
+
+/* ---------- 쓰기 화면 ---------- */
+.ws{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.ws header{display:flex;align-items:center;gap:8px;padding:max(8px,env(safe-area-inset-top)) 12px 6px}
+.ws header .title b{font-weight:normal}
+.mini{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:18px;box-shadow:var(--shadow);height:58px;padding:0 10px 0 4px;flex:none;cursor:pointer;border:none}
+.mini img{width:50px;height:50px}
+.mini .md{display:flex;gap:3px}
+.mini .md i{width:12px;height:12px;border-radius:50%;background:var(--soft);border:2px solid var(--line)}
+.mini .md i.on{background:#ffd54a;border-color:#f59e0b}
+.mini span{font-size:16px}
+.wbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:0 12px max(10px,env(safe-area-inset-bottom))}
+.info{background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:12px;display:flex;gap:14px;align-items:center;flex:none}
+.info .pic{width:150px;height:150px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle,#fff 52%,#ece8f8 53%,#ece8f8 64%,#fff 65%)}
+.info .pic img{width:92%;height:92%}
+.info .txt{flex:1;min-width:0}
+.info .nm{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.info .nm .no{background:#ef4444;color:#fff;border-radius:14px;padding:2px 10px;font-size:18px}
+.info .nm b{font-weight:normal;font-size:clamp(28px,4vw,40px)}
+.info .nm button{border:none;background:var(--soft);border-radius:50%;width:48px;height:48px;font-size:24px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.info dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0 0;font-size:17px;font-family:'Noto Sans KR',system-ui,sans-serif}
+.info dt{font-weight:700;white-space:nowrap}.info dt::before{content:"● ";font-size:.7em;vertical-align:2px}
+.info dd{margin:0;overflow-wrap:anywhere}
+.chip{display:inline-block;border-radius:10px;padding:0 8px;margin-right:4px;color:#fff;font-size:15px;line-height:24px}
+.sheet{flex:1;min-height:0;background:var(--sheet);border-radius:24px;padding:10px;display:flex;flex-direction:column;gap:10px;
+  background-image:radial-gradient(rgba(255,255,255,.08) 1.5px,transparent 1.6px);background-size:16px 16px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar .lbl{color:#fff;font-size:18px;margin-right:auto}
+.tbtn{border:none;border-radius:14px;background:#fff;color:#2b2b3a;font-size:18px;height:46px;padding:0 14px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.pen{width:40px;height:40px;border-radius:50%;border:4px solid #fff;background:var(--c);cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.pen.on{outline:4px solid #ffd54a}
+.rows{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px}
+.wrow{display:flex;align-items:center;gap:8px;justify-content:center}
+.wrow .tag{color:#fff;font-size:16px;writing-mode:vertical-rl;letter-spacing:2px;opacity:.85;flex:none}
+.wrow .boxes{display:flex;background:#eef0f4;border-radius:16px;padding:6px;gap:0;box-shadow:inset 0 0 0 3px rgba(255,255,255,.6);position:relative}
+.box{position:relative;border:2px solid #9aa1ae;margin-left:-2px;background:#fff;touch-action:none}
+.box:first-child{margin-left:0;border-radius:10px 0 0 10px}
+.box:last-child{border-radius:0 10px 10px 0}
+.box:only-child{border-radius:10px}
+.box canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.box .g{pointer-events:none}
+.box.ok{background:#f0fdf4}
+.box.ok::after{content:"✔";position:absolute;right:4px;top:0;color:#16a34a;font-size:22px;pointer-events:none;animation:popin .3s}
+.box.static{background:#f6f7fa}
+.box.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes popin{from{transform:scale(0)}to{transform:scale(1)}}
+.wrow .side{display:flex;flex-direction:column;gap:6px;flex:none}
+.wrow .side button{border:none;border-radius:14px;width:84px;height:46px;font-size:22px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25);background:#fff}
+.wrow .side .chk{height:auto;min-height:62px;font-size:19px;line-height:1.15;padding:6px 4px}
+.wrow .side .chk{background:var(--ok);color:#fff}
+.wrow.done .boxes{box-shadow:inset 0 0 0 4px #4ade80}
+.wrow.done .side .chk{background:#fff;color:var(--ok)}
+.jamo{color:#fff;text-align:center;font-size:16px;opacity:.85;font-family:'Noto Sans KR',system-ui,sans-serif;min-height:1em}
+@media (orientation:landscape) and (min-width:800px){
+  .wbody{flex-direction:row}
+  .info{flex-direction:column;width:300px;align-items:stretch;overflow-y:auto}
+  .info .pic{width:220px;height:220px;margin:0 auto}
+}
+@media (max-height:700px) and (orientation:portrait){ .info .pic{width:110px;height:110px} }
+
+/* ---------- 상·진화 ---------- */
+.ov{position:fixed;inset:0;background:rgba(10,20,50,.62);display:flex;align-items:center;justify-content:center;padding:16px;z-index:40}
+.panel{background:var(--card);border-radius:30px;padding:22px;max-width:620px;width:100%;text-align:center;box-shadow:0 10px 0 rgba(0,0,0,.2);max-height:94dvh;overflow:auto;position:relative}
+.panel h3{font-weight:normal;font-size:clamp(32px,8vw,52px);margin:4px 0;color:#f97316}
+.panel p{font-size:22px;margin:6px 0}
+.stars{font-size:46px;letter-spacing:4px}
+.stage{position:relative;height:300px;display:flex;align-items:center;justify-content:center;overflow:visible}
+.stage img{position:absolute;max-height:270px;max-width:80%;transition:transform .45s ease-in,opacity .45s ease-in,filter .3s}
+.stage img.in{transform:scale(0) translateY(80px);opacity:0;filter:brightness(3)}
+.stage img.white{filter:brightness(0) invert(1) drop-shadow(0 0 14px #93c5fd)}
+.stage.glow{background:radial-gradient(circle,#dbeafe 0,transparent 65%)}
+.ball{position:absolute;width:110px;height:110px;border-radius:50%;opacity:0;border:6px solid #222;
+  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.75),transparent 26%),linear-gradient(#ef4444 0 45%,#222 45% 55%,#fff 55%)}
+.ball::after{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:#fff;border:6px solid #222}
+.ball.throw{opacity:1;animation:throw .7s cubic-bezier(.3,.8,.4,1) forwards}
+.ball.wobble{opacity:1;animation:wobble 1.6s ease-in-out}
+.ball.got{opacity:1;animation:gotit .5s}
+@keyframes throw{from{transform:translateY(55vh) scale(.4) rotate(-720deg)}to{transform:translateY(60px) scale(1) rotate(0)}}
+@keyframes wobble{0%,100%{transform:translateY(60px) rotate(0)}10%,43%,76%{transform:translateY(60px) rotate(-22deg)}22%,55%,88%{transform:translateY(60px) rotate(22deg)}33%,66%{transform:translateY(60px) rotate(0)}}
+@keyframes gotit{0%{transform:translateY(60px) scale(1)}50%{transform:translateY(60px) scale(1.25)}100%{transform:translateY(60px) scale(1)}}
+.ball.wobble,.ball.got{transform:translateY(60px)}
+.burst{position:absolute;font-size:36px;animation:burst 1s ease-out forwards;pointer-events:none;z-index:3}
+@keyframes burst{from{transform:translate(0,40px) scale(.3);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.2);opacity:0}}
+.flick{animation:flick .5s 6 alternate}
+@keyframes flick{from{transform:scale(1)}to{transform:scale(.82)}}
+
+/* ---------- 내 포켓몬 ---------- */
+.chain{background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:6px;overflow-x:auto}
+.chain .st{flex:none;display:flex;flex-direction:column;align-items:center;width:clamp(96px,16vw,140px);border:none;background:none;cursor:pointer;padding:4px}
+.chain .st .im{width:100%;aspect-ratio:1;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center}
+.chain .st img{width:86%;height:86%}
+.chain .st b{font-weight:normal;font-size:clamp(15px,2.2vw,19px);margin-top:4px;white-space:nowrap}
+.chain .st.now .im{background:#fff3cf;box-shadow:0 0 0 4px #f59e0b}
+.chain .ar{flex:none;font-size:24px;opacity:.5}
+:root{ --bg1:#cfeaff; --bg2:#fff1c9; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg1:#1b2a46; --bg2:#2b2350; } }
+:root[data-theme="dark"]{ --bg1:#1b2a46; --bg2:#2b2350; }
+.logo{color:#2563eb;text-shadow:3px 3px 0 #ffd54a,6px 6px 0 rgba(0,0,0,.12)}
+.menu-btn.main{background:#2563eb}
+.tab.on{background:#2563eb}
+.info .nm .no{background:#2563eb}
+.en{font-family:'Andika',system-ui,sans-serif}
+.info .word button{border:none;background:var(--soft);border-radius:50%;width:48px;height:48px;font-size:24px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.info .word{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.info .word .em{font-size:clamp(46px,6vw,64px);line-height:1}
+.info .word b{font-family:'Andika',system-ui,sans-serif;font-weight:normal;font-size:clamp(40px,5.5vw,60px);line-height:1}
+.info .ko{font-size:24px;margin:6px 0 2px}
+.info .line{font-size:19px;line-height:1.4;margin:6px 0;background:var(--soft);border-radius:14px;padding:8px 10px}
+.info .who{font-size:15px;opacity:.7}
+.tiles{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.tiles button{border:none;border-radius:12px;background:#fff;color:#1f2937;font-family:'Andika',system-ui,sans-serif;font-size:26px;min-width:46px;height:46px;padding:0 10px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.tiles button.all{background:#ffd54a;font-size:22px}
+.box.ln{border-color:#9aa1ae}
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.quiz button{border:none;border-radius:22px;background:var(--soft);font-size:clamp(54px,12vw,84px);padding:12px 0;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.14)}
+.quiz button.right{background:#bbf7d0}
+.quiz button.shake{animation:shake .45s}
+.quiz button img{width:70%;aspect-ratio:1;margin:0 auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.wcard{border:none;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.wcard .thumb{width:100%;aspect-ratio:1;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative}
+.wcard .thumb img{width:84%;height:84%}
+.wcard .thumb .em{position:absolute;right:4px;bottom:0;font-size:40px}
+.wcard b{font-family:'Andika',system-ui,sans-serif;font-weight:normal;font-size:28px;line-height:1.1}
+.wcard small{font-size:16px;opacity:.75}
+.other{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit;background:var(--card);border-radius:18px;box-shadow:var(--shadow);height:58px;padding:0 16px;font-size:20px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* 포켓몬 영어·한글 이름과 진화 정보 (PokeAPI 공개 데이터에서 뽑음, 그림은 들어 있지 않음) */
+// SPN[도감번호] = [영어 이름, 한글 이름, 진화 전 번호]
+const SPN=[null,["Bulbasaur","이상해씨",0],["Ivysaur","이상해풀",1],["Venusaur","이상해꽃",2],["Charmander","파이리",0],["Charmeleon","리자드",4],["Charizard","리자몽",5],["Squirtle","꼬부기",0],["Wartortle","어니부기",7],["Blastoise","거북왕",8],["Caterpie","캐터피",0],["Metapod","단데기",10],["Butterfree","버터플",11],["Weedle","뿔충이",0],["Kakuna","딱충이",13],["Beedrill","독침붕",14],["Pidgey","구구",0],["Pidgeotto","피죤",16],["Pidgeot","피죤투",17],["Rattata","꼬렛",0],["Raticate","레트라",19],["Spearow","깨비참",0],["Fearow","깨비드릴조",21],["Ekans","아보",0],["Arbok","아보크",23],["Pikachu","피카츄",172],["Raichu","라이츄",25],["Sandshrew","모래두지",0],["Sandslash","고지",27],["Nidoran♀","니드런♀",0],["Nidorina","니드리나",29],["Nidoqueen","니드퀸",30],["Nidoran♂","니드런♂",0],["Nidorino","니드리노",32],["Nidoking","니드킹",33],["Clefairy","삐삐",173],["Clefable","픽시",35],["Vulpix","식스테일",0],["Ninetales","나인테일",37],["Jigglypuff","푸린",174],["Wigglytuff","푸크린",39],["Zubat","주뱃",0],["Golbat","골뱃",41],["Oddish","뚜벅쵸",0],["Gloom","냄새꼬",43],["Vileplume","라플레시아",44],["Paras","파라스",0],["Parasect","파라섹트",46],["Venonat","콘팡",0],["Venomoth","도나리",48],["Diglett","디그다",0],["Dugtrio","닥트리오",50],["Meowth","나옹",0],["Persian","페르시온",52],["Psyduck","고라파덕",0],["Golduck","골덕",54],["Mankey","망키",0],["Primeape","성원숭",56],["Growlithe","가디",0],["Arcanine","윈디",58],["Poliwag","발챙이",0],["Poliwhirl","슈륙챙이",60],["Poliwrath","강챙이",61],["Abra","캐이시",0],["Kadabra","윤겔라",63],["Alakazam","후딘",64],["Machop","알통몬",0],["Machoke","근육몬",66],["Machamp","괴력몬",67],["Bellsprout","모다피",0],["Weepinbell","우츠동",69],["Victreebel","우츠보트",70],["Tentacool","왕눈해",0],["Tentacruel","독파리",72],["Geodude","꼬마돌",0],["Graveler","데구리",74],["Golem","딱구리",75],["Ponyta","포니타",0],["Rapidash","날쌩마",77],["Slowpoke","야돈",0],["Slowbro","야도란",79],["Magnemite","코일",0],["Magneton","레어코일",81],["Farfetch’d","파오리",0],["Doduo","두두",0],["Dodrio","두트리오",84],["Seel","쥬쥬",0],["Dewgong","쥬레곤",86],["Grimer","질퍽이",0],["Muk","질뻐기",88],["Shellder","셀러",0],["Cloyster","파르셀",90],["Gastly","고오스",0],["Haunter","고우스트",92],["Gengar","팬텀",93],["Onix","롱스톤",0],["Drowzee","슬리프",0],["Hypno","슬리퍼",96],["Krabby","크랩",0],["Kingler","킹크랩",98],["Voltorb","찌리리공",0],["Electrode","붐볼",100],["Exeggcute","아라리",0],["Exeggutor","나시",102],["Cubone","탕구리",0],["Marowak","텅구리",104],["Hitmonlee","시라소몬",236],["Hitmonchan","홍수몬",236],["Lickitung","내루미",0],["Koffing","또가스",0],["Weezing","또도가스",109],["Rhyhorn","뿔카노",0],["Rhydon","코뿌리",111],["Chansey","럭키",440],["Tangela","덩쿠리",0],["Kangaskhan","캥카",0],["Horsea","쏘드라",0],["Seadra","시드라",116],["Goldeen","콘치",0],["Seaking","왕콘치",118],["Staryu","별가사리",0],["Starmie","아쿠스타",120],["Mr. Mime","마임맨",439],["Scyther","스라크",0],["Jynx","루주라",238],["Electabuzz","에레브",239],["Magmar","마그마",240],["Pinsir","쁘사이저",0],["Tauros","켄타로스",0],["Magikarp","잉어킹",0],["Gyarados","갸라도스",129],["Lapras","라프라스",0],["Ditto","메타몽",0],["Eevee","이브이",0],["Vaporeon","샤미드",133],["Jolteon","쥬피썬더",133],["Flareon","부스터",133],["Porygon","폴리곤",0],["Omanyte","암나이트",0],["Omastar","암스타",138],["Kabuto","투구",0],["Kabutops","투구푸스",140],["Aerodactyl","프테라",0],["Snorlax","잠만보",446],["Articuno","프리져",0],["Zapdos","썬더",0],["Moltres","파이어",0],["Dratini","미뇽",0],["Dragonair","신뇽",147],["Dragonite","망나뇽",148],["Mewtwo","뮤츠",0],["Mew","뮤",0],["Chikorita","치코리타",0],["Bayleef","베이리프",152],["Meganium","메가니움",153],["Cyndaquil","브케인",0],["Quilava","마그케인",155],["Typhlosion","블레이범",156],["Totodile","리아코",0],["Croconaw","엘리게이",158],["Feraligatr","장크로다일",159],["Sentret","꼬리선",0],["Furret","다꼬리",161],["Hoothoot","부우부",0],["Noctowl","야부엉",163],["Ledyba","레디바",0],["Ledian","레디안",165],["Spinarak","페이검",0],["Ariados","아리아도스",167],["Crobat","크로뱃",42],["Chinchou","초라기",0],["Lanturn","랜턴",170],["Pichu","피츄",0],["Cleffa","삐",0],["Igglybuff","푸푸린",0],["Togepi","토게피",0],["Togetic","토게틱",175],["Natu","네이티",0],["Xatu","네이티오",177],["Mareep","메리프",0],["Flaaffy","보송송",179],["Ampharos","전룡",180],["Bellossom","아르코",44],["Marill","마릴",298],["Azumarill","마릴리",183],["Sudowoodo","꼬지모",438],["Politoed","왕구리",61],["Hoppip","통통코",0],["Skiploom","두코",187],["Jumpluff","솜솜코",188],["Aipom","에이팜",0],["Sunkern","해너츠",0],["Sunflora","해루미",191],["Yanma","왕자리",0],["Wooper","우파",0],["Quagsire","누오",194],["Espeon","에브이",133],["Umbreon","블래키",133],["Murkrow","니로우",0],["Slowking","야도킹",79],["Misdreavus","무우마",0],["Unown","안농",0],["Wobbuffet","마자용",360],["Girafarig","키링키",0],["Pineco","피콘",0],["Forretress","쏘콘",204],["Dunsparce","노고치",0],["Gligar","글라이거",0],["Steelix","강철톤",95],["Snubbull","블루",0],["Granbull","그랑블루",209],["Qwilfish","침바루",0],["Scizor","핫삼",123],["Shuckle","단단지",0],["Heracross","헤라크로스",0],["Sneasel","포푸니",0],["Teddiursa","깜지곰",0],["Ursaring","링곰",216],["Slugma","마그마그",0],["Magcargo","마그카르고",218],["Swinub","꾸꾸리",0],["Piloswine","메꾸리",220],["Corsola","코산호",0],["Remoraid","총어",0],["Octillery","대포무노",223],["Delibird","딜리버드",0],["Mantine","만타인",458],["Skarmory","무장조",0],["Houndour","델빌",0],["Houndoom","헬가",228],["Kingdra","킹드라",117],["Phanpy","코코리",0],["Donphan","코리갑",231],["Porygon2","폴리곤2",137],["Stantler","노라키",0],["Smeargle","루브도",0],["Tyrogue","배루키",0],["Hitmontop","카포에라",236],["Smoochum","뽀뽀라",0],["Elekid","에레키드",0],["Magby","마그비",0],["Miltank","밀탱크",0],["Blissey","해피너스",113],["Raikou","라이코",0],["Entei","앤테이",0],["Suicune","스이쿤",0],["Larvitar","애버라스",0],["Pupitar","데기라스",246],["Tyranitar","마기라스",247],["Lugia","루기아",0],["Ho-Oh","칠색조",0],["Celebi","세레비",0],["Treecko","나무지기",0],["Grovyle","나무돌이",252],["Sceptile","나무킹",253],["Torchic","아차모",0],["Combusken","영치코",255],["Blaziken","번치코",256],["Mudkip","물짱이",0],["Marshtomp","늪짱이",258],["Swampert","대짱이",259],["Poochyena","포챠나",0],["Mightyena","그라에나",261],["Zigzagoon","지그제구리",0],["Linoone","직구리",263],["Wurmple","개무소",0],["Silcoon","실쿤",265],["Beautifly","뷰티플라이",266],["Cascoon","카스쿤",265],["Dustox","독케일",268],["Lotad","연꽃몬",0],["Lombre","로토스",270],["Ludicolo","로파파",271],["Seedot","도토링",0],["Nuzleaf","잎새코",273],["Shiftry","다탱구",274],["Taillow","테일로",0],["Swellow","스왈로",276],["Wingull","갈모매",0],["Pelipper","패리퍼",278],["Ralts","랄토스",0],["Kirlia","킬리아",280],["Gardevoir","가디안",281],["Surskit","비구술",0],["Masquerain","비나방",283],["Shroomish","버섯꼬",0],["Breloom","버섯모",285],["Slakoth","게을로",0],["Vigoroth","발바로",287],["Slaking","게을킹",288],["Nincada","토중몬",0],["Ninjask","아이스크",290],["Shedinja","껍질몬",290],["Whismur","소곤룡",0],["Loudred","노공룡",293],["Exploud","폭음룡",294],["Makuhita","마크탕",0],["Hariyama","하리뭉",296],["Azurill","루리리",0],["Nosepass","코코파스",0],["Skitty","에나비",0],["Delcatty","델케티",300],["Sableye","깜까미",0],["Mawile","입치트",0],["Aron","가보리",0],["Lairon","갱도라",304],["Aggron","보스로라",305],["Meditite","요가랑",0],["Medicham","요가램",307],["Electrike","썬더라이",0],["Manectric","썬더볼트",309],["Plusle","플러시",0],["Minun","마이농",0],["Volbeat","볼비트",0],["Illumise","네오비트",0],["Roselia","로젤리아",406],["Gulpin","꼴깍몬",0],["Swalot","꿀꺽몬",316],["Carvanha","샤프니아",0],["Sharpedo","샤크니아",318],["Wailmer","고래왕자",0],["Wailord","고래왕",320],["Numel","둔타",0],["Camerupt","폭타",322],["Torkoal","코터스",0],["Spoink","피그점프",0],["Grumpig","피그킹",325],["Spinda","얼루기",0],["Trapinch","톱치",0],["Vibrava","비브라바",328],["Flygon","플라이곤",329],["Cacnea","선인왕",0],["Cacturne","밤선인",331],["Swablu","파비코",0],["Altaria","파비코리",333],["Zangoose","쟝고",0],["Seviper","세비퍼",0],["Lunatone","루나톤",0],["Solrock","솔록",0],["Barboach","미꾸리",0],["Whiscash","메깅",339],["Corphish","가재군",0],["Crawdaunt","가재장군",341],["Baltoy","오뚝군",0],["Claydol","점토도리",343],["Lileep","릴링",0],["Cradily","릴리요",345],["Anorith","아노딥스",0],["Armaldo","아말도",347],["Feebas","빈티나",0],["Milotic","밀로틱",349],["Castform","캐스퐁",0],["Kecleon","켈리몬",0],["Shuppet","어둠대신",0],["Banette","다크펫",353],["Duskull","해골몽",0],["Dusclops","미라몽",355],["Tropius","트로피우스",0],["Chimecho","치렁",433],["Absol","앱솔",0],["Wynaut","마자",0],["Snorunt","눈꼬마",0],["Glalie","얼음귀신",361],["Spheal","대굴레오",0],["Sealeo","씨레오",363],["Walrein","씨카이저",364],["Clamperl","진주몽",0],["Huntail","헌테일",366],["Gorebyss","분홍장이",366],["Relicanth","시라칸",0],["Luvdisc","사랑동이",0],["Bagon","아공이",0],["Shelgon","쉘곤",371],["Salamence","보만다",372],["Beldum","메탕",0],["Metang","메탕구",374],["Metagross","메타그로스",375],["Regirock","레지락",0],["Regice","레지아이스",0],["Registeel","레지스틸",0],["Latias","라티아스",0],["Latios","라티오스",0],["Kyogre","가이오가",0],["Groudon","그란돈",0],["Rayquaza","레쿠쟈",0],["Jirachi","지라치",0],["Deoxys","테오키스",0],["Turtwig","모부기",0],["Grotle","수풀부기",387],["Torterra","토대부기",388],["Chimchar","불꽃숭이",0],["Monferno","파이숭이",390],["Infernape","초염몽",391],["Piplup","팽도리",0],["Prinplup","팽태자",393],["Empoleon","엠페르트",394],["Starly","찌르꼬",0],["Staravia","찌르버드",396],["Staraptor","찌르호크",397],["Bidoof","비버니",0],["Bibarel","비버통",399],["Kricketot","귀뚤뚜기",0],["Kricketune","귀뚤톡크",401],["Shinx","꼬링크",0],["Luxio","럭시오",403],["Luxray","렌트라",404],["Budew","꼬몽울",0],["Roserade","로즈레이드",315],["Cranidos","두개도스",0],["Rampardos","램펄드",408],["Shieldon","방패톱스",0],["Bastiodon","바리톱스",410],["Burmy","도롱충이",0],["Wormadam","도롱마담",412],["Mothim","나메일",412],["Combee","세꿀버리",0],["Vespiquen","비퀸",415],["Pachirisu","파치리스",0],["Buizel","브이젤",0],["Floatzel","플로젤",418],["Cherubi","체리버",0],["Cherrim","체리꼬",420],["Shellos","깝질무",0],["Gastrodon","트리토돈",422],["Ambipom","겟핸보숭",190],["Drifloon","흔들풍손",0],["Drifblim","둥실라이드",425],["Buneary","이어롤",0],["Lopunny","이어롭",427],["Mismagius","무우마직",200],["Honchkrow","돈크로우",198],["Glameow","나옹마",0],["Purugly","몬냥이",431],["Chingling","랑딸랑",0],["Stunky","스컹뿡",0],["Skuntank","스컹탱크",434],["Bronzor","동미러",0],["Bronzong","동탁군",436],["Bonsly","꼬지지",0],["Mime Jr.","흉내내",0],["Happiny","핑복",0],["Chatot","페라페",0],["Spiritomb","화강돌",0],["Gible","딥상어동",0],["Gabite","한바이트",443],["Garchomp","한카리아스",444],["Munchlax","먹고자",0],["Riolu","리오르",0],["Lucario","루카리오",447],["Hippopotas","히포포타스",0],["Hippowdon","하마돈",449],["Skorupi","스콜피",0],["Drapion","드래피온",451],["Croagunk","삐딱구리",0],["Toxicroak","독개굴",453],["Carnivine","무스틈니",0],["Finneon","형광어",0],["Lumineon","네오라이트",456],["Mantyke","타만타",0],["Snover","눈쓰개",0],["Abomasnow","눈설왕",459],["Weavile","포푸니라",215],["Magnezone","자포코일",82],["Lickilicky","내룸벨트",108],["Rhyperior","거대코뿌리",112],["Tangrowth","덩쿠림보",114],["Electivire","에레키블",125],["Magmortar","마그마번",126],["Togekiss","토게키스",176],["Yanmega","메가자리",193],["Leafeon","리피아",133],["Glaceon","글레이시아",133],["Gliscor","글라이온",207],["Mamoswine","맘모꾸리",221],["Porygon-Z","폴리곤Z",233],["Gallade","엘레이드",281],["Probopass","대코파스",299],["Dusknoir","야느와르몽",356],["Froslass","눈여아",361],["Rotom","로토무",0],["Uxie","유크시",0],["Mesprit","엠라이트",0],["Azelf","아그놈",0],["Dialga","디아루가",0],["Palkia","펄기아",0],["Heatran","히드런",0],["Regigigas","레지기가스",0],["Giratina","기라티나",0],["Cresselia","크레세리아",0],["Phione","피오네",0],["Manaphy","마나피",0],["Darkrai","다크라이",0],["Shaymin","쉐이미",0],["Arceus","아르세우스",0],["Victini","비크티니",0],["Snivy","주리비얀",0],["Servine","샤비",495],["Serperior","샤로다",496],["Tepig","뚜꾸리",0],["Pignite","차오꿀",498],["Emboar","염무왕",499],["Oshawott","수댕이",0],["Dewott","쌍검자비",501],["Samurott","대검귀",502],["Patrat","보르쥐",0],["Watchog","보르그",504],["Lillipup","요테리",0],["Herdier","하데리어",506],["Stoutland","바랜드",507],["Purrloin","쌔비냥",0],["Liepard","레파르다스",509],["Pansage","야나프",0],["Simisage","야나키",511],["Pansear","바오프",0],["Simisear","바오키",513],["Panpour","앗차프",0],["Simipour","앗차키",515],["Munna","몽나",0],["Musharna","몽얌나",517],["Pidove","콩둘기",0],["Tranquill","유토브",519],["Unfezant","켄호로우",520],["Blitzle","줄뮤마",0],["Zebstrika","제브라이카",522],["Roggenrola","단굴",0],["Boldore","암트르",524],["Gigalith","기가이어스",525],["Woobat","또르박쥐",0],["Swoobat","맘박쥐",527],["Drilbur","두더류",0],["Excadrill","몰드류",529],["Audino","다부니",0],["Timburr","으랏차",0],["Gurdurr","토쇠골",532],["Conkeldurr","노보청",533],["Tympole","동챙이",0],["Palpitoad","두까비",535],["Seismitoad","두빅굴",536],["Throh","던지미",0],["Sawk","타격귀",0],["Sewaddle","두르보",0],["Swadloon","두르쿤",540],["Leavanny","모아머",541],["Venipede","마디네",0],["Whirlipede","휠구",543],["Scolipede","펜드라",544],["Cottonee","소미안",0],["Whimsicott","엘풍",546],["Petilil","치릴리",0],["Lilligant","드레디어",548],["Basculin","배쓰나이",0],["Sandile","깜눈크",0],["Krokorok","악비르",551],["Krookodile","악비아르",552],["Darumaka","달막화",0],["Darmanitan","불비달마",554],["Maractus","마라카치",0],["Dwebble","돌살이",0],["Crustle","암팰리스",557],["Scraggy","곤율랭",0],["Scrafty","곤율거니",559],["Sigilyph","심보러",0],["Yamask","데스마스",0],["Cofagrigus","데스니칸",562],["Tirtouga","프로토가",0],["Carracosta","늑골라",564],["Archen","아켄",0],["Archeops","아케오스",566],["Trubbish","깨봉이",0],["Garbodor","더스트나",568],["Zorua","조로아",0],["Zoroark","조로아크",570],["Minccino","치라미",0],["Cinccino","치라치노",572],["Gothita","고디탱",0],["Gothorita","고디보미",574],["Gothitelle","고디모아젤",575],["Solosis","유니란",0],["Duosion","듀란",577],["Reuniclus","란쿨루스",578],["Ducklett","꼬지보리",0],["Swanna","스완나",580],["Vanillite","바닐프티",0],["Vanillish","바닐리치",582],["Vanilluxe","배바닐라",583],["Deerling","사철록",0],["Sawsbuck","바라철록",585],["Emolga","에몽가",0],["Karrablast","딱정곤",0],["Escavalier","슈바르고",588],["Foongus","깜놀버슬",0],["Amoonguss","뽀록나",590],["Frillish","탱그릴",0],["Jellicent","탱탱겔",592],["Alomomola","맘복치",0],["Joltik","파쪼옥",0],["Galvantula","전툴라",595],["Ferroseed","철시드",0],["Ferrothorn","너트령",597],["Klink","기어르",0],["Klang","기기어르",599],["Klinklang","기기기어르",600],["Tynamo","저리어",0],["Eelektrik","저리릴",602],["Eelektross","저리더프",603],["Elgyem","리그레",0],["Beheeyem","벰크",605],["Litwick","불켜미",0],["Lampent","램프라",607],["Chandelure","샹델라",608],["Axew","터검니",0],["Fraxure","액슨도",610],["Haxorus","액스라이즈",611],["Cubchoo","코고미",0],["Beartic","툰베어",613],["Cryogonal","프리지오",0],["Shelmet","쪼마리",0],["Accelgor","어지리더",616],["Stunfisk","메더",0],["Mienfoo","비조푸",0],["Mienshao","비조도",619],["Druddigon","크리만",0],["Golett","골비람",0],["Golurk","골루그",622],["Pawniard","자망칼",0],["Bisharp","절각참",624],["Bouffalant","버프론",0],["Rufflet","수리둥보",0],["Braviary","워글",627],["Vullaby","벌차이",0],["Mandibuzz","버랜지나",629],["Heatmor","앤티골",0],["Durant","아이앤트",0],["Deino","모노두",0],["Zweilous","디헤드",633],["Hydreigon","삼삼드래",634],["Larvesta","활화르바",0],["Volcarona","불카모스",636],["Cobalion","코바르온",0],["Terrakion","테라키온",0],["Virizion","비리디온",0],["Tornadus","토네로스",0],["Thundurus","볼트로스",0],["Reshiram","레시라무",0],["Zekrom","제크로무",0],["Landorus","랜드로스",0],["Kyurem","큐레무",0],["Keldeo","케르디오",0],["Meloetta","메로엣타",0],["Genesect","게노세크트",0],["Chespin","도치마론",0],["Quilladin","도치보구",650],["Chesnaught","브리가론",651],["Fennekin","푸호꼬",0],["Braixen","테르나",653],["Delphox","마폭시",654],["Froakie","개구마르",0],["Frogadier","개굴반장",656],["Greninja","개굴닌자",657],["Bunnelby","파르빗",0],["Diggersby","파르토",659],["Fletchling","화살꼬빈",0],["Fletchinder","불화살빈",661],["Talonflame","파이어로",662],["Scatterbug","분이벌레",0],["Spewpa","분떠도리",664],["Vivillon","비비용",665],["Litleo","레오꼬",0],["Pyroar","화염레오",667],["Flabébé","플라베베",0],["Floette","플라엣테",669],["Florges","플라제스",670],["Skiddo","메이클",0],["Gogoat","고고트",672],["Pancham","판짱",0],["Pangoro","부란다",674],["Furfrou","트리미앙",0],["Espurr","냐스퍼",0],["Meowstic","냐오닉스",677],["Honedge","단칼빙",0],["Doublade","쌍검킬",679],["Aegislash","킬가르도",680],["Spritzee","슈쁘",0],["Aromatisse","프레프티르",682],["Swirlix","나룸퍼프",0],["Slurpuff","나루림",684],["Inkay","오케이징",0],["Malamar","칼라마네로",686],["Binacle","거북손손",0],["Barbaracle","거북손데스",688],["Skrelp","수레기",0],["Dragalge","드래캄",690],["Clauncher","완철포",0],["Clawitzer","블로스터",692],["Helioptile","목도리키텔",0],["Heliolisk","일레도리자드",694],["Tyrunt","티고라스",0],["Tyrantrum","견고라스",696],["Amaura","아마루스",0],["Aurorus","아마루르가",698],["Sylveon","님피아",133],["Hawlucha","루차불",0],["Dedenne","데덴네",0],["Carbink","멜리시",0],["Goomy","미끄메라",0],["Sliggoo","미끄네일",704],["Goodra","미끄래곤",705],["Klefki","클레피",0],["Phantump","나목령",0],["Trevenant","대로트",708],["Pumpkaboo","호바귀",0],["Gourgeist","펌킨인",710],["Bergmite","꽁어름",0],["Avalugg","크레베이스",712],["Noibat","음뱃",0],["Noivern","음번",714],["Xerneas","제르네아스",0],["Yveltal","이벨타르",0],["Zygarde","지가르데",0],["Diancie","디안시",0],["Hoopa","후파",0],["Volcanion","볼케니온",0],["Rowlet","나몰빼미",0],["Dartrix","빼미스로우",722],["Decidueye","모크나이퍼",723],["Litten","냐오불",0],["Torracat","냐오히트",725],["Incineroar","어흥염",726],["Popplio","누리공",0],["Brionne","키요공",728],["Primarina","누리레느",729],["Pikipek","콕코구리",0],["Trumbeak","크라파",731],["Toucannon","왕큰부리",732],["Yungoos","영구스",0],["Gumshoos","형사구스",734],["Grubbin","턱지충이",0],["Charjabug","전지충이",736],["Vikavolt","투구뿌논",737],["Crabrawler","오기지게",0],["Crabominable","모단단게",739],["Oricorio","춤추새",0],["Cutiefly","에블리",0],["Ribombee","에리본",742],["Rockruff","암멍이",0],["Lycanroc","루가루암",744],["Wishiwashi","약어리",0],["Mareanie","시마사리",0],["Toxapex","더시마사리",747],["Mudbray","머드나기",0],["Mudsdale","만마드",749],["Dewpider","물거미",0],["Araquanid","깨비물거미",751],["Fomantis","짜랑랑",0],["Lurantis","라란티스",753],["Morelull","자마슈",0],["Shiinotic","마셰이드",755],["Salandit","야도뇽",0],["Salazzle","염뉴트",757],["Stufful","포곰곰",0],["Bewear","이븐곰",759],["Bounsweet","달콤아",0],["Steenee","달무리나",761],["Tsareena","달코퀸",762],["Comfey","큐아링",0],["Oranguru","하랑우탄",0],["Passimian","내던숭이",0],["Wimpod","꼬시레",0],["Golisopod","갑주무사",767],["Sandygast","모래꿍",0],["Palossand","모래성이당",769],["Pyukumuku","해무기",0],["Type: Null","타입:널",0],["Silvally","실버디",772],["Minior","메테노",0],["Komala","자말라",0],["Turtonator","폭거북스",0],["Togedemaru","토게데마루",0],["Mimikyu","따라큐",0],["Bruxish","치갈기",0],["Drampa","할비롱",0],["Dhelmise","타타륜",0],["Jangmo-o","짜랑꼬",0],["Hakamo-o","짜랑고우",782],["Kommo-o","짜랑고우거",783],["Tapu Koko","카푸꼬꼬꼭",0],["Tapu Lele","카푸나비나",0],["Tapu Bulu","카푸브루루",0],["Tapu Fini","카푸느지느",0],["Cosmog","코스모그",0],["Cosmoem","코스모움",789],["Solgaleo","솔가레오",790],["Lunala","루나아라",790],["Nihilego","텅비드",0],["Buzzwole","매시붕",0],["Pheromosa","페로코체",0],["Xurkitree","전수목",0],["Celesteela","철화구야",0],["Kartana","종이신도",0],["Guzzlord","악식킹",0],["Necrozma","네크로즈마",0],["Magearna","마기아나",0],["Marshadow","마샤도",0],["Poipole","베베놈",0],["Naganadel","아고용",803],["Stakataka","차곡차곡",0],["Blacephalon","두파팡",0],["Zeraora","제라오라",0],["Meltan","멜탄",0],["Melmetal","멜메탈",808],["Grookey","흥나숭",0],["Thwackey","채키몽",810],["Rillaboom","고릴타",811],["Scorbunny","염버니",0],["Raboot","래비풋",813],["Cinderace","에이스번",814],["Sobble","울머기",0],["Drizzile","누겔레온",816],["Inteleon","인텔리레온",817],["Skwovet","탐리스",0],["Greedent","요씽리스",819],["Rookidee","파라꼬",0],["Corvisquire","파크로우",821],["Corviknight","아머까오",822],["Blipbug","두루지벌레",0],["Dottler","레돔벌레",824],["Orbeetle","이올브",825],["Nickit","훔처우",0],["Thievul","폭슬라이",827],["Gossifleur","꼬모카",0],["Eldegoss","백솜모카",829],["Wooloo","우르",0],["Dubwool","배우르",831],["Chewtle","깨물부기",0],["Drednaw","갈가부기",833],["Yamper","멍파치",0],["Boltund","펄스멍",835],["Rolycoly","탄동",0],["Carkol","탄차곤",837],["Coalossal","석탄산",838],["Applin","과사삭벌레",0],["Flapple","애프룡",840],["Appletun","단지래플",840],["Silicobra","모래뱀",0],["Sandaconda","사다이사",843],["Cramorant","윽우지",0],["Arrokuda","찌로꼬치",0],["Barraskewda","꼬치조",846],["Toxel","일레즌",0],["Toxtricity","스트린더",848],["Sizzlipede","태우지네",0],["Centiskorch","다태우지네",850],["Clobbopus","때때무노",0],["Grapploct","케오퍼스",852],["Sinistea","데인차",0],["Polteageist","포트데스",854],["Hatenna","몸지브림",0],["Hattrem","손지브림",856],["Hatterene","브리무음",857],["Impidimp","메롱꿍",0],["Morgrem","쏘겨모",859],["Grimmsnarl","오롱털",860],["Obstagoon","가로막구리",264],["Perrserker","나이킹",52],["Cursola","산호르곤",222],["Sirfetch’d","창파나이트",83],["Mr. Rime","마임꽁꽁",122],["Runerigus","데스판",562],["Milcery","마빌크",0],["Alcremie","마휘핑",868],["Falinks","대여르",0],["Pincurchin","찌르성게",0],["Snom","누니머기",0],["Frosmoth","모스노우",872],["Stonjourner","돌헨진",0],["Eiscue","빙큐보",0],["Indeedee","에써르",0],["Morpeko","모르페코",0],["Cufant","끼리동",0],["Copperajah","대왕끼리동",878],["Dracozolt","파치래곤",0],["Arctozolt","파치르돈",0],["Dracovish","어래곤",0],["Arctovish","어치르돈",0],["Duraludon","두랄루돈",0],["Dreepy","드라꼰",0],["Drakloak","드래런치",885],["Dragapult","드래펄트",886],["Zacian","자시안",0],["Zamazenta","자마젠타",0],["Eternatus","무한다이노",0],["Kubfu","치고마",0],["Urshifu","우라오스",891],["Zarude","자루도",0],["Regieleki","레지에레키",0],["Regidrago","레지드래고",0],["Glastrier","블리자포스",0],["Spectrier","레이스포스",0],["Calyrex","버드렉스",0],["Wyrdeer","신비록",234],["Kleavor","사마자르",123],["Ursaluna","다투곰",217],["Basculegion","대쓰여너",550],["Sneasler","포푸니크",215],["Overqwil","장침바루",211],["Enamorus","러브로스",0],["Sprigatito","나오하",0],["Floragato","나로테",906],["Meowscarada","마스카나",907],["Fuecoco","뜨아거",0],["Crocalor","악뜨거",909],["Skeledirge","라우드본",910],["Quaxly","꾸왁스",0],["Quaxwell","아꾸왁",912],["Quaquaval","웨이니발",913],["Lechonk","맛보돈",0],["Oinkologne","퍼퓨돈",915],["Tarountula","타랜툴라",0],["Spidops","트래피더",917],["Nymble","콩알뚜기",0],["Lokix","엑스레그",919],["Pawmi","빠모",0],["Pawmo","빠모트",921],["Pawmot","빠르모트",922],["Tandemaus","두리쥐",0],["Maushold","파밀리쥐",924],["Fidough","쫀도기",0],["Dachsbun","바우첼",926],["Smoliv","미니브",0],["Dolliv","올리뇨",928],["Arboliva","올리르바",929],["Squawkabilly","시비꼬",0],["Nacli","베베솔트",0],["Naclstack","스태솔트",932],["Garganacl","콜로솔트",933],["Charcadet","카르본",0],["Armarouge","카디나르마",935],["Ceruledge","파라블레이즈",935],["Tadbulb","빈나두",0],["Bellibolt","찌리배리",938],["Wattrel","찌리비",0],["Kilowattrel","찌리비크",940],["Maschiff","오라티프",0],["Mabosstiff","마피티프",942],["Shroodle","땃쭈르",0],["Grafaiai","태깅구르",944],["Bramblin","그푸리",0],["Brambleghast","공푸리",946],["Toedscool","들눈해",0],["Toedscruel","육파리",948],["Klawf","절벼게",0],["Capsakid","캡싸이",0],["Scovillain","스코빌런",951],["Rellor","구르데",0],["Rabsca","베라카스",953],["Flittle","하느라기",0],["Espathra","클레스퍼트라",955],["Tinkatink","어리짱",0],["Tinkatuff","벼리짱",957],["Tinkaton","두드리짱",958],["Wiglett","바다그다",0],["Wugtrio","바닥트리오",960],["Bombirdier","떨구새",0],["Finizen","맨돌핀",0],["Palafin","돌핀맨",963],["Varoom","부르롱",0],["Revavroom","부르르룸",965],["Cyclizar","모토마",0],["Orthworm","꿈트렁",0],["Glimmet","초롱순",0],["Glimmora","킬라플로르",969],["Greavard","망망이",0],["Houndstone","묘두기",971],["Flamigo","꼬이밍고",0],["Cetoddle","터벅고래",0],["Cetitan","우락고래",974],["Veluza","가비루사",0],["Dondozo","어써러셔",0],["Tatsugiri","싸리용",0],["Annihilape","저승갓숭",57],["Clodsire","토오",194],["Farigiraf","키키링",203],["Dudunsparce","노고고치",206],["Kingambit","대도각참",625],["Great Tusk","위대한엄니",0],["Scream Tail","우렁찬꼬리",0],["Brute Bonnet","사나운버섯",0],["Flutter Mane","날개치는머리",0],["Slither Wing","땅을기는날개",0],["Sandy Shocks","모래털가죽",0],["Iron Treads","무쇠바퀴",0],["Iron Bundle","무쇠보따리",0],["Iron Hands","무쇠손",0],["Iron Jugulis","무쇠머리",0],["Iron Moth","무쇠독나방",0],["Iron Thorns","무쇠가시",0],["Frigibax","드니차",0],["Arctibax","드니꽁",996],["Baxcalibur","드닐레이브",997],["Gimmighoul","모으령",0],["Gholdengo","타부자고",999],["Wo-Chien","총지엔",0],["Chien-Pao","파오젠",0],["Ting-Lu","딩루",0],["Chi-Yu","위유이",0],["Roaring Moon","고동치는달",0],["Iron Valiant","무쇠무인",0],["Koraidon","코라이돈",0],["Miraidon","미라이돈",0],["Walking Wake","굽이치는물결",0],["Iron Leaves","무쇠잎새",0],["Dipplin","과미르",840],["Poltchageist","차데스",0],["Sinistcha","그우린차",1012],["Okidogi","조타구",0],["Munkidori","이야후",0],["Fezandipiti","기로치",0],["Ogerpon","오거폰",0],["Archaludon","브리두라스",884],["Hydrapple","과미드라",1011],["Gouging Fire","꿰뚫는화염",0],["Raging Bolt","날뛰는우레",0],["Iron Boulder","무쇠암석",0],["Iron Crown","무쇠감투",0],["Terapagos","테라파고스",0],["Pecharunt","복숭악동",0]];
+// 메가진화 등 = [그림 번호, 도감번호, 영어 이름, 한글 이름]
+const MEGA=[[10033,3,"Mega Venusaur","메가이상해꽃"],[10034,6,"Mega Charizard X","메가리자몽X"],[10035,6,"Mega Charizard Y","메가리자몽Y"],[10036,9,"Mega Blastoise","메가거북왕"],[10090,15,"Mega Beedrill","메가독침붕"],[10073,18,"Mega Pidgeot","메가피죤투"],[10037,65,"Mega Alakazam","메가후딘"],[10071,80,"Mega Slowbro","메가야도란"],[10038,94,"Mega Gengar","메가팬텀"],[10039,115,"Mega Kangaskhan","메가캥카"],[10040,127,"Mega Pinsir","메가쁘사이저"],[10041,130,"Mega Gyarados","메가갸라도스"],[10042,142,"Mega Aerodactyl","메가프테라"],[10043,150,"Mega Mewtwo X","메가뮤츠X"],[10044,150,"Mega Mewtwo Y","메가뮤츠Y"],[10045,181,"Mega Ampharos","메가전룡"],[10072,208,"Mega Steelix","메가강철톤"],[10046,212,"Mega Scizor","메가핫삼"],[10047,214,"Mega Heracross","메가헤라크로스"],[10048,229,"Mega Houndoom","메가헬가"],[10049,248,"Mega Tyranitar","메가마기라스"],[10065,254,"Mega Sceptile","메가나무킹"],[10050,257,"Mega Blaziken","메가번치코"],[10064,260,"Mega Swampert","메가대짱이"],[10051,282,"Mega Gardevoir","메가가디안"],[10066,302,"Mega Sableye","메가깜까미"],[10052,303,"Mega Mawile","메가입치트"],[10053,306,"Mega Aggron","메가보스로라"],[10054,308,"Mega Medicham","메가요가램"],[10055,310,"Mega Manectric","메가썬더볼트"],[10070,319,"Mega Sharpedo","메가샤크니아"],[10087,323,"Mega Camerupt","메가폭타"],[10067,334,"Mega Altaria","메가파비코리"],[10056,354,"Mega Banette","메가다크펫"],[10057,359,"Mega Absol","메가앱솔"],[10074,362,"Mega Glalie","메가얼음귀신"],[10089,373,"Mega Salamence","메가보만다"],[10076,376,"Mega Metagross","메가메타그로스"],[10062,380,"Mega Latias","메가라티아스"],[10063,381,"Mega Latios","메가라티오스"],[10079,384,"Mega Rayquaza","메가레쿠쟈"],[10088,428,"Mega Lopunny","메가이어롭"],[10058,445,"Mega Garchomp","메가한카리아스"],[10059,448,"Mega Lucario","메가루카리오"],[10060,460,"Mega Abomasnow","메가눈설왕"],[10068,475,"Mega Gallade","메가엘레이드"],[10069,531,"Mega Audino","메가다부니"],[10075,719,"Mega Diancie","메가디안시"]];
+const XFORM=[[10011,479,"Fan Rotom","선풍기 로토무"]];
+</script>
+<script>
+/* ======================================================================
+   포켓몬 영어 쓰기
+   - 알파벳: A~Z 한 쪽씩, 그 글자로 시작하는 포켓몬 영어 이름도 따라 쓰기
+   - 단어: 아주 쉬운 생활 단어(cat, dog, sun …)부터. 단어마다 뜻이 어울리는 포켓몬이
+     소개해 줌 (cat → 나옹, mud → 물짱이, seed → 이상해씨)
+   - 줄마다 [다 썼어요]를 누르면 글자 모양과 비교해 ✔, 단어는 철자와 함께 영어로 읽어 줌
+   - 다 쓰면 그림 고르기로 뜻 확인 → 포켓몬 단어 카드를 모으고, 듣고 고르기 퀴즈로 복습
+   - 단어 5개마다 레벨업: 파이리부터 잡고 → 진화 → 최종 진화 → 다음 포켓몬
+   - 앱에는 포켓몬 그림이 들어 있지 않음. 설치 뒤 어른 메뉴에서 기기가 직접 받아 저장
+     (같은 사이트의 포켓몬 한글 쓰기와 받은 그림을 함께 씀)
+   ====================================================================== */
+const $=s=>document.querySelector(s);
+const $app=$('#app');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const mkCanvas=(w,h)=>{ const c=document.createElement('canvas'); c.width=w; c.height=h; return c; };
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const jongOf=s=>{ const c=s[s.length-1]; return c&&c>='가'&&c<='힣'?(c.charCodeAt(0)-0xAC00)%28:0; };
+const pp=(s,a,b)=>jongOf(s)?a:b;                     // 받침 따라 조사: pp(이름,'을','를')
+const roP=s=>{ const j=jongOf(s); return j&&j!==8?'으로':'로'; };
+
+/* ---------- 포켓몬 이름 ---------- */
+const EN={}, KO={}, KIDS={}, MEGAS={};
+for(let i=1;i<SPN.length;i++){ const [e,k,f]=SPN[i]; EN[i]=e; KO[i]=k; if(f) (KIDS[f]=KIDS[f]||[]).push(i); }
+MEGA.concat(XFORM).forEach(([pid,s,e,k])=>{ EN[pid]=e; KO[pid]=k; if(e.startsWith('Mega')) (MEGAS[s]=MEGAS[s]||[]).push(pid); });
+const both=pid=>`${EN[pid]} (${KO[pid]})`;
+
+/* ---------- 알파벳 (그 글자로 시작하는 포켓몬) ---------- */
+const ALPHA=[['A',63],['B',418],['C',104],['D',132],['E',133],['F',136],['G',94],['H',187],['I',686],['J',135],['K',98],['L',131],['M',151],
+  ['N',177],['O',95],['P',25],['Q',912],['R',26],['S',143],['T',175],['U',201],['V',37],['W',194],['X',178],['Y',835],['Z',41]];
+
+/* ---------- 단어: 쉬운 것부터, 뜻이 어울리는 포켓몬이 소개 ----------
+   [단어, 뜻, 그림 글자, 소개하는 포켓몬 그림 번호, 소개 한마디] */
+const LEVELS=[
+ {t:'짧은 a',d:'c·a·t 처럼 세 글자',w:[
+  ['cat','고양이','🐱',52,'나옹은 고양이 포켓몬이에요.'],['bat','박쥐','🦇',41,'주뱃은 박쥐 포켓몬이에요.'],
+  ['rat','쥐','🐀',19,'꼬렛은 쥐 포켓몬이에요.'],['hat','모자','🎩',856,'몸지브림의 머리는 모자처럼 생겼어요.'],
+  ['bag','봉지','🛍️',568,'깨봉이는 쓰레기 봉지 포켓몬이에요.'],['ant','개미','🐜',632,'아이앤트는 강철 개미 포켓몬이에요.'],
+  ['nap','낮잠','😴',143,'잠만보는 낮잠 대장이에요.'],['fan','선풍기','🌀',10011,'로토무가 선풍기 속에 들어갔어요.']]},
+ {t:'짧은 e',d:'e가 들어간 세 글자',w:[
+  ['egg','알','🥚',175,'토게피는 알 껍데기를 입고 있어요.'],['red','빨강','🔴',165,'레디바는 빨간 무당벌레 포켓몬이에요.'],
+  ['web','거미줄','🕸️',167,'페이검은 거미줄을 쳐요.'],['bed','침대','🛏️',775,'자말라는 늘 잠을 자요.'],
+  ['leg','다리','🦵',106,'시라소몬은 긴 다리로 킥을 해요.'],['jet','제트기','✈️',381,'라티오스는 제트기처럼 빨리 날아요.'],
+  ['wet','젖은','💦',194,'우파는 몸이 늘 촉촉하게 젖어 있어요.'],['pen','펜','🖊️',235,'루브도는 꼬리 붓으로 그림을 그려요.']]},
+ {t:'짧은 i',d:'i가 들어간 세 글자',w:[
+  ['pig','돼지','🐷',498,'뚜꾸리는 아기 돼지 포켓몬이에요.'],['fin','지느러미','🐠',456,'형광어는 지느러미가 반짝여요.'],
+  ['lip','입술','👄',238,'뽀뽀라는 입술로 뽀뽀해요.'],['dig','땅을 파다','⛏️',50,'디그다는 땅을 파요.'],
+  ['big','커다란','🐋',321,'고래왕은 아주아주 커요.']]},
+ {t:'짧은 o',d:'o가 들어간 세 글자',w:[
+  ['dog','개','🐶',58,'가디는 강아지 포켓몬이에요.'],['fox','여우','🦊',37,'식스테일은 여우 포켓몬이에요.'],
+  ['hop','깡충 뛰다','🐰',427,'이어롤은 깡충깡충 뛰어요.'],['pot','주전자','🫖',855,'포트데스는 찻주전자 포켓몬이에요.'],
+  ['hot','뜨거운','🔥',126,'마그마는 몸이 아주 뜨거워요.'],['box','상자','📦',999,'모으령은 보물 상자 속에 숨어요.']]},
+ {t:'짧은 u',d:'u가 들어간 세 글자',w:[
+  ['sun','해','☀️',191,'해너츠는 해를 좋아해요.'],['bug','벌레','🐛',10,'캐터피는 벌레 포켓몬이에요.'],
+  ['mud','진흙','🟤',258,'물짱이는 진흙을 좋아해요. 영어 이름도 Mudkip!'],['cup','찻잔','☕',854,'데인차는 찻잔 속에 살아요.'],
+  ['nut','도토리','🌰',273,'도토링은 도토리를 닮았어요.'],['hug','꼭 안다','🤗',760,'이븐곰은 꼭 안아 주기를 좋아해요.'],
+  ['run','달리다','🏃',78,'날쌩마는 아주 빨리 달려요.']]},
+ {t:'sh·ch·th',d:'두 글자가 한 소리',w:[
+  ['fish','물고기','🐟',129,'잉어킹은 물고기 포켓몬이에요.'],['duck','오리','🦆',54,'고라파덕은 오리 포켓몬이에요.'],
+  ['ship','배','🚢',781,'타타륜은 배의 키와 닻 포켓몬이에요.'],['shell','조개껍데기','🐚',90,'셀러는 조개 포켓몬이에요.'],
+  ['rock','돌','🪨',74,'꼬마돌은 돌 포켓몬이에요.'],['chick','병아리','🐤',255,'아차모는 병아리 포켓몬이에요.'],
+  ['moth','나방','🦋',49,'도나리는 나방 포켓몬이에요.'],['three','셋','3️⃣',51,'닥트리오는 머리가 셋이에요.'],
+  ['sing','노래하다','🎤',39,'푸린은 노래를 불러요.'],['king','왕','👑',99,'킹크랩은 게들의 왕이에요.']]},
+ {t:'두 자음',d:'fr·cr·st 처럼 붙은 소리',w:[
+  ['frog','개구리','🐸',656,'개구마르는 개구리 포켓몬이에요.'],['crab','게','🦀',98,'크랩은 게 포켓몬이에요.'],
+  ['star','별','⭐',120,'별가사리는 별 모양이에요.'],['tree','나무','🌳',185,'꼬지모는 나무인 척해요.'],
+  ['drum','북','🥁',810,'흥나숭은 막대기로 북을 쳐요.'],['swim','헤엄치다','🏊',418,'브이젤은 헤엄을 잘 쳐요.'],
+  ['snow','눈','❄️',361,'눈꼬마는 눈 속에 살아요.'],['plant','식물','🌱',43,'뚜벅쵸는 걸어 다니는 풀이에요.'],
+  ['snail','달팽이','🐌',616,'쪼마리는 달팽이처럼 껍데기를 써요.']]},
+ {t:'긴 모음',d:'이름처럼 길게 나는 소리',w:[
+  ['cake','케이크','🍰',869,'마휘핑은 크림 케이크 같아요.'],['bone','뼈','🦴',104,'탕구리는 뼈 몽둥이를 들고 다녀요.'],
+  ['moon','달','🌙',35,'삐삐는 달을 좋아해요.'],['rain','비','🌧️',351,'캐스퐁은 비가 오면 모습이 바뀌어요.'],
+  ['boat','보트','⛵',131,'라프라스는 등에 사람을 태우고 물을 건너요.'],['leaf','나뭇잎','🍃',470,'리피아는 나뭇잎 포켓몬이에요.'],
+  ['bee','벌','🐝',415,'세꿀버리는 꿀벌 포켓몬이에요.'],['seed','씨앗','🌰',1,'이상해씨 등에는 씨앗이 있어요.'],
+  ['nose','코','👃',299,'코코파스는 코가 아주 커요.'],['bell','종','🔔',358,'치렁은 종 모양 포켓몬이에요.'],
+  ['key','열쇠','🔑',707,'클레피는 열쇠를 모아요.'],['kite','연','🪁',425,'흔들풍손은 바람을 타고 날아요.']]},
+ {t:'생활 단어',d:'매일 쓰는 말',w:[
+  ['apple','사과','🍎',840,'과사삭벌레는 사과 속에 살아요.'],['ball','공','⚽',100,'찌리리공은 몬스터볼을 닮았어요.'],
+  ['milk','우유','🥛',241,'밀탱크는 맛있는 우유를 줘요.'],['water','물','💧',7,'꼬부기는 입에서 물을 쏘아요.'],
+  ['fire','불','🔥',4,'파이리 꼬리에는 불꽃이 있어요.'],['bird','새','🐦',16,'구구는 작은 새 포켓몬이에요.'],
+  ['mouse','생쥐','🐭',25,'피카츄는 생쥐 포켓몬이에요.'],['snake','뱀','🐍',23,'아보는 뱀 포켓몬이에요.'],
+  ['horse','말','🐴',77,'포니타는 불꽃 말 포켓몬이에요.'],['flower','꽃','🌸',182,'아르코는 머리에 꽃이 피었어요.'],
+  ['ghost','유령','👻',92,'고오스는 유령 포켓몬이에요.'],['dragon','용','🐉',147,'미뇽은 아기 용 포켓몬이에요.'],
+  ['cloud','구름','☁️',334,'파비코리의 날개는 구름처럼 폭신해요.'],['heart','하트','❤️',370,'사랑동이는 하트 모양이에요.'],
+  ['light','빛','💡',170,'초라기는 더듬이에서 빛이 나요.'],['banana','바나나','🍌',357,'트로피우스 목에는 바나나 같은 열매가 열려요.'],
+  ['sword','칼','🗡️',679,'단칼빙은 칼 포켓몬이에요.'],['sky','하늘','🌤️',384,'레쿠쟈는 높은 하늘에 살아요.'],
+  ['sea','바다','🌊',382,'가이오가는 바다의 포켓몬이에요.'],['two','둘','2️⃣',84,'두두는 머리가 둘이에요.']]},
+ {t:'색깔',d:'무슨 색일까?',w:[
+  ['blue','파랑','🔵',183,'마릴은 파란색이에요.'],['green','초록','🟢',252,'나무지기는 초록색이에요.'],
+  ['yellow','노랑','🟡',172,'피츄는 노란색이에요.'],['pink','분홍','🩷',113,'럭키는 분홍색이에요.'],
+  ['purple','보라','🟣',94,'팬텀은 보라색이에요.'],['black','검정','⚫',197,'블래키는 검은색이에요.'],
+  ['white','하양','⚪',86,'쥬쥬는 하얀색이에요.'],['orange','주황','🟠',149,'망나뇽은 주황색이에요.']]},
+];
+
+/* ---------- 쪽 목록 ---------- */
+const ABC_PAGES=ALPHA.map(([L,pid],i)=>({key:'L'+L,kind:'abc',no:i+1,text:L+L.toLowerCase(),name:EN[pid],pid,title:`${L} ${L.toLowerCase()}`}));
+const WORD_PAGES=LEVELS.flatMap((lv,li)=>lv.w.map(([w,ko,em,pid,line])=>({key:'w'+w,kind:'word',lv:li,text:w,ko,em,pid,line,title:w})));
+const PAGES=ABC_PAGES.concat(WORD_PAGES), BY_KEY={}; PAGES.forEach(p=>BY_KEY[p.key]=p);
+WORD_PAGES.forEach((p,i)=>p.no=i+1);
+
+/* ---------- 보상: 잡기 → 진화 → 최종 진화 → 다음 포켓몬 ---------- */
+const CHAINS=[[4,5,6,10034],[1,2,3,10033],[7,8,9,10036],[172,25,26],[147,148,149],[258,259,260,10064]];
+(function moreChains(){
+  const used=new Set(CHAINS.flat());
+  for(let i=1;i<SPN.length;i++){ if(SPN[i][2]||!KIDS[i]) continue;
+    const c=[i]; let s=i; while(KIDS[s]){ s=KIDS[s][0]; c.push(s); } if(MEGAS[s]) c.push(MEGAS[s][0]);
+    if(c.some(x=>used.has(x))) continue; c.forEach(x=>used.add(x)); CHAINS.push(c); }
+})();
+const STAGES=CHAINS.flatMap((c,ci)=>c.map((pid,j)=>({pid,ci,j,last:j===c.length-1})));
+
+/* ---------- 설정·기록 ---------- */
+const OPT_KEY='abcpoke.opts', ST_KEY='abcpoke.state';
+const load=k=>{ try{ return JSON.parse(localStorage.getItem(k))||{}; }catch(e){ return {}; } };
+const opts=Object.assign({sound:true,palm:true,auto:true,rows:3,per:5,course:'mix',rate:.8,pen:0,ko:true},load(OPT_KEY));
+const st=Object.assign({words:0,level:0,since:0,done:{}},load(ST_KEY));
+const saveOpts=()=>{ try{ localStorage.setItem(OPT_KEY,JSON.stringify(opts)); }catch(e){} };
+const saveSt=()=>{ try{ localStorage.setItem(ST_KEY,JSON.stringify(st)); }catch(e){} };
+function course(){
+  if(opts.course==='abc') return ABC_PAGES.concat(WORD_PAGES);
+  if(opts.course==='words') return WORD_PAGES.concat(ABC_PAGES);
+  const out=[]; for(let i=0;i<Math.max(ABC_PAGES.length,WORD_PAGES.length);i++){ if(ABC_PAGES[i]) out.push(ABC_PAGES[i]); if(WORD_PAGES[i]) out.push(WORD_PAGES[i]); }
+  return out;   // 알파벳 하나, 단어 하나 번갈아
+}
+let ORDER=course();
+const nextPage=()=>ORDER.find(p=>!st.done[p.key])||ORDER.slice().sort((a,b)=>st.done[a.key].n-st.done[b.key].n)[0];
+const isOpen=p=>!!st.done[p.key]||p===nextPage();
+const partner=()=>st.level?STAGES[Math.min(st.level,STAGES.length)-1]:null;
+const OTHER_APP=location.pathname.endsWith('.html')?'hangul-writing.html':'../write/';
+
+/* ---------- 그림 저장소 (포켓몬 한글 쓰기와 같은 저장소를 함께 씀) ---------- */
+const db=(()=>{
+  let p;
+  const open=()=>p||(p=new Promise((res,rej)=>{
+    const r=indexedDB.open('hangulpoke',1);
+    r.onupgradeneeded=()=>{ r.result.createObjectStore('art'); };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  }));
+  const tx=async(mode,fn)=>{ const d=await open(); return new Promise((res,rej)=>{
+    const t=d.transaction('art',mode), r=fn(t.objectStore('art'));
+    t.oncomplete=()=>res(r&&r.result); t.onerror=t.onabort=()=>rej(t.error); }); };
+  return { get:k=>tx('readonly',o=>o.get(k)), put:(k,v)=>tx('readwrite',o=>o.put(v,k)),
+    keys:()=>tx('readonly',o=>o.getAllKeys()), clear:()=>tx('readwrite',o=>o.clear()) };
+})();
+const POKE_ART=n=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${n}.png`;
+const PH='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="#fff" stroke="#c5cad6" stroke-width="6"/><path d="M6 50a44 44 0 0 1 88 0z" fill="#e5e7eb"/><rect x="6" y="46" width="88" height="8" fill="#c5cad6"/><circle cx="50" cy="50" r="13" fill="#fff" stroke="#c5cad6" stroke-width="6"/></svg>');
+const have=new Set(), artURL=new Map(), pending=new Map();
+async function artGet(pid){
+  if(artURL.has(pid)) return artURL.get(pid);
+  if(!have.has(pid)) return null;
+  try{ const b=await db.get(pid); if(!b) return null; const u=URL.createObjectURL(b); artURL.set(pid,u); return u; }catch(e){ return null; }
+}
+async function shrink(blob,max=360){
+  let img; try{ img=await createImageBitmap(blob); }
+  catch(e){ img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(blob); }); }
+  const s=Math.min(1,max/Math.max(img.width,img.height)), c=mkCanvas(Math.round(img.width*s),Math.round(img.height*s));
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('blob')),'image/png'));
+}
+function artFetch(pid){
+  if(pending.has(pid)) return pending.get(pid);
+  const pr=(async()=>{
+    const r=await fetch(POKE_ART(pid)); if(!r.ok) throw new Error('HTTP '+r.status);
+    const b=await shrink(await r.blob()); await db.put(pid,b); have.add(pid);
+    const u=URL.createObjectURL(b); artURL.set(pid,u); return u;
+  })().finally(()=>pending.delete(pid));
+  pending.set(pid,pr); return pr;
+}
+async function artEnsure(pid){ return (await artGet(pid))||(opts.auto&&navigator.onLine!==false?await artFetch(pid).catch(()=>null):null); }
+const imgTag=(pid,cls='')=>`<img class="art ph ${cls}" data-pid="${pid}" src="${PH}" alt="" draggable="false">`;
+function hydrate(root,fetchMissing=true){
+  root.querySelectorAll('img[data-pid]').forEach(async im=>{
+    const pid=+im.dataset.pid, u=fetchMissing?await artEnsure(pid):await artGet(pid);
+    if(u){ im.src=u; im.classList.remove('ph'); }
+  });
+}
+let lazyObs=null;
+function lazyHydrate(root){
+  if(lazyObs) lazyObs.disconnect();
+  lazyObs=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; lazyObs.unobserve(e.target);
+    const im=e.target; artGet(+im.dataset.pid).then(u=>{ if(u){ im.src=u; im.classList.remove('ph'); } }); }),{rootMargin:'300px'});
+  root.querySelectorAll('img[data-pid]').forEach(im=>{ if(have.has(+im.dataset.pid)) lazyObs.observe(im); });
+}
+
+/* ---------- 소리·읽어 주기 (영어 단어는 영어 목소리, 안내는 한국어 목소리) ---------- */
+const sfx=(()=>{
+  let ac;
+  const tone=(f,t0,d,type='sine',v=.16)=>{ if(!opts.sound) return; try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume();
+    const o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+t0;
+    o.type=type; o.frequency.value=f; g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t+d+.02); }catch(e){} };
+  return { pop:()=>tone(660,0,.08,'triangle'), ding:()=>{ tone(988,0,.12,'triangle',.12); tone(1319,.08,.2,'triangle',.12); },
+    ok:()=>[523,659,784,1047].forEach((f,i)=>tone(f,i*.09,.2)), no:()=>tone(220,0,.18,'square',.05),
+    wob:()=>tone(240,0,.12,'square',.06), click:()=>tone(1400,0,.06,'square',.08),
+    fan:()=>[523,659,784,659,784,1047].forEach((f,i)=>tone(f,i*.12,.28,'triangle')),
+    evo:()=>[392,440,494,523,587,659,698,784].forEach((f,i)=>tone(f,i*.18,.22,'sine',.1)) };
+})();
+let enVoice=null, koVoice=null;
+function pickVoice(){ try{ const v=speechSynthesis.getVoices();
+  const en=v.filter(x=>/^en[-_]US/i.test(x.lang)), ko=v.filter(x=>/^ko/i.test(x.lang));
+  enVoice=en.find(x=>/samantha|premium|enhanced/i.test(x.name))||en[0]||v.find(x=>/^en/i.test(x.lang))||null;
+  koVoice=ko.find(x=>/yuna|유나|premium|enhanced/i.test(x.name))||ko[0]||null; }catch(e){} }
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+// say(['cat','en'],['고양이','ko'], …) — 차례대로 이어서 읽음
+function say(...parts){
+  if(!opts.sound||!('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel();
+    parts.filter(p=>p&&p[0]).forEach(([t,l])=>{ const u=new SpeechSynthesisUtterance(t);
+      if(l==='en'){ u.lang='en-US'; if(enVoice) u.voice=enVoice; u.rate=opts.rate; }
+      else{ if(!opts.ko&&l==='ko') return; u.lang='ko-KR'; if(koVoice) u.voice=koVoice; u.rate=Math.min(1,opts.rate+.05); }
+      u.pitch=1.1; speechSynthesis.speak(u); });
+  }catch(e){}
+}
+const LNAME={a:'ay',b:'bee',c:'see',d:'dee',e:'ee',f:'eff',g:'jee',h:'aitch',i:'eye',j:'jay',k:'kay',l:'ell',m:'em',n:'en',o:'oh',p:'pee',q:'cue',r:'are',s:'ess',t:'tee',u:'you',v:'vee',w:'double you',x:'ex',y:'why',z:'zee'};
+const spell=w=>[...w.toLowerCase()].map(c=>LNAME[c]||c).join(', ');
+const EN_LINE=p=>p.kind==='abc'?`${p.text[0]} is for ${p.name}!`:p.text;
+function toast(t,ms=2400){ document.querySelectorAll('.toast').forEach(e=>e.remove()); const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),ms); }
+function show(html){ if(lazyObs) lazyObs.disconnect(); window.onresize=null; $app.innerHTML=html; window.scrollTo(0,0); }
+function holdButton(btn,onHold,onTap){
+  let t=null, fired=false;
+  const stop=()=>{ clearTimeout(t); t=null; btn.classList.remove('holding'); };
+  btn.addEventListener('pointerdown',()=>{ fired=false; btn.classList.add('holding'); t=setTimeout(()=>{ fired=true; stop(); onHold(); },1200); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,stop));
+  btn.addEventListener('click',()=>{ if(!fired&&onTap) onTap(); });
+}
+function dotsHTML(cls='dots'){ const n=st.level?st.since:0; return `<div class="${cls}">${Array.from({length:opts.per},(_,i)=>`<i class="${i<n?'on':''}">${cls==='dots'&&i<n?'✏️':''}</i>`).join('')}</div>`; }
+const pageLabel=p=>p.kind==='abc'?`${p.text[0]} ${p.text[1]}`:p.text;
+
+/* ======================================================================
+   첫 화면
+   ====================================================================== */
+function home(){
+  const pt=partner(), nx=STAGES[st.level]||null, left=opts.per-st.since, np=nextPage();
+  const nDone=Object.keys(st.done).length, nWords=WORD_PAGES.filter(p=>st.done[p.key]).length;
+  let p;
+  if(!pt) p=`<div class="pimg">${imgTag(4,'shadow')}</div><h3>누가 숨어 있을까?</h3><p>첫 쪽을 끝까지 쓰면 포켓몬을 잡을 수 있어요!</p>`;
+  else p=`<div class="pimg">${imgTag(pt.pid)}</div>
+    <h3><span class="lv">Lv.${st.level}</span><span class="en">${esc(EN[pt.pid])}</span></h3><p style="margin-top:0;opacity:.75">${esc(KO[pt.pid])}</p>
+    ${dotsHTML()}
+    <p>${nx?(nx.j===0?`<b>${left}쪽</b>만 더 쓰면 새 포켓몬을 만나요!`:`<b>${left}쪽</b>만 더 쓰면 ${esc(KO[pt.pid])}${pp(KO[pt.pid],'이','가')} 진화해요!`):'모든 포켓몬을 다 모았어요! 대단해요!'}</p>`;
+  show(`<div class="page">
+    <h1 class="logo">포켓몬 영어 쓰기<small>A B C부터 cat, dog까지 또박또박</small></h1>
+    ${have.size?'':`<div class="banner" style="margin-bottom:14px"><span>👋 어른에게: 포켓몬 그림이 아직 없어요. 설치한 뒤 한 번만 그림을 받아 주세요.</span><button class="big-btn small" id="getArt">⬇️ 그림 받으러 가기</button></div>`}
+    <div class="home">
+      <div class="partner" id="partner">${p}</div>
+      <div class="menu">
+        <button class="menu-btn main" id="go"><span class="em">✏️</span><span>오늘의 공부<small><span class="en">${esc(pageLabel(np))}</span> 쓰러 가기</small></span></button>
+        <button class="menu-btn" id="list"><span class="em">📖</span><span>골라서 쓰기<small>${nDone} / ${PAGES.length}쪽 썼어요</small></span></button>
+        <button class="menu-btn" id="cards"><span class="em">🃏</span><span>포켓몬 단어 카드<small>${nWords}장 모았어요 · 듣고 고르기 퀴즈</small></span></button>
+        <button class="menu-btn" id="dex"><span class="em">🏆</span><span>내 포켓몬<small>${st.level?`${st.level}번 만나고 진화했어요`:'아직 비어 있어요'}</small></span></button>
+        <div class="row" style="justify-content:space-between"><a class="other" href="${OTHER_APP}">🇰🇷 한글 쓰기로</a><button class="icon-btn" id="parent" title="어른 메뉴 (길게 누르기)">⚙️</button></div>
+      </div>
+    </div>
+  </div>`);
+  hydrate($app);
+  $('#go').onclick=()=>{ sfx.pop(); writePage(np); };
+  $('#list').onclick=()=>{ sfx.pop(); list(); };
+  $('#cards').onclick=()=>{ sfx.pop(); cards(); };
+  $('#dex').onclick=()=>{ sfx.pop(); myDex(); };
+  $('#partner').onclick=()=>{ if(pt) say([EN[pt.pid],'en'],[KO[pt.pid],'ko']); };
+  if($('#getArt')) $('#getArt').onclick=()=>parent();
+  holdButton($('#parent'),parent,()=>toast('어른 메뉴는 ⚙️을 길게 눌러요'));
+}
+
+/* ======================================================================
+   골라서 쓰기 — 쓴 쪽과 오늘의 공부만 열림
+   ====================================================================== */
+let listTab='abc';
+function list(){
+  const TABS=[['abc','A B C']].concat(LEVELS.map((l,i)=>[String(i),`${i+1}. ${l.t}`]));
+  show(`<div class="page">
+    <div class="top"><button class="icon-btn" id="back">🏠</button><h2 class="title">📖 골라서 쓰기</h2><div class="spacer"></div></div>
+    <div class="tabs" id="tabs">${TABS.map(([k,t])=>`<button class="tab ${listTab===k?'on':''}" data-k="${k}">${esc(t)}</button>`).join('')}</div>
+    <p id="desc" style="font-size:18px;margin:0 0 10px"></p>
+    <div class="grid" id="grid"></div>
+  </div>`);
+  $('#back').onclick=()=>{ sfx.pop(); home(); };
+  const today=nextPage();
+  const draw=()=>{
+    const L=listTab==='abc'?ABC_PAGES:WORD_PAGES.filter(p=>p.lv===+listTab);
+    $('#desc').textContent=listTab==='abc'?'알파벳 대문자·소문자와 그 글자로 시작하는 포켓몬 이름':`${listTab*1+1}단계 · ${LEVELS[listTab].d}`;
+    const g=$('#grid');
+    g.innerHTML=L.map(p=>{ const d=st.done[p.key], lab=`<b class="en">${esc(pageLabel(p))}</b>`;
+      if(p===today) return `<button class="card today" data-k="${p.key}"><span class="badge">✏️ 오늘의 공부</span><div class="thumb">${imgTag(p.pid)}</div>${lab}<small>${esc(p.kind==='abc'?p.name:p.ko)}</small></button>`;
+      if(!d) return `<button class="card locked" data-lock="1"><div class="thumb">${imgTag(p.pid,'shadow')}</div><b>???</b><small>🔒</small></button>`;
+      return `<button class="card done" data-k="${p.key}"><span class="st">${'⭐'.repeat(d.s||1)}</span><div class="thumb">${imgTag(p.pid)}</div>${lab}<small>${esc(p.kind==='abc'?p.name:p.ko)}</small></button>`; }).join('');
+    lazyHydrate(g);
+  };
+  $('#tabs').onclick=e=>{ const b=e.target.closest('[data-k]'); if(!b) return; listTab=b.dataset.k; $('#tabs').querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b)); draw(); };
+  $('#grid').onclick=e=>{ if(e.target.closest('[data-lock]')){ sfx.no(); toast('오늘의 공부를 쓰면 하나씩 열려요!'); return; }
+    const b=e.target.closest('[data-k]'); if(!b) return; sfx.pop(); writePage(BY_KEY[b.dataset.k]); };
+  if(listTab==='abc'&&today.kind==='word') listTab=String(today.lv);
+  $('#tabs').querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.k===listTab));
+  draw();
+}
+
+/* ======================================================================
+   영어 4줄 칸과 글자 모양 비교 (넉넉하게)
+   ====================================================================== */
+const GFONT='"Andika","Comic Sans MS",system-ui,sans-serif';
+const fontReady=()=>document.fonts?document.fonts.load(`100px ${GFONT}`,'Hxgaby').catch(()=>{}):Promise.resolve();
+const BOX_W=.72;                       // 칸 너비 = 높이 × 0.72
+let FM=null;                           // 글꼴 비율(대문자 높이, x 높이, 아래로 내려가는 길이)
+function fontMetrics(){
+  if(FM) return FM;
+  const x=mkCanvas(10,10).getContext('2d'); x.font=`100px ${GFONT}`;
+  const a=c=>x.measureText(c);
+  FM={cap:(a('H').actualBoundingBoxAscent||70)/100,xh:(a('x').actualBoundingBoxAscent||50)/100,desc:(a('g').actualBoundingBoxDescent||22)/100};
+  return FM;
+}
+function guide(H){ // 4줄의 자리와 글자 크기
+  const m=fontMetrics(), base=H*.7, fs=H*.5/m.cap;
+  return {fs,base,top:base-m.cap*fs,mid:base-m.xh*fs,bot:base+m.desc*fs};
+}
+function drawGlyph(ctx,ch,W,H,fill,stroke){
+  const g=guide(H); ctx.font=`${g.fs}px ${GFONT}`; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle=fill; ctx.fillText(ch,W/2,g.base);
+  if(stroke){ ctx.save(); ctx.setLineDash([H*.03,H*.03]); ctx.lineWidth=Math.max(1,H*.008); ctx.strokeStyle=stroke; ctx.strokeText(ch,W/2,g.base); ctx.restore(); }
+}
+function drawLines(ctx,W,H){
+  const g=guide(H); ctx.save(); ctx.lineWidth=1.5;
+  const ln=(y,col,dash)=>{ ctx.strokeStyle=col; ctx.setLineDash(dash||[]); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); };
+  ln(g.top,'#b9c3d6'); ln(g.mid,'#c7cedb',[6,6]); ln(g.base,'#ef8a8a'); ln(g.bot,'#b9c3d6');
+  ctx.restore();
+}
+const MH=56, MW=Math.round(MH*BOX_W), maskCache=new Map();
+function glyphMask(ch){
+  if(maskCache.has(ch)) return maskCache.get(ch);
+  const c=mkCanvas(MW,MH), x=c.getContext('2d',{willReadFrequently:true}); drawGlyph(x,ch,MW,MH,'#000');
+  const d=x.getImageData(0,0,MW,MH).data, m=new Uint8Array(MW*MH); for(let i=0;i<m.length;i++) m[i]=d[i*4+3]>110?1:0;
+  maskCache.set(ch,m); return m;
+}
+function inkMask(strokes,fit){
+  const c=mkCanvas(MW,MH), x=c.getContext('2d',{willReadFrequently:true});
+  let tr=p=>[p.x*MW,p.y*MH];
+  if(fit){ let x0=1,y0=1,x1=0,y1=0; strokes.forEach(s=>s.forEach(p=>{ x0=Math.min(x0,p.x); y0=Math.min(y0,p.y); x1=Math.max(x1,p.x); y1=Math.max(y1,p.y); }));
+    const [gx0,gy0,gx1,gy1]=fit, sw=Math.max(x1-x0,.05), sh=Math.max(y1-y0,.05);
+    tr=p=>[(gx0+(p.x-x0)/sw*(gx1-gx0))*MW,(gy0+(p.y-y0)/sh*(gy1-gy0))*MH]; }
+  x.lineCap=x.lineJoin='round'; x.strokeStyle='#000'; x.lineWidth=MH*.07;
+  strokes.forEach(s=>{ x.beginPath(); s.forEach((p,i)=>{ const [a,b]=tr(p); i?x.lineTo(a,b):x.moveTo(a,b); }); if(s.length===1){ const [a,b]=tr(s[0]); x.lineTo(a+.1,b); } x.stroke(); });
+  const d=x.getImageData(0,0,MW,MH).data, m=new Uint8Array(MW*MH); for(let i=0;i<m.length;i++) m[i]=d[i*4+3]>60?1:0; return m;
+}
+function dilate(m,r){
+  const o=new Uint8Array(m.length);
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){ if(!m[y*MW+x]) continue;
+    for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){ if(dx*dx+dy*dy>r*r+1) continue; const X=x+dx,Y=y+dy; if(X>=0&&Y>=0&&X<MW&&Y<MH) o[Y*MW+X]=1; } }
+  return o;
+}
+function bbox(m){ let x0=MW,y0=MH,x1=0,y1=0; for(let i=0;i<m.length;i++) if(m[i]){ const x=i%MW,y=i/MW|0; x0=Math.min(x0,x); y0=Math.min(y0,y); x1=Math.max(x1,x); y1=Math.max(y1,y); } return [x0/MW,y0/MH,(x1+1)/MW,(y1+1)/MH]; }
+function judge(box){
+  const E={cov:0,prec:0,much:0,q:0,empty:true};
+  if(!box.strokes.length) return E;
+  const G=glyphMask(box.ch), I=inkMask(box.strokes,box.mode===2?bbox(G):null), r=box.mode===2?3:2;
+  let ink=0; for(const v of I) ink+=v;
+  if(ink<MW*MH*.008) return E;
+  const Id=dilate(I,r), Gd=dilate(G,r); let g=0,gc=0,ic=0;
+  for(let i=0;i<G.length;i++){ if(G[i]){ g++; if(Id[i]) gc++; } if(I[i]&&Gd[i]) ic++; }
+  const cov=gc/g, prec=ic/ink, much=ink/g;
+  return {cov,prec,much,q:Math.sqrt(cov*prec)};
+}
+// 다 썼어요를 누르면 이 기준으로 봐 줌. 같은 칸을 두 번 넘게 다시 써도 안 되면 PASS_TRIED로 통과
+const PASS_HAND=r=>r.cov>=.4&&r.prec>=.55&&r.much<2.8, PASS_TRIED=r=>!r.empty&&r.prec>=.35&&r.much<3.2;
+
+/* ======================================================================
+   쓰기 화면
+   ====================================================================== */
+const PENS=[['#1f2937','검정'],['#2563eb','파랑'],['#dc2626','빨강'],['#16a34a','초록']];
+let penSeen=false;
+async function writePage(p){
+  const OPEN=ORDER.filter(isOpen), idx=OPEN.indexOf(p), prev=idx>0?OPEN[idx-1]:null, next=idx>=0?OPEN[idx+1]:null;
+  const pt=partner(), modes=[[0],[0,2],[0,1,2]][Math.max(1,Math.min(3,opts.rows))-1];
+  const ROWTAG=['따라 쓰기','흐린 글씨','혼자 쓰기','이름 쓰기'];
+  const rowsDef=modes.map(m=>({mode:m,text:p.text,tag:ROWTAG[m]}));
+  if(p.kind==='abc') rowsDef.push({mode:0,text:p.name,tag:ROWTAG[3]});   // 그 글자로 시작하는 포켓몬 이름도 따라 쓰기
+  const d=st.done[p.key];
+  const info=p.kind==='abc'
+    ?`<div class="word"><b>${esc(p.text[0])} ${esc(p.text[1])}</b><button id="speak" title="읽어 주기">🔊</button>${d?`<span>${'⭐'.repeat(d.s||1)}</span>`:''}</div>
+      <div class="line"><span class="en" style="font-size:24px">${esc(p.text[0])} is for <b>${esc(p.name)}</b>!</span><br>${esc(KO[p.pid])}의 영어 이름은 <b class="en">${esc(p.name)}</b>${pp(p.name,'이에요','예요')}.</div>
+      <div class="who">알파벳 ${p.no} / 26</div>`
+    :`<div class="word"><span class="em">${p.em}</span><b>${esc(p.text)}</b><button id="speak" title="읽어 주기">🔊</button>${d?`<span>${'⭐'.repeat(d.s||1)}</span>`:''}</div>
+      <div class="ko">뜻: <b>${esc(p.ko)}</b></div>
+      <div class="line">${esc(p.line)}</div>
+      <div class="who">${LEVELS[p.lv].t} · 소개: <span class="en">${esc(EN[p.pid])}</span> (${esc(KO[p.pid])})</div>`;
+  show(`<div class="ws">
+    <header>
+      <button class="icon-btn" id="back">🏠</button>
+      <button class="icon-btn" id="prev" ${prev?'':'disabled'}>◀</button>
+      <h2 class="title"><b class="en">${esc(pageLabel(p))}</b></h2>
+      <button class="icon-btn" id="next" ${next?'':'disabled'}>▶</button>
+      <button class="mini" id="mini">${pt?imgTag(pt.pid):imgTag(4,'shadow')}<span>${pt?'Lv.'+st.level:'?'}</span>${dotsHTML('md')}</button>
+    </header>
+    <div class="wbody">
+      <div class="info">
+        <div class="pic">${imgTag(p.pid)}</div>
+        <div class="txt">${info}</div>
+      </div>
+      <div class="sheet">
+        <div class="toolbar"><span class="lbl">✏️ 글자를 누르면 이름을 읽어 줘요</span>
+          ${PENS.map(([c,n],i)=>`<button class="pen ${i===opts.pen?'on':''}" style="--c:${c}" data-i="${i}" title="${n}"></button>`).join('')}
+          <button class="tbtn" id="undo">↶ 되돌리기</button></div>
+        <div class="tiles" id="tiles">${[...p.text].map(c=>`<button data-c="${esc(c)}">${esc(c)}</button>`).join('')}<button class="all" id="allw">🔊 ${esc(p.kind==='abc'?p.text[0]:p.text)}</button></div>
+        <div class="rows" id="rows">${rowsDef.map((r,ri)=>`<div class="wrow" data-r="${ri}"><span class="tag">${r.tag}</span><div class="boxes"></div>
+          <div class="side"><button class="chk">다 썼어요<br>✔</button><button class="clr" title="이 줄 지우기">🧽</button></div></div>`).join('')}</div>
+      </div>
+    </div>
+  </div>`);
+  hydrate($app);
+  const intro=()=>p.kind==='abc'?say([p.text[0],'en'],[`${p.text[0]} is for ${p.name}!`,'en']):say([p.text,'en'],[p.ko,'ko']);
+  $('#back').onclick=()=>{ sfx.pop(); try{ speechSynthesis.cancel(); }catch(e){} home(); };
+  $('#mini').onclick=()=>{ sfx.pop(); myDex(); };
+  if(prev) $('#prev').onclick=()=>{ sfx.pop(); writePage(prev); };
+  if(next) $('#next').onclick=()=>{ sfx.pop(); writePage(next); };
+  $('#speak').onclick=intro;
+  $('#tiles').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; sfx.click();
+    if(b.id==='allw') return p.kind==='abc'?say([`${p.text[0]}, ${p.text[1]}`,'en']):say([p.text,'en'],[spell(p.text),'en'],[p.text,'en']);
+    say([LNAME[b.dataset.c.toLowerCase()]||b.dataset.c,'en']); };
+  $app.querySelectorAll('.pen').forEach(b=>b.onclick=()=>{ opts.pen=+b.dataset.i; saveOpts(); $app.querySelectorAll('.pen').forEach(x=>x.classList.toggle('on',x===b)); sfx.click(); });
+
+  await fontReady();
+  const hist=[]; let finished=false, activeId=null, S=100;
+  const rows=rowsDef.map((rd,ri)=>{
+    const el=$app.querySelector(`.wrow[data-r="${ri}"]`), wrap=el.querySelector('.boxes');
+    const boxes=[...rd.text].map(ch=>{
+      const b={ch,mode:rd.mode,han:/[A-Za-z]/.test(ch),strokes:[],done:!/[A-Za-z]/.test(ch),fails:0,row:null};
+      b.el=document.createElement('div'); b.el.className='box ln'+(b.han?'':' static');
+      b.g=mkCanvas(1,1); b.g.className='g'; b.k=mkCanvas(1,1); b.el.append(b.g,b.k); wrap.appendChild(b.el);
+      if(b.han) bindInk(b);
+      return b;
+    });
+    const row={el,boxes,done:false,text:rd.text}; boxes.forEach(b=>b.row=row);
+    el.querySelector('.chk').onclick=()=>checkRow(row);
+    el.querySelector('.clr').onclick=()=>{ sfx.pop(); boxes.forEach(b=>{ if(!b.han) return; b.strokes=[]; b.done=false; b.fails=0; b.el.classList.remove('ok'); paint(b); });
+      for(let i=hist.length-1;i>=0;i--) if(hist[i].row===row) hist.splice(i,1); row.done=false; el.classList.remove('done'); };
+    return row;
+  });
+  const all=rows.flatMap(r=>r.boxes), maxLen=Math.max(...rows.map(r=>r.boxes.length));
+  $('#undo').onclick=()=>{ const b=hist.pop(); if(!b){ sfx.no(); return; } sfx.pop(); b.strokes.pop(); paint(b);
+    if(b.done&&!b.strokes.length){ b.done=false; b.el.classList.remove('ok'); b.row.done=false; b.row.el.classList.remove('done'); } };
+
+  let W=72;
+  function layout(){
+    const rowsEl=$('#rows'); if(!rowsEl) return;
+    const AW=rowsEl.clientWidth-(28+92+16+12+16), AH=rowsEl.clientHeight;
+    S=Math.floor(Math.max(56,Math.min(200,AW/maxLen/BOX_W,(AH-rows.length*8)/rows.length-14)));
+    W=Math.round(S*BOX_W);
+    const dpr=Math.min(3,window.devicePixelRatio||1);
+    all.forEach(b=>{ b.el.style.width=W+'px'; b.el.style.height=S+'px';
+      [b.g,b.k].forEach(c=>{ c.width=Math.round(W*dpr); c.height=Math.round(S*dpr); });
+      const g=b.g.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,S);
+      drawLines(g,W,S);
+      if(!b.han) drawGlyph(g,b.ch,W,S,'#4b5563');
+      else if(b.mode===0) drawGlyph(g,b.ch,W,S,'#c7ccd6','#8a91a0');
+      else if(b.mode===1) drawGlyph(g,b.ch,W,S,'#e8eaef');
+      b.k.getContext('2d').setTransform(dpr,0,0,dpr,0,0); paint(b); });
+  }
+  const widthAt=pr=>S*.06*(.65+pr*.7);
+  function seg(ctx,a,b,col){ ctx.strokeStyle=col; ctx.lineCap=ctx.lineJoin='round'; ctx.lineWidth=widthAt((a.p+b.p)/2);
+    ctx.beginPath(); ctx.moveTo(a.x*W,a.y*S); ctx.lineTo(b.x*W+(a===b?.01:0),b.y*S); ctx.stroke(); }
+  function paint(b){ const x=b.k.getContext('2d'); x.clearRect(0,0,W,S);
+    b.strokes.forEach(s=>{ for(let i=0;i<s.length;i++) seg(x,s[Math.max(0,i-1)],s[i],s.col); }); }
+  function bindInk(b){
+    const cv=b.k;
+    const pt=e=>{ const r=cv.getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height,p:e.pointerType==='pen'?(e.pressure||.5):.5}; };
+    cv.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='pen'&&!penSeen) penSeen=true;
+      if(opts.palm&&penSeen&&e.pointerType==='touch') return;   // 펜슬을 쓰는 동안 손바닥·손가락은 무시
+      if(activeId!==null||finished) return;
+      e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+      activeId=e.pointerId;
+      const s=[pt(e)]; s.col=PENS[opts.pen][0]; b.strokes.push(s); b.cur=s; hist.push(b);
+      seg(cv.getContext('2d'),s[0],s[0],s.col);
+    });
+    cv.addEventListener('pointermove',e=>{
+      if(e.pointerId!==activeId||!b.cur) return; e.preventDefault();
+      const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e], x=cv.getContext('2d');
+      (evs.length?evs:[e]).forEach(ev=>{ const q=pt(ev), l=b.cur[b.cur.length-1]; if(Math.abs(q.x-l.x)+Math.abs(q.y-l.y)<.004) return; b.cur.push(q); seg(x,l,q,b.cur.col); });
+    });
+    const end=e=>{ if(e.pointerId!==activeId) return; activeId=null; b.cur=null; };
+    cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
+  }
+  function checkRow(row){
+    if(finished) return;
+    if(row.done){ say([row.text,'en']); return; }
+    let miss=null;
+    row.boxes.forEach(b=>{ if(b.done) return; const r=judge(b);
+      if(PASS_HAND(r)||(b.fails>=2&&PASS_TRIED(r))){ b.done=true; b.el.classList.add('ok'); } else { b.fails++; miss=miss||b; } });
+    if(miss){ sfx.no(); miss.el.classList.remove('shake'); void miss.el.offsetWidth; miss.el.classList.add('shake');
+      say([miss.ch,'en'],[miss.strokes.length?'조금 더 또박또박 써 볼까요?':'여기도 써 주세요!','ko']); return; }
+    row.done=true; row.el.classList.add('done'); sfx.ok();
+    // 다 쓴 줄은 철자와 함께 읽어 줌: c, a, t — cat!
+    if(p.kind==='abc'&&row.text===p.text) say([`${p.text[0]}, ${p.text[1]}`,'en']);
+    else say([spell(row.text),'en'],[row.text,'en']);
+    if(rows.every(r=>r.done)){ finished=true; setTimeout(()=>p.kind==='word'?quiz(p,all):finishPage(p,all),1600); }
+  }
+  layout(); window.onresize=()=>{ clearTimeout(layout.t); layout.t=setTimeout(layout,120); };
+  setTimeout(intro,250);
+}
+
+/* ======================================================================
+   뜻 맞히기: 방금 쓴 단어는 어떤 그림일까?
+   ====================================================================== */
+function quiz(p,boxes){
+  const others=shuffle(WORD_PAGES.filter(x=>x!==p&&x.em!==p.em)).slice(0,2), opts3=shuffle([p,...others]);
+  const ov=document.createElement('div'); ov.className='ov';
+  ov.innerHTML=`<div class="panel"><h3 style="color:#2563eb">어떤 그림일까?</h3>
+    <p><b class="en" style="font-size:52px">${esc(p.text)}</b> <button class="tbtn" id="qsay">🔊</button></p>
+    <div class="quiz">${opts3.map(x=>`<button data-k="${x.key}">${x.em}</button>`).join('')}</div></div>`;
+  document.body.appendChild(ov);
+  say([p.text,'en'],['는 어떤 그림일까요?','ko']);
+  ov.querySelector('#qsay').onclick=()=>say([p.text,'en']);
+  let tries=0;
+  ov.querySelector('.quiz').onclick=async e=>{ const b=e.target.closest('[data-k]'); if(!b||b.disabled) return;
+    if(b.dataset.k===p.key){ b.classList.add('right'); sfx.ok(); say([p.text,'en'],[p.ko+'! 정답이에요!','ko']);
+      ov.querySelectorAll('.quiz button').forEach(x=>x.disabled=true); await sleep(1600); ov.remove(); finishPage(p,boxes,tries===0); }
+    else{ tries++; sfx.no(); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); b.disabled=true; b.style.opacity=.35;
+      const w=WORD_PAGES.find(x=>x.key===b.dataset.k); say([w.ko+pp(w.ko,'은 ','는 '),'ko'],[w.text,'en'],['다시 골라 볼까요?','ko']); } };
+}
+
+/* ======================================================================
+   다 썼어요 → 별 · 단어 카드 · 레벨업 · 잡기/진화
+   ====================================================================== */
+async function finishPage(p,boxes,quizFirst){
+  const hs=boxes.filter(b=>b.han), q=hs.reduce((a,b)=>a+judge(b).q,0)/hs.length;
+  let stars=q>=.78?3:q>=.6?2:1; if(quizFirst===false) stars=Math.max(1,stars-1);
+  const first=!st.done[p.key];
+  const prev=st.done[p.key]; st.done[p.key]={n:(prev?prev.n:0)+1,s:Math.max(stars,prev?prev.s:0)};
+  st.words++;
+  let ev=null; const from=partner();
+  if(!st.level){ st.level=1; st.since=0; ev='catch'; }
+  else if(st.level<STAGES.length){ st.since++; if(st.since>=opts.per){ st.since=0; st.level++; ev=STAGES[st.level-1].j===0?'catch':'evolve'; } }
+  saveSt();
+  const to=partner();
+  const ov=document.createElement('div'); ov.className='ov'; ov.innerHTML='<div class="panel"></div>'; document.body.appendChild(ov);
+  const panel=ov.querySelector('.panel');
+  const nx=STAGES[st.level], left=opts.per-st.since, next=nextPage();
+  const buttons=`<div class="row" style="justify-content:center;margin-top:14px">
+      <button class="big-btn alt" id="rAgain">🔁 다시 쓰기</button><button class="big-btn alt" id="rHome">🏠 처음으로</button>
+      <button class="big-btn go" id="rNext">다음 ▶<br><small class="en">${esc(pageLabel(next))}</small></button></div>`;
+  const progress=()=>to?`${dotsHTML()}<p style="font-size:19px">${nx?(nx.j===0?`${left}쪽 더 쓰면 새 포켓몬!`:`${left}쪽 더 쓰면 진화!`):'모든 포켓몬을 모았어요!'}</p>`:'';
+  const wire=()=>{ const close=()=>ov.remove();
+    panel.querySelector('#rAgain').onclick=()=>{ close(); writePage(p); };
+    panel.querySelector('#rHome').onclick=()=>{ close(); home(); };
+    panel.querySelector('#rNext').onclick=()=>{ close(); writePage(next); }; };
+
+  // 1) 칭찬 + (처음 쓴 단어면) 포켓몬 단어 카드
+  sfx.fan();
+  const card=p.kind==='word'
+    ?`<div class="wcard" style="max-width:220px;margin:8px auto;cursor:default"><div class="thumb">${imgTag(p.pid)}<span class="em">${p.em}</span></div><b>${esc(p.text)}</b><small>${esc(p.ko)}</small></div>`
+    :`<div class="wcard" style="max-width:220px;margin:8px auto;cursor:default"><div class="thumb">${imgTag(p.pid)}</div><b>${esc(p.text[0])} ${esc(p.text[1])}</b><small class="en">${esc(p.name)}</small></div>`;
+  panel.innerHTML=`<h3>Great job!</h3><p>참 잘했어요!</p><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    ${first?`<p style="font-size:20px">🃏 새 포켓몬 단어 카드를 받았어요!</p>`:''}${card}`;
+  hydrate(panel); burst(panel,'⭐',10);
+  say(['Great job!','en'],[p.kind==='word'?p.text:EN_LINE(p),'en']);
+  if(!ev){ panel.insertAdjacentHTML('beforeend',progress()+buttons); wire(); return; }
+  await sleep(2600);
+
+  // 2) 잡기 또는 진화
+  const toEn=EN[to.pid], toKo=KO[to.pid];
+  if(ev==='catch'){
+    const wasLast=from&&STAGES[st.level-2]&&STAGES[st.level-2].last;
+    panel.innerHTML=`<h3>${wasLast?'새 친구 등장!':'앗! 포켓몬이다!'}</h3>
+      ${wasLast?`<p>${esc(KO[from.pid])}의 진화를 모두 마쳤어요!</p>`:'<p>몬스터볼을 던져요!</p>'}
+      <div class="stage"><img id="pk" class="in" alt=""><div class="ball" id="ball"></div></div><div id="msg"></div>`;
+    const u=await artEnsure(to.pid); const im=panel.querySelector('#pk'); im.src=u||PH;
+    say([wasLast?`${KO[from.pid]}${pp(KO[from.pid],'은','는')} 최종 진화를 마쳤어요. 새로운 포켓몬이 나타났다!`:'앗! 야생 포켓몬이 나타났다!','ko']);
+    im.classList.remove('in'); await sleep(1400);
+    const b=panel.querySelector('#ball'); b.classList.add('throw'); sfx.pop(); await sleep(650);
+    im.classList.add('in'); await sleep(450); b.classList.remove('throw'); b.classList.add('wobble');
+    for(let i=0;i<3;i++){ await sleep(520); sfx.wob(); }
+    await sleep(300); b.classList.remove('wobble'); b.classList.add('got'); sfx.click(); burst(panel,'⭐'); await sleep(350); sfx.fan();
+    b.remove(); im.classList.remove('in');
+    panel.querySelector('#msg').innerHTML=`<p><b class="en" style="font-size:36px">${esc(toEn)}</b></p><p>${esc(toKo)}${pp(toKo,'을','를')} 잡았다!</p>`+progress()+buttons;
+    say(['Gotcha!','en'],[toEn,'en'],[`${toKo}${pp(toKo,'을','를')} 잡았다!`,'ko']);
+  }else{
+    const fromKo=KO[from.pid], mega=toEn.startsWith('Mega');
+    panel.innerHTML=`<h3>${mega?'메가진화!':'어라…?'}</h3><p id="hm">${esc(fromKo)}의 모습이…!</p>
+      <div class="stage glow"><img id="a" alt=""><img id="b" alt="" style="opacity:0"></div><div id="msg"></div>`;
+    const [ua,ub]=await Promise.all([artEnsure(from.pid),artEnsure(to.pid)]);
+    const A=panel.querySelector('#a'), B=panel.querySelector('#b'); A.src=ua||PH; B.src=ub||PH;
+    say(['What?','en'],[`${fromKo}의 모습이…!`,'ko']); sfx.evo();
+    await sleep(1200); A.classList.add('white'); await sleep(400);
+    for(let i=0;i<7;i++){ const s=1-(i%2); A.style.opacity=s; B.style.opacity=1-s; B.classList.add('white'); await sleep(Math.max(140,420-i*45)); }
+    A.style.opacity=0; B.style.opacity=1; await sleep(300); B.classList.remove('white'); burst(panel,'✨',14); sfx.fan();
+    panel.querySelector('h3').textContent='축하해요!'; panel.querySelector('#hm').remove();
+    panel.querySelector('#msg').innerHTML=`<p>${esc(fromKo)}${pp(fromKo,'은','는')} <b class="en" style="font-size:32px">${esc(toEn)}</b>(${esc(toKo)})${roP(toKo)} 진화했어요!</p>
+      ${to.last?`<p>🎉 최종 진화! 다음 레벨에는 새 포켓몬을 만나요!</p>`:''}`+progress()+buttons;
+    say(['Congratulations!','en'],[toEn,'en'],[`${fromKo}${pp(fromKo,'은','는')} ${toKo}${roP(toKo)} 진화했어요!`,'ko']);
+  }
+  wire();
+}
+function burst(host,em,n=8){
+  const stage=host.querySelector('.stage')||host;
+  for(let i=0;i<n;i++){ const s=document.createElement('span'); s.className='burst'; s.textContent=em;
+    const a=Math.random()*Math.PI*2, r=110+Math.random()*120;
+    s.style.cssText=`left:calc(50% - 18px);top:40%;--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px;animation-delay:${i*.04}s`;
+    stage.appendChild(s); setTimeout(()=>s.remove(),1400); }
+}
+
+/* ======================================================================
+   포켓몬 단어 카드 + 듣고 고르기 퀴즈
+   ====================================================================== */
+function cards(){
+  const got=WORD_PAGES.filter(p=>st.done[p.key]), abc=ABC_PAGES.filter(p=>st.done[p.key]);
+  show(`<div class="page">
+    <div class="top"><button class="icon-btn" id="back">🏠</button><h2 class="title">🃏 포켓몬 단어 카드</h2><div class="spacer"></div></div>
+    <div class="row" style="justify-content:center;margin-bottom:14px">
+      <button class="big-btn go" id="lq" ${got.length>=3?'':'disabled'}>🎧 듣고 고르기 퀴즈</button>
+      <span style="font-size:17px;opacity:.75">${got.length>=3?'영어를 듣고 알맞은 카드를 골라요':'단어 카드 3장을 모으면 퀴즈를 할 수 있어요'}</span></div>
+    ${got.length?`<h2>단어 카드 ${got.length} / ${WORD_PAGES.length}</h2><div class="cards">${got.map(p=>`<button class="wcard" data-k="${p.key}"><div class="thumb">${imgTag(p.pid)}<span class="em">${p.em}</span></div><b>${esc(p.text)}</b><small>${esc(p.ko)}</small></button>`).join('')}</div>`
+      :'<div class="empty" style="background:var(--card);border-radius:24px;padding:22px;text-align:center;font-size:21px">단어를 다 쓰면 그 단어를 소개한 포켓몬 카드를 받아요!</div>'}
+    ${abc.length?`<h2>알파벳 카드 ${abc.length} / 26</h2><div class="cards">${abc.map(p=>`<button class="wcard" data-k="${p.key}"><div class="thumb">${imgTag(p.pid)}</div><b>${esc(p.text[0])} ${esc(p.text[1])}</b><small class="en">${esc(p.name)}</small></button>`).join('')}</div>`:''}
+  </div>`);
+  hydrate($app);
+  $('#back').onclick=()=>{ sfx.pop(); home(); };
+  $app.querySelectorAll('.wcard[data-k]').forEach(b=>b.onclick=()=>{ const p=BY_KEY[b.dataset.k]; sfx.pop();
+    if(p.kind==='word') say([p.text,'en'],[p.ko,'ko']); else say([EN_LINE(p),'en']); });
+  if(got.length>=3) $('#lq').onclick=()=>listenQuiz(got);
+}
+async function listenQuiz(pool){
+  const N=Math.min(5,pool.length), qs=shuffle(pool).slice(0,N); let right=0;
+  const ov=document.createElement('div'); ov.className='ov'; ov.innerHTML='<div class="panel"></div>'; document.body.appendChild(ov);
+  const panel=ov.querySelector('.panel');
+  for(let i=0;i<N;i++){
+    const p=qs[i], ch=shuffle([p,...shuffle(pool.filter(x=>x!==p)).slice(0,2)]);
+    panel.innerHTML=`<p>${i+1} / ${N}</p><h3 style="color:#2563eb">잘 듣고 골라요!</h3><button class="big-btn" id="again">🔊 다시 듣기</button>
+      <div class="quiz">${ch.map(x=>`<button data-k="${x.key}">${imgTag(x.pid)}<div>${x.em}</div></button>`).join('')}</div>`;
+    hydrate(panel);
+    const hear=()=>say([p.text,'en']); panel.querySelector('#again').onclick=hear; hear();
+    let miss=0;
+    await new Promise(res=>{ panel.querySelector('.quiz').onclick=e=>{ const b=e.target.closest('[data-k]'); if(!b||b.disabled) return;
+      if(b.dataset.k===p.key){ b.classList.add('right'); sfx.ok(); if(!miss) right++; say([p.text,'en'],[p.ko,'ko']);
+        panel.querySelectorAll('.quiz button').forEach(x=>x.disabled=true); setTimeout(res,1500); }
+      else{ miss++; sfx.no(); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); b.disabled=true; b.style.opacity=.35; hear(); } }; });
+  }
+  const s=right>=N?3:right>=N-1?2:1; sfx.fan();
+  panel.innerHTML=`<h3>Well done!</h3><div class="stars">${'⭐'.repeat(s)}${'☆'.repeat(3-s)}</div><p>${N}개 중 ${right}개를 한 번에 맞혔어요!</p>
+    <div class="row" style="justify-content:center;margin-top:12px"><button class="big-btn alt" id="qa">🔁 한 번 더</button><button class="big-btn go" id="qc">카드 보기</button></div>`;
+  say(['Well done!','en']);
+  panel.querySelector('#qa').onclick=()=>{ ov.remove(); listenQuiz(pool); };
+  panel.querySelector('#qc').onclick=()=>{ ov.remove(); cards(); };
+}
+
+/* ======================================================================
+   내 포켓몬 (잡고 진화시킨 포켓몬)
+   ====================================================================== */
+function myDex(){
+  const shownChains=Math.min(CHAINS.length,(st.level?STAGES[st.level-1].ci:0)+2);
+  let html='';
+  for(let ci=0;ci<shownChains;ci++){
+    html+=`<div class="chain">`+CHAINS[ci].map((pid,j)=>{
+      const k=STAGES.findIndex(s=>s.ci===ci&&s.j===j), got=k<st.level, now=k===st.level-1;
+      return (j?'<span class="ar">▶</span>':'')+`<button class="st ${now?'now':''}" data-pid="${got?pid:''}"><div class="im">${imgTag(pid,got?'':'shadow')}</div><b class="en">${got?esc(EN[pid]):'???'}</b><small style="font-size:14px;opacity:.7">${got?esc(KO[pid]):''}</small></button>`;
+    }).join('')+`</div>`;
+  }
+  show(`<div class="page">
+    <div class="top"><button class="icon-btn" id="back">🏠</button><h2 class="title">🏆 내 포켓몬</h2><div class="spacer"></div></div>
+    ${st.level?`<p style="font-size:20px;text-align:center">레벨 ${st.level} · 쓴 쪽 ${st.words}개 · ${opts.per}쪽마다 레벨업!</p>`:'<p style="font-size:22px;text-align:center">첫 쪽을 끝까지 쓰면 첫 포켓몬을 잡아요!</p>'}
+    ${html}
+  </div>`);
+  hydrate($app,true);
+  $('#back').onclick=()=>{ sfx.pop(); home(); };
+  $app.querySelectorAll('.st[data-pid]').forEach(b=>b.onclick=()=>{ const pid=+b.dataset.pid; if(pid){ sfx.pop(); say([EN[pid],'en'],[KO[pid],'ko']); } else toast('계속 쓰면 만날 수 있어요!'); });
+}
+
+/* ======================================================================
+   어른 메뉴: 그림 받기 · 설정
+   ====================================================================== */
+let dlCancel=false;
+async function downloadMany(pids,progress){
+  pids=[...new Set(pids)].filter(p=>!have.has(p)); let done=0, ok=0; const fail=[]; dlCancel=false;
+  try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+  const work=async()=>{ while(pids.length&&!dlCancel){ const pid=pids.shift();
+    try{ await artFetch(pid); ok++; }catch(e){ fail.push(EN[pid]||pid); } done++; progress(done,done+pids.length); } };
+  await Promise.all([work(),work(),work(),work()]);
+  return {ok,fail};
+}
+function parent(){
+  const needPids=[...new Set(PAGES.map(p=>p.pid).concat(CHAINS.slice(0,12).flat()))];
+  const cnt=a=>a.filter(p=>have.has(p)).length;
+  show(`<div class="page">
+    <div class="top"><button class="icon-btn" id="back">🏠</button><h2 class="title">⚙️ 어른 메뉴</h2><div class="spacer"></div></div>
+    <p class="note">이 앱에는 포켓몬 그림이 들어 있지 않아요. 아래 버튼을 누르면 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)에서 공식 일러스트를 직접 받아
+      <b>이 기기 안에만</b> 작게 줄여 저장해요. 같은 사이트의 ‘포켓몬 한글 쓰기’와 받은 그림을 함께 써요.
+      그림의 저작권은 Nintendo·Creatures·GAME FREAK에 있으니 가정에서 아이와 함께 쓰는 용도로만 사용해 주세요.</p>
+
+    <h2>⬇️ 포켓몬 그림 받기</h2>
+    <div class="opt">
+      <div class="row">
+        <button class="big-btn" id="dlNeed">🃏 이 앱에 나오는 포켓몬 (${needPids.length}장 · 약 ${Math.round(needPids.length*.07)}MB)</button>
+        <button class="big-btn small alt" id="dlStop" hidden>그만 받기</button>
+      </div>
+      <div class="bar"><i id="dlBar"></i></div><p class="note" id="dlMsg">받은 그림 ${cnt(needPids)}/${needPids.length}</p>
+      <label><input type="checkbox" id="oAuto" ${opts.auto?'checked':''}> 아직 없는 그림은 화면을 열 때 자동으로 받기 (인터넷 연결 시)</label>
+    </div>
+
+    <h2>✏️ 공부 설정</h2>
+    <div class="opt">
+      <label>공부 순서 <select id="oCourse"><option value="mix">알파벳 하나, 단어 하나 번갈아</option><option value="abc">알파벳 A~Z 먼저</option><option value="words">단어 먼저</option></select></label>
+      <label>한 쪽에 쓰는 줄
+        <select id="oRows"><option value="3">3줄 (따라 쓰기·흐린 글씨·혼자 쓰기)</option><option value="2">2줄 (따라 쓰기·혼자 쓰기)</option><option value="1">1줄 (따라 쓰기만)</option></select></label>
+      <label>레벨업까지 쓸 쪽 수 <select id="oPer">${[3,5,7,10].map(n=>`<option value="${n}">${n}쪽</option>`).join('')}</select></label>
+      <label><input type="checkbox" id="oPalm" ${opts.palm?'checked':''}> ✏️ 애플펜슬을 쓰면 손바닥·손가락 터치는 무시</label>
+      <label><input type="checkbox" id="oSound" ${opts.sound?'checked':''}> 🔊 소리와 읽어 주기</label>
+      <label><input type="checkbox" id="oKo" ${opts.ko?'checked':''}> 🇰🇷 뜻과 안내도 한국어로 읽어 주기</label>
+      <label>읽는 빠르기 <select id="oRate"><option value=".65">천천히</option><option value=".8">보통</option><option value=".95">빠르게</option></select>
+        <button class="big-btn small alt" id="tts">🔊 들어 보기</button></label>
+      <p class="note">단어는 c·a·t 같은 짧은 소리부터 생활 단어·색깔까지 ${LEVELS.length}단계 ${WORD_PAGES.length}개예요. 단어마다 뜻이 어울리는 포켓몬이 소개해 주고,
+        다 쓰면 뜻에 맞는 그림을 고른 뒤 그 포켓몬 단어 카드를 받아요. 알파벳 쪽에서는 대문자·소문자와 그 글자로 시작하는 포켓몬 영어 이름을 따라 써요.
+        줄마다 ‘다 썼어요’를 누를 때만 글자 모양과 비교해요. 같은 칸을 두 번 넘게 다시 써도 안 되면 통과시켜 줘요.</p>
+    </div>
+
+    <h2>🧹 기록</h2>
+    <div class="opt"><p style="margin-top:0">레벨 ${st.level} · 쓴 쪽 ${st.words}개 · 다 쓴 쪽 ${Object.keys(st.done).length}개</p>
+      <button class="big-btn small red" id="reset">처음부터 다시 하기 (기록 지우기)</button></div>
+  </div>`);
+  $('#back').onclick=()=>{ sfx.pop(); dlCancel=true; home(); };
+  $('#oRows').value=String(opts.rows); $('#oPer').value=String(opts.per); $('#oCourse').value=opts.course; $('#oRate').value=String(opts.rate);
+  const bindC=(id,k)=>{ $(id).onchange=e=>{ opts[k]=e.target.checked; saveOpts(); }; };
+  bindC('#oAuto','auto'); bindC('#oPalm','palm'); bindC('#oSound','sound'); bindC('#oKo','ko');
+  $('#oRows').onchange=e=>{ opts.rows=+e.target.value; saveOpts(); };
+  $('#oPer').onchange=e=>{ opts.per=+e.target.value; if(st.since>=opts.per) st.since=opts.per-1; saveOpts(); saveSt(); };
+  $('#oCourse').onchange=e=>{ opts.course=e.target.value; saveOpts(); ORDER=course(); };
+  $('#oRate').onchange=e=>{ opts.rate=+e.target.value; saveOpts(); };
+  $('#tts').onclick=()=>say(['cat','en'],[spell('cat'),'en'],['cat','en'],['고양이','ko']);
+  const busy=on=>{ $('#dlNeed').disabled=on; $('#dlStop').hidden=!on; };
+  $('#dlNeed').onclick=async()=>{
+    if(navigator.onLine===false) return alert('인터넷에 연결된 뒤 다시 눌러 주세요.');
+    busy(true); const bar=$('#dlBar'), msg=$('#dlMsg');
+    const r=await downloadMany(needPids,(d,t)=>{ if(!bar.isConnected) return; bar.style.width=(d/t*100)+'%'; msg.textContent=`받는 중… ${d}/${t}`; });
+    if(!bar.isConnected) return;
+    busy(false); bar.style.width='100%';
+    msg.textContent=(dlCancel?'멈췄어요. ':'')+`${r.ok}장 받았어요. 모두 ${cnt(needPids)}/${needPids.length}`+(r.fail.length?` · 받지 못한 그림 ${r.fail.length}장 (다시 누르면 이어서 받아요)`:''); if(r.ok) sfx.ok();
+    if(!r.ok&&r.fail.length) alert('그림을 받지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요.');
+  };
+  $('#dlStop').onclick=()=>{ dlCancel=true; };
+  $('#reset').onclick=()=>{ if(!confirm('레벨·잡은 포켓몬·단어 카드 기록을 모두 지울까요?')) return;
+    Object.assign(st,{words:0,level:0,since:0,done:{}}); saveSt(); toast('처음부터 다시 시작해요'); parent(); };
+}
+
+/* ---------- 시작 ---------- */
+(async function boot(){
+  try{ (await db.keys()).forEach(k=>have.add(+k)); }catch(e){}
+  home();
+})();
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

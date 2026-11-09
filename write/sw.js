@@ -1,6 +1,6 @@
 // 포켓몬 한글 쓰기: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 기기에 보관
 // (받은 포켓몬 그림과 쓰기 기록은 앱 안의 저장소에 따로 있어서 여기서 다루지 않음)
-const CACHE = 'hangul-writing-410a76623a';
+const CACHE = 'hangul-writing-b0a80ac3ab';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/write-192.png", "icons/write-512.png", "../fonts/jua.woff2", "../fonts/noto-500.woff2"];
 
 self.addEventListener('install', e => {

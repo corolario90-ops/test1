@@ -28,8 +28,8 @@ self.addEventListener('fetch', e => {
   }
   if (url.origin !== location.origin) return;
   // 같은 사이트의 숫자 놀이 앱(math/), 한글 드라이브(drive/), 색칠놀이(color/), 한글 쓰기(write/), 주사위 모험(board/),
-  // 그림놀이(draw/), 농장 가게(farm/), 우주 택배 기차(train/), 미로 탐험(maze/), 포켓몬 시계(clock/), 숫자 마법 놀이(number/), 동전 가게(shop/)는 그 앱의 서비스 워커가 맡음
-  if (['math/', 'drive/', 'color/', 'write/', 'board/', 'draw/', 'farm/', 'train/', 'maze/', 'clock/', 'number/', 'shop/'].some(d => url.pathname.startsWith(new URL(d, self.registration.scope).pathname))) return;
+  // 그림놀이(draw/), 농장 가게(farm/), 우주 택배 기차(train/), 미로 탐험(maze/), 포켓몬 시계(clock/), 숫자 마법 놀이(number/), 동전 가게(shop/), 영어 쓰기(abc/)는 그 앱의 서비스 워커가 맡음
+  if (['math/', 'drive/', 'color/', 'write/', 'board/', 'draw/', 'farm/', 'train/', 'maze/', 'clock/', 'number/', 'shop/', 'abc/'].some(d => url.pathname.startsWith(new URL(d, self.registration.scope).pathname))) return;
   if (req.mode === 'navigate') {
     // 화면은 인터넷이 되면 새 버전을, 안 되면 보관한 버전을
     // 사이트가 내려가서 404가 와도 보관한 앱을 그대로 열도록, 정상 응답일 때만 새 버전으로 바꿈

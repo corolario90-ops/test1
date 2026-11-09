@@ -9,6 +9,7 @@
 - `gaegu.woff2` — Gaegu Regular. Copyright 2018 The Gaegu Project Authors 라이선스: SIL Open Font License 1.1
 - `hi-melody.woff2` — Hi Melody Regular. Copyright (c) YoonDesign Inc. All Rights Reserved. 라이선스: SIL Open Font License 1.1
 - `gamja-flower.woff2` — Gamja Flower Regular. Copyright (c) YoonDesign Inc. All Rights Reserved. 라이선스: SIL Open Font License 1.1
+- `andika.woff2` — Andika Regular (라틴 글자만). Copyright (c) 2004-2022 SIL International, with Reserved Font Names "Andika" and "SIL". 라이선스: SIL Open Font License 1.1
 - `nanum-pen.woff2` — Nanum Pen Regular. Copyright © 2010 NHN Corporation. All rights reserved. Font designed by Sandoll Communications Inc. 라이선스: SIL Open Font License 1.1
 
-각 글꼴의 라이선스 전문은 같은 폴더의 `OFL-*.txt`에 있어요 (jua, notosanskr, gaegu, himelody, gamjaflower, nanumpenscript).
+각 글꼴의 라이선스 전문은 같은 폴더의 `OFL-*.txt`에 있어요 (jua, notosanskr, andika, gaegu, himelody, gamjaflower, nanumpenscript).
