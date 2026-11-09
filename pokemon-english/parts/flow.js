@@ -1,3 +1,4 @@
+
 /* ================= 처음 화면 ================= */
 const nextNode = () => NODES.find(id => !S.stages[id]) || 'league';
 const nodeLabel = id => { if (id === 'league') return '포켓몬 리그'; const [u, k] = id.split('-'); return `${UNITS[u - 1].town} · ${KIND[k].t}`; };
@@ -45,6 +46,7 @@ function showHome() {
         </div>
       </section>
       <section class="homeside">
+        ${artOfferHTML()}
         <button class="big go-adventure" id="goNext">모험 계속하기<small>${esc(nodeLabel(nx))}</small></button>
         <div class="menu">
           <button id="mMap"><span class="ic en" style="background:var(--water)">A</span><span>모험 지도<small>마을 8곳 · 배지 ${S.badges.length}/8</small></span></button>
@@ -61,6 +63,7 @@ function showHome() {
   $('#mDex').onclick = () => go(showDex);
   $('#mBadge').onclick = () => go(showBadges);
   $('#mParent').onclick = () => go(showParent);
+  bindArtOffer();
 }
 
 /* ================= 모험 지도 ================= */
