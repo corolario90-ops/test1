@@ -64,6 +64,8 @@ rep("try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.v === 
 rep("return { no: +no, n, art, rare, u: wordUnit(n) };", "return { no: +no, n, art, rare };")
 rep("settings: { rate: .9, voice: '' }, updated: 0 });\nlet STORE", "settings: { rate: .9, voice: '', rateEn: .8, voiceEn: '' }, updated: 0 });\nlet STORE")
 rep("try { importLegacy(JSON.parse(localStorage.getItem(LS_KEY))); } catch (e) { /* 예전 기록 없음 */ }\n", "")
+# 한글 앱의 예전 기록(v1)을 옮겨 오는 코드 두 군데를 뺌
+cut("try {\n  const o = JSON.parse(localStorage.getItem(LS_OLD));", "\n/* 모험 기록(슬롯)", "")
 cut("try {\n  const o = JSON.parse(localStorage.getItem(LS_OLD));", "\nlet dbRef", "")
 rep("dbRef = db.doc(`data/users/${id}/progress`);", "dbRef = db.doc(`data/users/${id}/english`);")
 

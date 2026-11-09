@@ -1335,6 +1335,37 @@ function merge(a, b) {
   return r;
 }
 
+/* 모험 기록(슬롯) 여러 개를 한 번에 보관. 새 모험을 시작해도 예전 기록은 남아 있어서 언제든 이어 할 수 있음 */
+const LS_STORE = 'pokemon-english.v1';
+const blankStore = () => ({ v: 3, active: 'main', slots: {}, settings: { rate: .9, voice: '', rateEn: .8, voiceEn: '' }, updated: 0 });
+let STORE = blankStore();
+function mergeStore(a, b) {
+  const r = clone(a);
+  if (!b || typeof b !== 'object') return r;
+  for (const [id, sl] of Object.entries(b.slots || {})) {
+    if (!sl || !sl.state) continue;
+    const x = r.slots[id];
+    r.slots[id] = x ? { created: Math.min(x.created || Infinity, sl.created || Infinity), state: merge(x.state, sl.state) } : { created: sl.created || Date.now(), state: merge(blank(), sl.state) };
+  }
+  if ((b.updated || 0) > (a.updated || 0) && b.settings) r.settings = { ...r.settings, ...b.settings };
+  if (!r.slots[r.active]) r.active = b.active && r.slots[b.active] ? b.active : (Object.keys(r.slots)[0] || 'main');
+  r.updated = Math.max(a.updated || 0, b.updated || 0);
+  return r;
+}
+// 예전 버전(기록 한 개)은 '처음 모험'으로 옮김
+function importLegacy(state) {
+  if (!state || state.v !== 2) return;
+  const sl = STORE.slots.main;
+  STORE.slots.main = { created: sl ? sl.created : Date.now(), state: merge(sl ? sl.state : blank(), state) };
+  if (state.settings && !STORE.settings.voice && state.settings.voice) STORE.settings = { ...STORE.settings, ...state.settings };
+}
+function useActive() {
+  if (!STORE.slots[STORE.active]) STORE.slots[STORE.active] = { created: Date.now(), state: blank() };
+  S = STORE.slots[STORE.active].state = merge(blank(), STORE.slots[STORE.active].state);
+}
+try { const st = JSON.parse(localStorage.getItem(LS_STORE)); if (st && st.v === 3) STORE = mergeStore(blankStore(), st); } catch (e) { /* 처음 */ }
+useActive();
+
 let dbRef = null, saving = false, dirty = false, saveTimer = 0;
 function persist() {
   S.updated = STORE.updated = Date.now();

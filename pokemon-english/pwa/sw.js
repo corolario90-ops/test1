@@ -1,5 +1,5 @@
 // 포켓몬 영어 모험: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 아이패드에 보관 (사이트의 english/ 폴더만 맡음)
-const CACHE = 'pokemon-english-9aa1ccb75d';
+const CACHE = 'pokemon-english-439dcf7a72';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "fonts/jua.woff2", "fonts/andika-400.ttf", "fonts/andika-700.ttf", "fonts/noto-500.woff2", "fonts/noto-700.woff2", "fonts/gaegu.woff2", "fonts/patrick-hand.ttf", "fonts/gamja-flower.woff2", "fonts/pen-hand.woff2"];
 // 공식 이미지는 한글 앱과 같은 보관함을 함께 씀
 const ART_CACHE = 'pokemon-art-v1';
