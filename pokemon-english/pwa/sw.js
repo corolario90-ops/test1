@@ -1,0 +1,41 @@
+// 포켓몬 영어 모험: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 아이패드에 보관 (사이트의 english/ 폴더만 맡음)
+const CACHE = 'pokemon-english-9aa1ccb75d';
+const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "fonts/jua.woff2", "fonts/andika-400.ttf", "fonts/andika-700.ttf", "fonts/noto-500.woff2", "fonts/noto-700.woff2", "fonts/gaegu.woff2", "fonts/patrick-hand.ttf", "fonts/gamja-flower.woff2", "fonts/pen-hand.woff2"];
+// 공식 이미지는 한글 앱과 같은 보관함을 함께 씀
+const ART_CACHE = 'pokemon-art-v1';
+const isArt = url => url.origin === 'https://raw.githubusercontent.com' && url.pathname.startsWith('/PokeAPI/sprites/');
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys()
+    .then(keys => Promise.all(keys.filter(k => k.startsWith('pokemon-english-') && k !== CACHE).map(k => caches.delete(k))))
+    .then(() => self.clients.claim()));
+});
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (isArt(url)) {
+    e.respondWith(caches.open(ART_CACHE).then(c => c.match(req.url).then(hit => hit || fetch(req.url, { mode: 'cors' }).then(res => {
+      if (res.ok) c.put(req.url, res.clone());
+      return res;
+    }))));
+    return;
+  }
+  if (url.origin !== location.origin || !url.pathname.startsWith(new URL(self.registration.scope).pathname)) return;
+  if (req.mode === 'navigate') {
+    // 사이트가 내려가서 404가 와도 보관한 앱을 그대로 열도록, 정상 응답일 때만 새 버전으로 바꿈
+    e.respondWith(fetch(req).then(res => {
+      if (!res.ok) return caches.match('index.html').then(hit => hit || res);
+      const copy = res.clone();
+      caches.open(CACHE).then(c => c.put('index.html', copy));
+      return res;
+    }).catch(() => caches.match('index.html')));
+    return;
+  }
+  e.respondWith(caches.match(req).then(hit => hit || fetch(req)));
+});

@@ -9,6 +9,6 @@
 - `gaegu.woff2` — Gaegu Regular. Copyright 2018 The Gaegu Project Authors 라이선스: SIL Open Font License 1.1
 - `hi-melody.woff2` — Hi Melody Regular. Copyright (c) YoonDesign Inc. All Rights Reserved. 라이선스: SIL Open Font License 1.1
 - `gamja-flower.woff2` — Gamja Flower Regular. Copyright (c) YoonDesign Inc. All Rights Reserved. 라이선스: SIL Open Font License 1.1
-- `nanum-pen.woff2` — Nanum Pen Regular. Copyright © 2010 NHN Corporation. All rights reserved. Font designed by Sandoll Communications Inc. 라이선스: SIL Open Font License 1.1
+- `pen-hand.woff2` — Nanum Pen Script를 줄여서 만든 글꼴이에요. 원본의 예약 이름(Nanum)을 쓰지 않도록 이름을 'Pen Script Hand'로 바꿨어요. Copyright © 2010 NHN Corporation. Font designed by Sandoll Communications Inc. 라이선스: SIL Open Font License 1.1
 
 각 글꼴의 라이선스 전문은 같은 폴더의 `OFL-*.txt`에 있어요 (jua, notosanskr, gaegu, himelody, gamjaflower, nanumpenscript).

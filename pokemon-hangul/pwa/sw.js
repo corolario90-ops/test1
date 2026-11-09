@@ -1,6 +1,6 @@
 // 포켓몬 한글 모험: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 아이패드에 보관
-const CACHE = 'pokemon-hangul-693090ee65';
-const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "fonts/jua.woff2", "fonts/noto-500.woff2", "fonts/noto-700.woff2", "fonts/gaegu.woff2", "fonts/hi-melody.woff2", "fonts/gamja-flower.woff2", "fonts/nanum-pen.woff2"];
+const CACHE = 'pokemon-hangul-e6eb689b9e';
+const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "fonts/jua.woff2", "fonts/noto-500.woff2", "fonts/noto-700.woff2", "fonts/gaegu.woff2", "fonts/hi-melody.woff2", "fonts/gamja-flower.woff2", "fonts/pen-hand.woff2"];
 // 공식 이미지는 앱을 새 버전으로 바꿔도 지우지 않는 따로 된 보관함에
 const ART_CACHE = 'pokemon-art-v1';
 const isArt = url => url.origin === 'https://raw.githubusercontent.com' && url.pathname.startsWith('/PokeAPI/sprites/');
@@ -27,8 +27,12 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin !== location.origin) return;
-  // 같은 사이트의 숫자 놀이 앱(math/)은 그 앱의 서비스 워커가 맡음
-  if (url.pathname.startsWith(new URL('math/', self.registration.scope).pathname)) return;
+  // 같은 사이트에 다른 앱이 폴더마다 있어서(math/, abc/, english/ …), 이 워커는 첫 화면과 자기 파일만 맡음
+  const scope = new URL(self.registration.scope).pathname;
+  const rel = url.pathname.startsWith(scope) ? url.pathname.slice(scope.length) : null;
+  if (rel === null) return;
+  const mine = rel === '' || rel === 'index.html' || !rel.includes('/') || rel.startsWith('fonts/') || rel.startsWith('icons/');
+  if (!mine) return;
   if (req.mode === 'navigate') {
     // 화면은 인터넷이 되면 새 버전을, 안 되면 보관한 버전을
     // 사이트가 내려가서 404가 와도 보관한 앱을 그대로 열도록, 정상 응답일 때만 새 버전으로 바꿈

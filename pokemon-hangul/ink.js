@@ -9,7 +9,9 @@ const Ink = (() => {
   const JONG_STROKES = [0, 1, 2, 3, 1, 3, 4, 2, 3, 4, 6, 7, 5, 6, 7, 6, 3, 4, 6, 2, 4, 1, 2, 3, 2, 3, 4, 3];
   const dec = ch => { const k = ch.charCodeAt(0) - S0; return { cho: Math.floor(k / 588), jung: Math.floor((k % 588) / 28), jong: k % 28 }; };
   const com = (a, b, c = 0) => String.fromCharCode(S0 + a * 588 + b * 28 + c);
-  const expectedStrokes = ch => { const d = dec(ch); return CHO_STROKES[d.cho] + JUNG_STROKES[d.jung] + JONG_STROKES[d.jong]; };
+  const isHangul = ch => { const k = ch.charCodeAt(0) - S0; return k >= 0 && k <= 11171; };
+  // 영어 글자는 획 수 검사를 하지 않음(아이들이 이어 쓰는 방식이 제각각이라)
+  const expectedStrokes = ch => { if (!isHangul(ch)) return 1; const d = dec(ch); return CHO_STROKES[d.cho] + JUNG_STROKES[d.jung] + JONG_STROKES[d.jong]; };
 
   const ctx2d = N => { const c = document.createElement('canvas'); c.width = c.height = N; return c.getContext('2d', { willReadFrequently: true }); };
   const toMask = (x, N) => { const d = x.getImageData(0, 0, N, N).data, m = new Uint8Array(N * N); for (let i = 0; i < N * N; i++) m[i] = d[i * 4 + 3] > 110 ? 1 : 0; return m; };
@@ -206,7 +208,11 @@ const Ink = (() => {
   const fdist = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) { const d = a[i] - b[i]; s += d * d; } return Math.sqrt(s); };
 
   const COMMON_JONG = [1, 4, 7, 8, 16, 17, 19, 21];
+  const LOWER = 'abcdefghijklmnopqrstuvwxyz', UPPER = LOWER.toUpperCase();
   function confusables(ch) {
+    // 영어: 같은 크기(소문자/대문자)의 다른 글자 전부와 비교
+    if (LOWER.includes(ch)) return [...LOWER].filter(x => x !== ch);
+    if (UPPER.includes(ch)) return [...UPPER].filter(x => x !== ch);
     const d = dec(ch), out = new Set();
     for (let c = 0; c < 19; c++) if (c !== d.cho) out.add(com(c, d.jung, d.jong));
     for (let v = 0; v < 21; v++) if (v !== d.jung) out.add(com(d.cho, v, d.jong));
@@ -230,13 +236,17 @@ const Ink = (() => {
     return judge(ch, F, fonts, strokes.length);
   }
   const LIMIT = { abs: .66, k: 1.05 };
-  function judge(ch, F, fonts, nStrokes, k = LIMIT.k) {
+  // 영어 글자는 손글씨 모양 차이가 커서 기준을 조금 넓게 (손글씨 글꼴 시험에서 틀린 글자 통과 4% 이하)
+  const LIMIT_LATIN = { abs: .75, k: 1.05 };
+  function judge(ch, F, fonts, nStrokes, k) {
+    const lim = isHangul(ch) ? LIMIT : LIMIT_LATIN;
+    if (k == null) k = lim.k;
     const target = dist(F, ch, fonts);
     let best = null, bestD = Infinity;
     for (const c of confusables(ch)) { const v = dist(F, c, fonts); if (v < bestD) { bestD = v; best = c; } }
     const minStrokes = Math.ceil(expectedStrokes(ch) / 2);
     let reason = '';
-    if (target > LIMIT.abs) reason = 'shape';
+    if (target > lim.abs) reason = 'shape';
     else if (target > bestD * k) reason = 'other';
     else if (nStrokes != null && nStrokes < minStrokes) reason = 'strokes';
     return { pass: !reason, reason, target, nearest: best, nearestD: bestD };

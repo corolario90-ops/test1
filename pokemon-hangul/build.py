@@ -13,12 +13,14 @@ open(os.path.join(HERE, 'pokemon-hangul.html'), 'w', encoding='utf8').write(body
 
 # 2) 홈 화면 앱: 글꼴을 앱 안에 넣고, 문서 머리말·매니페스트·서비스 워커 추가
 FONTS = [('Jua', 400, 'jua'), ('Noto Sans KR', 500, 'noto-500'), ('Noto Sans KR', 700, 'noto-700'), ('Gaegu', 400, 'gaegu'),
-         ('Hi Melody', 400, 'hi-melody'), ('Gamja Flower', 400, 'gamja-flower'), ('Nanum Pen Script', 400, 'nanum-pen')]
+         ('Hi Melody', 400, 'hi-melody'), ('Gamja Flower', 400, 'gamja-flower'), ('Pen Script Hand', 400, 'pen-hand')]
 faces = '\n'.join(f'@font-face {{ font-family: "{f}"; font-weight: {w}; font-style: normal; font-display: swap; src: url("fonts/{n}.woff2") format("woff2"); }}' for f, w, n in FONTS)
 app = body.replace("/*BUILD*/'artifact'", "'app'")
 # 공개 사이트에서는 앱 이름에 상표 '포켓몬'을 쓰지 않음 (게임 안의 포켓몬 이름은 그대로)
 APP_NAME, APP_SHORT = '몬스터 한글 모험', '몬스터 한글'
 app = app.replace('포켓몬 한글 모험', APP_NAME)
+# 나눔펜은 '나눔'이 예약 이름이라, 줄인 글꼴은 이름을 바꿔서 넣음 (OFL 규칙)
+app = app.replace('"Nanum Pen Script"', '"Pen Script Hand"')
 title = re.search(r'<title>.*?</title>', app).group(0)
 app = re.sub(r'<title>.*?</title>\n', '', app, count=1)
 app = re.sub(r'<meta name="claude:viewport-fit-sides"[^>]*>\n', '', app)
