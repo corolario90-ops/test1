@@ -67,7 +67,7 @@ h3{font-weight:normal;font-size:19px;margin:16px 0 8px}
 .friend{display:inline-flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;--fw:84px;transition:transform .35s}
 .friend svg,.friend .pic{width:var(--fw);height:calc(var(--fw)*1.2);display:block;overflow:visible}
 .friend.wide svg{width:calc(var(--fw)*1.4)}
-.friend .pic{object-fit:contain;filter:drop-shadow(0 4px 0 rgba(0,0,0,.15))}
+.friend .pic{object-fit:contain;background:#fff;border-radius:18px;padding:4px;box-shadow:0 4px 0 rgba(0,0,0,.15)}
 .friend .tag{position:absolute;bottom:-4px;right:-4px;background:var(--card);border-radius:12px;padding:0 8px;font-size:calc(var(--fw)*.28);box-shadow:0 2px 0 rgba(0,0,0,.15)}
 .friend .pupil{animation:blink 4.6s infinite;transform-box:fill-box;transform-origin:center}
 .friend:nth-child(2n) .pupil{animation-delay:1.7s}.friend:nth-child(3n) .pupil{animation-delay:3.1s}
@@ -644,7 +644,10 @@ SCREENS.parent=()=>{
       작게 줄인 뒤 <b>기기 안에만</b> 저장해요. 한 번 받으면 인터넷 없이도 써요. 그림의 저작권은 알파블록스 제작사(Alphablocks Ltd·Blue Zoo)에 있으니 가정에서만 써 주세요.
       엉뚱한 그림이 들어온 글자는 아래 목록에서 🖼 그림으로 바꾸거나 🗑로 지울 수 있어요.</p>
       <div class="row" style="justify-content:flex-start"><button class="big-btn small" id="abGo">⬇ 알파블록스 그림 받기</button>
+        <button class="big-btn small" id="sheetGo">📄 글자 카드 시트 넣기</button>
         <button class="big-btn small alt" id="abDel">받은 그림 지우기</button></div>
+      <p class="note">📄 글자 카드 시트: a~z 캐릭터가 5칸씩 점선 카드로 놓인 한 장짜리 그림을 고르면, 기기 안에서 26장으로 잘라 글자마다 넣어요.</p>
+      <input type="file" id="sheetFile" accept="image/*" hidden>
       <p class="note" id="abMsg">${abCount()?`지금 ${abCount()}/26 글자에 알파블록스 그림이 있어요.`:''}</p>
     </div>
 
@@ -683,6 +686,9 @@ SCREENS.parent=()=>{
   bindRows();
   document.getElementById('packGo').onclick=loadPack;
   document.getElementById('abGo').onclick=loadAlphablocks;
+  const sf=document.getElementById('sheetFile');
+  document.getElementById('sheetGo').onclick=()=>sf.click();
+  sf.onchange=async()=>{ const f=sf.files[0]; sf.value=''; if(f) await loadSheet(f); };
   document.getElementById('abDel').onclick=async()=>{ if(!confirm('받은 알파블록스 그림을 지울까요?')) return;
     for(const g of Object.keys(S.set.ab||{})) await delMedia('img:'+g);
     S.set.ab={}; S.set.imgUrls={}; saveSet(); go('parent'); toast('지웠어요'); };
@@ -783,6 +789,44 @@ async function loadAlphablocks(){
   btn.disabled=false; refreshRows();
   msg.textContent=`${list.length}개 글자 그림을 받았어요.`+(linkOnly?` (${linkOnly}개는 한 번 화면에 나온 뒤부터 인터넷 없이 보여요)`:'')+(miss.length?` 못 찾은 글자: ${miss.join(', ')} — 아래에서 직접 넣을 수 있어요.`:'');
   toast('알파블록스 친구들이 왔어요! 🎉');
+}
+
+/* 글자 카드 시트(5열 × 6줄 점선 카드, a~z) → 글자마다 한 장씩, 기기 안에서만 자르기 */
+const SHEET={w:936,h:1244,x0:28,px:185,cw:137,y0:19,py:209.2,ch:175,cols:5,inset:6};
+function trimWhite(c){
+  const x=c.getContext('2d'), {width:w,height:h}=c, d=x.getImageData(0,0,w,h).data;
+  let l=w,t=h,r=-1,b=-1;
+  for(let y=0;y<h;y++) for(let i=0;i<w;i++){ const o=(y*w+i)*4; if(Math.min(d[o],d[o+1],d[o+2])<232){ if(i<l)l=i; if(i>r)r=i; if(y<t)t=y; if(y>b)b=y; } }
+  if(r<0) return null;
+  const p=4; l=Math.max(0,l-p); t=Math.max(0,t-p); r=Math.min(w-1,r+p); b=Math.min(h-1,b+p);
+  const k=Math.min(1,360/Math.max(r-l+1,b-t+1)), o=document.createElement('canvas');
+  o.width=Math.round((r-l+1)*k); o.height=Math.round((b-t+1)*k);
+  o.getContext('2d').drawImage(c,l,t,r-l+1,b-t+1,0,0,o.width,o.height); return o;
+}
+async function loadSheet(file){
+  const msg=document.getElementById('abMsg'), u=URL.createObjectURL(file);
+  try{
+    const im=new Image(); im.src=u; await im.decode();
+    const W=im.naturalWidth, H=im.naturalHeight;
+    if(Math.abs(W/H-SHEET.w/SHEET.h)>.06){ msg.textContent='이 그림은 글자 카드 시트 모양(5칸씩 6줄, 세로로 긴 한 장)과 달라요. 글자마다 🖼 그림으로 넣어 주세요.'; return; }
+    const k=W/SHEET.w, kh=H/SHEET.h; let ok=0;
+    S.set.ab=S.set.ab||{}; S.set.imgUrls=S.set.imgUrls||{};
+    for(let i=0;i<26;i++){
+      const g=LETTERS[i], col=i%SHEET.cols, row=i/SHEET.cols|0;
+      msg.textContent=`카드 자르는 중… ${g} (${i+1}/26)`;
+      const sx=(SHEET.x0+col*SHEET.px+SHEET.inset)*k, sy=(SHEET.y0+row*SHEET.py+SHEET.inset)*kh;
+      const sw=(SHEET.cw-SHEET.inset*2)*k, sh=(SHEET.ch-SHEET.inset*2)*kh;
+      const c=document.createElement('canvas'); c.width=Math.round(sw); c.height=Math.round(sh);
+      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height);
+      const t=trimWhite(c); if(!t) continue;
+      const blob=await new Promise(r=>t.toBlob(r,'image/png')); if(!blob) continue;
+      await putMedia('img:'+g,blob); delete S.set.imgUrls[g]; S.set.ab[g]='sheet'; ok++;
+    }
+    saveSet(); refreshRows();
+    msg.textContent=`${ok}/26 글자 카드를 넣었어요. 글자 소리 화면에서 확인해 보세요. 어긋난 글자는 아래에서 🖼 그림으로 바꿀 수 있어요.`;
+    toast('알파블록스 친구들이 왔어요! 🎉');
+  }catch(e){ msg.textContent='그림을 읽지 못했어요. 다른 사진으로 다시 해 주세요.'; }
+  finally{ URL.revokeObjectURL(u); }
 }
 
 async function loadPack(){
