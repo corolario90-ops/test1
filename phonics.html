@@ -162,6 +162,16 @@ pre{font-family:ui-monospace,monospace;font-size:12px;background:var(--soft);bor
 .aw-frame{position:absolute;outline:2px solid #ff3d7f;cursor:move;touch-action:none}
 .aw-frame i{position:absolute;border:2px solid #ff3d7f;background:rgba(255,61,127,.08);pointer-events:none}
 .aw-frame b{position:absolute;left:2px;top:0;font-weight:normal;font-size:12px;color:#fff;background:#ff3d7f;border-radius:0 0 6px 0;padding:0 4px}
+.wv{position:relative;flex:none;touch-action:none;border-radius:14px;overflow:visible}
+.wv canvas{display:block;border-radius:14px}
+.wv-sel{position:absolute;top:0;bottom:0;background:rgba(255,61,127,.22);outline:2px solid #ff3d7f}
+.wv-sel .aw-h{top:50%;margin-top:-16px;bottom:auto}
+.wv-sel .aw-h.wl{left:-16px;right:auto}
+.wv-head{position:absolute;top:0;bottom:0;width:2px;background:#22c55e;display:none}
+.wv-segs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:900px}
+.wv-segs button{border:3px solid transparent;background:#fff;color:#2b2b3a;border-radius:14px;padding:6px 12px;font-size:20px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.wv-segs button small{font-size:12px;opacity:.7}
+.wv-segs button.on{border-color:#ff3d7f}
 .aw-h.tl{left:-16px;top:-16px;right:auto;bottom:auto;cursor:nwse-resize}
 .aw-h{position:absolute;right:-16px;bottom:-16px;width:32px;height:32px;border-radius:50%;background:#ff3d7f;border:3px solid #fff;cursor:nwse-resize;touch-action:none}
 .overlay iframe{width:min(96vw,960px);aspect-ratio:16/9;border:0;border-radius:16px;background:#000}
@@ -630,6 +640,7 @@ function letterRows(){
     return `<div class="lrow" data-row="${g}">${friend(g)}<div class="tools">
       <button data-a="test">▶ 소리</button>
       <button data-a="rec" class="${recorder&&recorder.g===g?'rec':''}">${recorder&&recorder.g===g?'⏹ 멈추기':'🎙 녹음'}</button>
+      <button data-a="sndfile">🎵 소리 파일</button>
       ${MEDIA.has('snd:'+g)?'<button data-a="delsnd">🗑 녹음</button>':''}
       <button data-a="img">🖼 그림</button>${MEDIA.has('img:'+g)||(S.set.imgUrls||{})[g]?'<button data-a="delimg">🗑 그림</button>':''}
       <input type="url" data-a="vid" placeholder="${g} 영상 링크 (YouTube)" value="${esc(S.set.videos[g]||'')}">
@@ -664,7 +675,7 @@ SCREENS.parent=()=>{
       <p class="note">이 앱에는 다른 회사의 캐릭터·영상·소리가 <b>들어 있지 않아요</b>. 알파블록스처럼 아이가 좋아하는 캐릭터가 있다면,
       가정에서 정당하게 가진 그림 파일을 글자마다 넣거나 공식 채널 영상 링크를 연결할 수 있어요. 넣은 그림과 녹음은 <b>이 기기 안(IndexedDB)에만</b> 저장되고 어디에도 올라가지 않아요.
       🔎 버튼은 YouTube 검색을 새 창으로 열어요. 공식 채널(예: Alphablocks 공식) 영상의 주소를 복사해 칸에 붙여 넣으면, 글자 화면에 📺 버튼이 생기고 앱 안에서 재생돼요.</p>
-      <input type="file" id="file" accept="image/*" hidden>
+      <input type="file" id="file" accept="image/*" hidden><input type="file" id="sfile" accept="audio/*,.mp3,.m4a,.wav,.aac" hidden>
       <div id="lrows">${letterRows()}</div>
     </div>
 
@@ -719,6 +730,9 @@ function bindRows(){
       el.onclick=async()=>{
         if(a==='test') play([{g}]);
         else if(a==='rec') toggleRec(g);
+        else if(a==='sndfile'){ const sf=document.getElementById('sfile'); sf.onchange=async()=>{ const f=sf.files[0]; sf.value=''; if(!f) return;
+          try{ const part=await audioPick(f,g); if(!part) return; await putMedia('snd:'+g,part); refreshRows(); toast(g+' 소리를 넣었어요'); play([{g}]); }
+          catch(e){ toast('이 소리 파일을 읽지 못했어요'); } }; sf.click(); }
         else if(a==='delsnd'){ await delMedia('snd:'+g); refreshRows(); }
         else if(a==='img'){ imgTarget=g; file.click(); }
         else if(a==='delimg'){ await delMedia('img:'+g); if(S.set.ab) delete S.set.ab[g]; if(S.set.imgUrls) delete S.set.imgUrls[g]; saveSet(); refreshRows(); }
@@ -739,6 +753,73 @@ async function toggleRec(g){
   r.start(); r.tm=setTimeout(()=>{ if(r.state==='recording') r.stop(); },3000);
   refreshRows(); toast('🎙 '+g+' 소리를 짧게 말해 주세요 (3초)',1800);
 }
+// 소리 파일에서 쓸 부분 고르기: 말소리 덩어리를 찾아 보여 주고, 눌러 들어 본 뒤 그 부분만 저장 (기기 안에서만)
+function audioCtx(){ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }
+function findSegments(data,rate){
+  const fr=Math.round(rate*.02), n=Math.floor(data.length/fr), env=new Float32Array(n);
+  let peak=0; for(let i=0;i<n;i++){ let s=0; for(let j=i*fr;j<(i+1)*fr;j++) s+=data[j]*data[j]; env[i]=Math.sqrt(s/fr); if(env[i]>peak) peak=env[i]; }
+  const th=Math.max(.01,peak*.08), segs=[]; let st=-1, quiet=0;
+  for(let i=0;i<=n;i++){ const on=i<n&&env[i]>=th;
+    if(on){ if(st<0) st=i; quiet=0; }
+    else if(st>=0){ quiet++; if(quiet>=12||i===n){ const en=i-quiet+1; if(en-st>=4) segs.push([st,en]); st=-1; quiet=0; } } }
+  const T=i=>i*fr/rate, dur=data.length/rate;
+  return {env,peak,segs:segs.map(([a,b])=>[Math.max(0,T(a)-.06),Math.min(dur,T(b)+.08)])};
+}
+function wavBlob(buf,start,end){
+  const rate=buf.sampleRate, a=Math.floor(start*rate), b=Math.min(buf.length,Math.ceil(end*rate)), n=Math.max(0,b-a), ch=buf.numberOfChannels;
+  const ab=new ArrayBuffer(44+n*2), v=new DataView(ab), w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  const chans=Array.from({length:ch},(_,c)=>buf.getChannelData(c)), fade=Math.min(n/2,Math.round(rate*.01));
+  for(let i=0;i<n;i++){ let s=0; for(const d of chans) s+=d[a+i]; s/=ch; const f=Math.min(1,i/fade||1,(n-1-i)/fade||1); s*=f;
+    v.setInt16(44+i*2,Math.max(-1,Math.min(1,s))*0x7fff,true); }
+  return new Blob([ab],{type:'audio/wav'});
+}
+function audioPick(file,g){
+  return new Promise(async(done,fail)=>{
+    let buf; try{ const ctx=audioCtx(); const raw=await file.arrayBuffer();
+      buf=await new Promise((res,rej)=>{ const p=ctx.decodeAudioData(raw,res,rej); if(p&&p.then) p.then(res,rej); }); }catch(e){ fail(e); return; }
+    const data=buf.getChannelData(0), dur=buf.duration, {segs}=findSegments(data,buf.sampleRate);
+    let sel=segs[0]?[...segs[0]]:[0,Math.min(dur,1.5)], src=null;
+    const o=document.createElement('div'); o.className='overlay align';
+    o.innerHTML=`<div class="aw-tip"><b style="font-size:22px">${esc(g)}</b> 소리로 쓸 부분을 골라요. 번호를 누르면 그 부분을 들려줘요. 분홍 칸 양쪽 ● 를 끌면 시작과 끝을 바꿀 수 있어요.</div>
+      <div class="wv"><canvas></canvas><div class="wv-sel"><span class="aw-h wl"></span><span class="aw-h wr"></span></div><div class="wv-head"></div></div>
+      <div class="wv-segs">${segs.map((s,i)=>`<button data-s="${i}">${i+1}<small>${s[0].toFixed(1)}초</small></button>`).join('')||'<span class="aw-tip">말소리 덩어리를 찾지 못했어요. 칸을 직접 맞춰 주세요.</span>'}</div>
+      <div class="aw-tip" id="wvLen"></div>
+      <div class="row"><button class="big-btn alt" data-x="0">취소</button><button class="big-btn alt" data-x="play">▶ 들어 보기</button><button class="big-btn go" data-x="1">✂️ 이 부분 쓰기</button></div>`;
+    document.body.appendChild(o);
+    const wv=o.querySelector('.wv'), cv=o.querySelector('canvas'), selEl=o.querySelector('.wv-sel'), head=o.querySelector('.wv-head');
+    let Wpx=0;
+    const drawWave=()=>{ Wpx=Math.min(innerWidth-32,900); const H=150, dpr=devicePixelRatio||1;
+      wv.style.width=Wpx+'px'; cv.width=Wpx*dpr; cv.height=H*dpr; cv.style.width=Wpx+'px'; cv.style.height=H+'px';
+      const x=cv.getContext('2d'); x.scale(dpr,dpr); x.fillStyle='#fff'; x.fillRect(0,0,Wpx,H);
+      x.fillStyle='rgba(160,123,255,.18)'; segs.forEach(([a,b])=>x.fillRect(a/dur*Wpx,0,(b-a)/dur*Wpx,H));
+      x.fillStyle='#5b4bd6'; const step=data.length/Wpx;
+      for(let px=0;px<Wpx;px++){ let mn=0,mx=0; const a=Math.floor(px*step), b=Math.floor((px+1)*step); for(let i=a;i<b;i+=4){ const v=data[i]; if(v<mn)mn=v; if(v>mx)mx=v; }
+        x.fillRect(px,H/2+mn*H/2,1,Math.max(1,(mx-mn)*H/2)); }
+      x.fillStyle='#2b2b3a'; x.font='12px system-ui'; segs.forEach(([a],i)=>x.fillText(String(i+1),a/dur*Wpx+3,13)); };
+    const drawSel=()=>{ selEl.style.left=sel[0]/dur*Wpx+'px'; selEl.style.width=(sel[1]-sel[0])/dur*Wpx+'px';
+      o.querySelector('#wvLen').textContent=`${sel[0].toFixed(2)}초 ~ ${sel[1].toFixed(2)}초 (${(sel[1]-sel[0]).toFixed(1)}초)`; };
+    drawWave(); drawSel(); const onR=()=>{ drawWave(); drawSel(); }; addEventListener('resize',onR);
+    const stop=()=>{ if(src){ try{ src.stop(); }catch(e){} src=null; } head.style.display='none'; };
+    const preview=()=>{ stop(); stopSound(); const ctx=audioCtx(); src=ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination);
+      const t0=ctx.currentTime, a=sel[0], d=sel[1]-sel[0]; src.start(0,a,d); head.style.display='block';
+      const me=src; const tick=()=>{ if(src!==me) return; const t=ctx.currentTime-t0; if(t>d){ stop(); return; } head.style.left=(a+t)/dur*Wpx+'px'; requestAnimationFrame(tick); }; tick(); };
+    o.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ sel=[...segs[+b.dataset.s]]; o.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===b)); drawSel(); preview(); });
+    const first=o.querySelector('[data-s="0"]'); if(first) first.classList.add('on');
+    let drag=null;
+    const start=side=>e=>{ e.preventDefault(); e.stopPropagation(); drag={side,sx:e.clientX,s:[...sel]}; try{ e.target.setPointerCapture(e.pointerId); }catch(_){} };
+    const move=e=>{ if(!drag) return; const dt=(e.clientX-drag.sx)/Wpx*dur;
+      if(drag.side==='l') sel[0]=Math.max(0,Math.min(drag.s[0]+dt,sel[1]-.08)); else sel[1]=Math.min(dur,Math.max(drag.s[1]+dt,sel[0]+.08));
+      o.querySelectorAll('[data-s]').forEach(x=>x.classList.remove('on')); drawSel(); };
+    o.querySelectorAll('.wv-sel .aw-h').forEach(h=>{ h.onpointerdown=start(h.classList.contains('wl')?'l':'r'); h.onpointermove=move; h.onpointerup=h.onpointercancel=()=>{ if(drag){ drag=null; preview(); } }; });
+    o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ const x=b.dataset.x;
+      if(x==='play'){ preview(); return; }
+      stop(); removeEventListener('resize',onR); o.remove();
+      done(x==='1'?wavBlob(buf,sel[0],sel[1]):null); });
+  });
+}
+
 // 그림에서 쓸 부분 고르기: 칸 가운데를 끌면 이동, 모서리 ● 로 크기 (한 장에 여러 글자가 있을 때)
 function cropPick(file,g){
   return new Promise(async(done,fail)=>{
