@@ -130,6 +130,29 @@ h3{font-weight:normal;font-size:19px;margin:16px 0 8px}
 .dots i.on{background:var(--ok)}
 .speak{font-size:30px;width:70px;height:70px;border-radius:50%}
 
+/* 따라 쓰기 */
+.wtop{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.wpick{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:thin}
+.wpick button{flex:none;width:44px;height:44px;border-radius:14px;border:3px solid transparent;background:var(--card);box-shadow:0 3px 0 rgba(0,0,0,.12);font-size:22px;cursor:pointer;position:relative}
+.wpick button.on{border-color:var(--accent);background:#fff3cf;color:#3a2a00}
+.wpick button.did::after{content:'✓';position:absolute;top:-6px;right:-6px;background:var(--ok);color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px;line-height:18px}
+.wmain{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:640px){ .wmain{grid-template-columns:1fr} }
+.wpad{position:relative;background:#fff;border-radius:26px;box-shadow:var(--shadow);aspect-ratio:100/115;width:100%;max-width:560px;margin:0 auto;touch-action:none}
+.wpad svg,.wpad canvas{position:absolute;inset:0;width:100%;height:100%}
+.wpad canvas{touch-action:none;cursor:crosshair}
+.gl{stroke:#c9d4ea;stroke-width:.5;stroke-dasharray:2 2}.gl.mid{stroke:#ffb4c8}.gl.base{stroke:#8fa6d6;stroke-width:.7;stroke-dasharray:none}
+.wg{fill:none;stroke:#ece7fb;stroke-width:10;stroke-linecap:round;stroke-linejoin:round}
+.wc{fill:none;stroke:#b9a9f0;stroke-width:1.1;stroke-dasharray:1.6 2.4;stroke-linecap:round;stroke-linejoin:round}
+.wdemo{fill:none;stroke:#ff9f1c;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.wpen{font-size:9px}
+.wd circle{fill:#22c55e}.wd text{fill:#fff;font-size:6px;text-anchor:middle;font-family:system-ui,sans-serif;font-weight:700}
+.wside{display:flex;flex-direction:column;align-items:center;gap:12px}
+.wbig{font-size:clamp(56px,14vw,96px);line-height:1}
+.crayons{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.crayons button{width:38px;height:38px;border-radius:50%;border:4px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.18);cursor:pointer}
+.crayons button.on{outline:3px solid var(--ink);outline-offset:1px}
+
 /* 스티커북 */
 .stickers{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
 .sticker{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:8px 4px;text-align:center;cursor:pointer;font-size:46px;line-height:1.1}
@@ -497,6 +520,7 @@ SCREENS.home=()=>{
       <button class="mode" data-go="blend" style="background:#a07bff"><span class="em">🪄</span>단어 합체<small>c-a-t → 🐱</small></button>
       <button class="mode" data-go="first" style="background:#3fb6e8"><span class="em">👂</span>첫소리 찾기<small>무슨 글자로 시작할까?</small></button>
       <button class="mode" data-go="listen" style="background:#26bfb0"><span class="em">🖼️</span>듣고 고르기<small>어떤 그림일까?</small></button>
+      <button class="mode" data-go="write" style="background:#ff7fa8"><span class="em">✏️</span>따라 쓰기<small>점선 따라 슥슥</small></button>
       <button class="mode" data-go="book" style="background:#ffb703"><span class="em">📒</span>스티커북<small>${Object.keys(S.prog.words).length} / ${ALLWORDS.length}</small></button>
     </div>`;
   const hero=document.getElementById('hero');
@@ -692,6 +716,116 @@ SCREENS.book=()=>{
   app.querySelectorAll('.sticker[data-w]').forEach(s=>s.onclick=()=>{ const x=WORD[s.dataset.w]; hop(s);
     play([...(x.g?x.g.flatMap(g=>[{g},{wait:60}]):[]),{t:x.w},...(S.set.koHint?[{ko:x.k}]:[])]); });
   app.querySelectorAll('.sticker.lock').forEach(s=>s.onclick=()=>{ hop(s,'wob'); toast('단어 합체나 퀴즈로 모아요!'); });
+};
+
+/* 따라 쓰기 — 채점 없이 가이드를 따라 써 보기
+   좌표: 가로 0~100, 윗선 10 · 가운뎃선 45 · 밑선 80 · 아랫선 108 (획마다 SVG 경로, 쓰는 순서대로) */
+const BOWL_L="M67 52 C62 44 52 43 45 46 C35 51 32 70 40 77 C48 84 62 80 67 68";
+const BOWL_R="M33 64 C36 48 52 43 61 47 C71 52 72 72 63 78 C54 84 38 80 33 70";
+const ARCH="C38 48 46 44 54 45 C62 46 66 52 66 60 V80";
+const BIG_O="M50 10 C36 10 27 26 27 45 C27 64 36 80 50 80 C64 80 73 64 73 45 C73 26 64 10 50 10";
+const STROKES={
+  a:[BOWL_L,"M68 45 V80"], b:["M33 10 V80",BOWL_R], c:["M67 52 C62 44 52 43 45 46 C35 51 32 70 40 77 C48 84 62 81 67 72"], d:[BOWL_L,"M68 10 V80"],
+  e:["M33 63 H67 C67 50 58 44 50 44 C38 44 32 54 33 64 C34 77 44 82 52 81 C59 80 64 77 67 73"],
+  f:["M64 14 C60 9 50 8 46 14 C44 18 44 22 44 28 V80","M32 46 H60"],
+  g:[BOWL_L,"M68 45 V96 C68 106 58 110 50 108 C43 107 38 104 36 100"], h:["M34 10 V80","M34 60 "+ARCH],
+  i:["M50 45 V80","M50 29 V31"], j:["M54 45 V98 C54 106 48 109 42 108 C38 107 35 104 34 101","M54 29 V31"],
+  k:["M36 10 V80","M64 45 L36 66","M45 59 L66 80"], l:["M50 10 V80"],
+  m:["M26 45 V80","M26 58 C28 48 34 45 39 45 C45 45 48 50 48 58 V80","M48 58 C50 48 56 45 61 45 C67 45 72 50 72 58 V80"],
+  n:["M34 45 V80","M34 60 "+ARCH], o:["M50 44 C38 44 32 54 32 62 C32 72 40 81 50 81 C60 81 68 72 68 62 C68 52 61 44 50 44"],
+  p:["M33 45 V108",BOWL_R], q:[BOWL_L,"M68 45 V108"], r:["M38 45 V80","M38 62 C40 50 48 44 62 46"],
+  s:["M65 50 C61 45 55 44 50 44 C42 44 36 48 37 54 C38 61 48 61 54 63 C62 65 66 69 64 75 C61 81 52 82 47 81 C42 80 37 78 35 74"],
+  t:["M48 18 V74 C48 79 52 81 56 81 C60 81 63 79 64 77","M34 45 H62"], u:["M34 45 V66 C34 76 42 81 50 81 C58 81 66 76 66 66","M66 45 V80"],
+  v:["M32 45 L50 80 L68 45"], w:["M24 45 L36 80 L50 52 L64 80 L76 45"], x:["M34 45 L66 80","M66 45 L34 80"],
+  y:["M32 45 L50 80","M68 45 L44 108"], z:["M34 45 H66 L34 80 H66"],
+  A:["M50 10 L26 80","M50 10 L74 80","M35 55 H65"], B:["M32 10 V80","M32 10 H52 C62 10 66 18 66 26 C66 36 58 44 50 44 H32","M50 44 H54 C64 44 70 52 70 62 C70 72 63 80 52 80 H32"],
+  C:["M70 22 C64 12 56 10 50 10 C36 10 28 26 28 45 C28 64 36 80 50 80 C58 80 66 76 70 68"], D:["M32 10 V80","M32 10 H46 C62 10 70 26 70 45 C70 64 62 80 46 80 H32"],
+  E:["M34 10 V80","M34 10 H66","M34 45 H60","M34 80 H66"], F:["M34 10 V80","M34 10 H66","M34 45 H60"],
+  G:["M70 22 C64 12 56 10 50 10 C36 10 28 26 28 45 C28 64 36 80 50 80 C62 80 70 70 70 56 V50 H54"],
+  H:["M30 10 V80","M70 10 V80","M30 45 H70"], I:["M50 10 V80","M38 10 H62","M38 80 H62"], J:["M60 10 V64 C60 75 54 80 46 80 C38 80 33 75 32 68"],
+  K:["M32 10 V80","M68 10 L32 50","M44 38 L70 80"], L:["M34 10 V80 H66"], M:["M24 80 V10 L50 56 L76 10 V80"], N:["M30 80 V10 L70 80 V10"],
+  O:[BIG_O], P:["M32 10 V80","M32 10 H50 C62 10 68 18 68 28 C68 38 62 46 50 46 H32"], Q:[BIG_O,"M56 64 L72 84"],
+  R:["M32 10 V80","M32 10 H50 C62 10 68 18 68 28 C68 38 62 46 50 46 H32","M48 46 L70 80"],
+  S:["M68 20 C64 13 57 10 50 10 C40 10 32 15 32 25 C32 36 44 40 52 43 C62 47 70 51 70 62 C70 74 60 80 50 80 C40 80 33 76 30 70"],
+  T:["M26 10 H74","M50 10 V80"], U:["M30 10 V58 C30 72 38 80 50 80 C62 80 70 72 70 58 V10"], V:["M26 10 L50 80 L74 10"],
+  W:["M18 10 L32 80 L50 30 L68 80 L82 10"], X:["M30 10 L70 80","M70 10 L30 80"], Y:["M28 10 L50 46","M72 10 L50 46 V80"], Z:["M30 10 H70 L30 80 H70"],
+};
+const CRAYONS=['#ff5d8f','#ff7a59','#ffb703','#6ccf5f','#3fb6e8','#a07bff'];
+let writeCase=store.get('phonics-case','lower'), writeColor=CRAYONS[0], writeScreen=0;
+SCREENS.write=arg=>{
+  const g=(arg&&STROKES[arg])?arg:(writeCase==='upper'?'A':'a'), low=g.toLowerCase();
+  writeCase=g===low?'lower':'upper'; store.set('phonics-case',writeCase);
+  const set=writeCase==='upper'?LETTERS.map(l=>l.toUpperCase()):LETTERS, i=set.indexOf(g);
+  const prev=set[(i+25)%26], next=set[(i+1)%26], [w,e,k]=LW[low], done=(S.prog.written||{})[g];
+  const strokes=STROKES[g];
+  const startDot=(d,n)=>{ const m=d.match(/^M\s*([\d.]+)\s+([\d.]+)/); return `<g class="wd"><circle cx="${m[1]}" cy="${m[2]}" r="4.6"/><text x="${m[1]}" y="${+m[2]+2.2}">${n}</text></g>`; };
+  app.innerHTML=`${topBar('따라 쓰기')}
+    <div class="wtop"><div class="seg"><button data-case="lower" class="${writeCase==='lower'?'on':''}">a 소문자</button><button data-case="upper" class="${writeCase==='upper'?'on':''}">A 대문자</button></div>
+      <div class="wpick">${set.map(l=>`<button data-l="${l}" class="${l===g?'on':''}${(S.prog.written||{})[l]?' did':''}">${l}</button>`).join('')}</div></div>
+    <div class="wmain">
+      <div class="wpad" id="pad"><svg viewBox="0 0 100 115" aria-label="${g} 따라 쓰기">
+        <line x1="2" x2="98" y1="10" y2="10" class="gl"/><line x1="2" x2="98" y1="45" y2="45" class="gl mid"/><line x1="2" x2="98" y1="80" y2="80" class="gl base"/><line x1="2" x2="98" y1="108" y2="108" class="gl"/>
+        ${strokes.map(d=>`<path d="${d}" class="wg"/>`).join('')}${strokes.map(d=>`<path d="${d}" class="wc"/>`).join('')}
+        <g id="demo"></g>${strokes.map((d,n)=>startDot(d,n+1)).join('')}
+      </svg><canvas id="ink"></canvas></div>
+      <div class="wside">
+        <div class="wbig">${g}</div>
+        <div class="wordcard" id="wc"><span class="e">${e}</span><span>${w}${S.set.koHint?`<small>${k}</small>`:''}</span></div>
+        <div class="crayons">${CRAYONS.map(c=>`<button data-c="${c}" style="background:${c}" class="${c===writeColor?'on':''}" aria-label="크레용"></button>`).join('')}</div>
+        <div class="row"><button class="big-btn alt" id="show">👀 보여줘</button><button class="big-btn alt" id="clr">🧽 지우기</button></div>
+        <button class="big-btn go" id="fin" style="font-size:24px">✅ 다 썼어요!</button>
+        <div class="row"><button class="big-btn alt small" id="prev">◀ ${prev}</button><button class="big-btn alt small" id="next">${next} ▶</button></div>
+      </div>
+    </div>`;
+  // 시작점이 겹치는 획(R의 1·2획 등)은 뒤 번호를 자기 획 쪽으로 조금 옮겨 둘 다 보이게
+  { const guides=[...app.querySelectorAll('.wpad .wg')], dots=[...app.querySelectorAll('.wpad .wd')], put=[];
+    dots.forEach((dot,n)=>{ const c=dot.querySelector('circle'); let x=+c.getAttribute('cx'), y=+c.getAttribute('cy');
+      const near=()=>put.find(([px,py])=>Math.hypot(px-x,py-y)<10);
+      if(near()){ const q=guides[n].getPointAtLength(Math.min(13,guides[n].getTotalLength()*.4)); x=q.x; y=q.y;
+        const o=near(); if(o){ const dx=x-o[0], dy=y-o[1], L=Math.hypot(dx,dy)||1; x=o[0]+dx/L*10; y=o[1]+dy/L*10; }
+        c.setAttribute('cx',x); c.setAttribute('cy',y); const t=dot.querySelector('text'); t.setAttribute('x',x); t.setAttribute('y',y+2.2); }
+      put.push([x,y]); }); }
+  app.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>{ sfx.pop(); go('write',b.dataset.case==='upper'?low.toUpperCase():low); });
+  app.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ sfx.pop(); go('write',b.dataset.l); });
+  const on=app.querySelector('.wpick .on'); if(on) on.scrollIntoView({block:'nearest',inline:'center'});
+  document.getElementById('prev').onclick=()=>go('write',prev); document.getElementById('next').onclick=()=>go('write',next);
+  document.getElementById('wc').onclick=()=>play([{t:w}]);
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ writeColor=b.dataset.c; app.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b)); });
+  // 손가락으로 쓰는 판 (채점 없음)
+  const pad=document.getElementById('pad'), cv=document.getElementById('ink'), ctx=cv.getContext('2d'), svg=pad.querySelector('svg');
+  const size=()=>{ const r=pad.getBoundingClientRect(), dpr=devicePixelRatio||1; cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineCap=ctx.lineJoin='round'; };
+  size(); let drew=false, last=null;
+  const pt=e=>{ const r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
+  cv.onpointerdown=e=>{ e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){} last=pt(e); drew=true;
+    ctx.fillStyle=writeColor; ctx.beginPath(); ctx.arc(last[0],last[1],cv.getBoundingClientRect().width*.045,0,Math.PI*2); ctx.fill(); };
+  cv.onpointermove=e=>{ if(!last) return; const p=pt(e); ctx.strokeStyle=writeColor; ctx.lineWidth=cv.getBoundingClientRect().width*.09;
+    ctx.beginPath(); ctx.moveTo(last[0],last[1]); ctx.lineTo(p[0],p[1]); ctx.stroke(); last=p; };
+  cv.onpointerup=cv.onpointercancel=()=>{ last=null; };
+  document.getElementById('clr').onclick=()=>{ sfx.pop(); ctx.clearRect(0,0,cv.width,cv.height); drew=false; };
+  // 👀 쓰는 순서 보여주기
+  const layer=pad.querySelector('#demo'), screen=++writeScreen; // 이 화면의 판에만 그림 (글자를 바꾸면 앞 시연은 멈춤)
+  let demoId=0;
+  const demo=async()=>{ const my=++demoId, alive=()=>my===demoId&&screen===writeScreen&&document.body.contains(layer);
+    if(!alive()) return; layer.innerHTML='';
+    play([{g:low}]);
+    for(const d of strokes){ if(!alive()) return;
+      const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',d); p.setAttribute('class','wdemo'); layer.appendChild(p);
+      const pen=document.createElementNS('http://www.w3.org/2000/svg','text'); pen.textContent='✏️'; pen.setAttribute('class','wpen'); layer.appendChild(pen);
+      const L=p.getTotalLength(), T=Math.max(500,L*14); p.style.strokeDasharray=L; p.style.strokeDashoffset=L;
+      await new Promise(res=>{ const t0=performance.now(); const step=t=>{ if(!alive()){ pen.remove(); res(); return; } const f=Math.min(1,(t-t0)/T);
+        p.style.strokeDashoffset=L*(1-f); const q=p.getPointAtLength(L*f); pen.setAttribute('x',q.x-1); pen.setAttribute('y',q.y-1);
+        if(f<1) requestAnimationFrame(step); else { pen.remove(); res(); } }; requestAnimationFrame(step); });
+      await sleep(250); } };
+  document.getElementById('show').onclick=()=>{ sfx.pop(); demo(); };
+  // ✅ 다 썼어요 — 평가 없이 칭찬만
+  document.getElementById('fin').onclick=()=>{
+    if(!drew){ toast('손가락으로 따라 써 봐요 ✏️'); hop(document.getElementById('show'),'wob'); return; }
+    confetti(); sfx.yay(); S.prog.written=S.prog.written||{}; const first=!S.prog.written[g]; S.prog.written[g]=(S.prog.written[g]||0)+1; saveProg(); addStar();
+    app.querySelector(`.wpick [data-l="${g}"]`).classList.add('did');
+    play([{t:pick(['Great job!','Well done!','Wonderful!']),r:1},{g:low},{wait:200},{t:w},{ko:first?'멋지게 썼어요!':'또 썼네! 최고!'}]);
+    const fin=document.getElementById('fin'); fin.textContent='🌟 멋져요! 다음 글자 ▶'; fin.onclick=()=>go('write',next);
+  };
+  setTimeout(()=>{ if(cur==='write'&&!drew&&screen===writeScreen) demo(); },350);
 };
 
 /* 영상 보기 (어른이 연결한 링크만) */
