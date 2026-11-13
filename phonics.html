@@ -154,6 +154,15 @@ pre{font-family:ui-monospace,monospace;font-size:12px;background:var(--soft);bor
 .confetti{position:fixed;top:-20px;width:12px;height:16px;z-index:60;pointer-events:none;animation:fall linear forwards;border-radius:3px}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}
+.align{background:rgba(20,16,40,.92);justify-content:flex-start;padding-top:max(16px,env(safe-area-inset-top))}
+.aw-tip{color:#fff;font-size:17px;text-align:center;max-width:700px}
+.aw-box{position:relative;z-index:1;flex:none;touch-action:none}
+.align .row,.align .aw-tip{position:relative;z-index:2}
+.aw-box img{width:100%;height:100%;display:block;-webkit-user-drag:none}
+.aw-frame{position:absolute;outline:2px solid #ff3d7f;cursor:move;touch-action:none}
+.aw-frame i{position:absolute;border:2px solid #ff3d7f;background:rgba(255,61,127,.08);pointer-events:none}
+.aw-frame b{position:absolute;left:2px;top:0;font-weight:normal;font-size:12px;color:#fff;background:#ff3d7f;border-radius:0 0 6px 0;padding:0 4px}
+.aw-h{position:absolute;right:-16px;bottom:-16px;width:32px;height:32px;border-radius:50%;background:#ff3d7f;border:3px solid #fff;cursor:nwse-resize;touch-action:none}
 .overlay iframe{width:min(96vw,960px);aspect-ratio:16/9;border:0;border-radius:16px;background:#000}
 .cheer{text-align:center;font-size:clamp(30px,8vw,46px)}
 .cheer .em{font-size:clamp(90px,26vw,140px);display:block;animation:popin .6s cubic-bezier(.3,1.6,.6,1)}
@@ -791,41 +800,100 @@ async function loadAlphablocks(){
   toast('알파블록스 친구들이 왔어요! 🎉');
 }
 
-/* 글자 카드 시트(5열 × 6줄 점선 카드, a~z) → 글자마다 한 장씩, 기기 안에서만 자르기 */
-const SHEET={w:936,h:1244,x0:28,px:185,cw:137,y0:19,py:209.2,ch:175,cols:5,inset:6};
+/* 글자 카드 시트(5열 × 6줄 점선 카드, a~z) → 글자마다 한 장씩, 기기 안에서만 자르기
+   격자 단위: 카드 폭 137, 가로 간격 185, 카드 높이 175, 세로 간격 209.2 → 격자 전체 877 × 1221 */
+const GRID={cols:5,rows:6,cw:137,px:185,ch:175,py:209.2,W:877,H:1221,inset:8};
 function trimWhite(c){
   const x=c.getContext('2d'), {width:w,height:h}=c, d=x.getImageData(0,0,w,h).data;
   let l=w,t=h,r=-1,b=-1;
-  for(let y=0;y<h;y++) for(let i=0;i<w;i++){ const o=(y*w+i)*4; if(Math.min(d[o],d[o+1],d[o+2])<232){ if(i<l)l=i; if(i>r)r=i; if(y<t)t=y; if(y>b)b=y; } }
-  if(r<0) return null;
+  for(let y=0;y<h;y++) for(let i=0;i<w;i++){ const o=(y*w+i)*4; if(Math.min(d[o],d[o+1],d[o+2])<225){ if(i<l)l=i; if(i>r)r=i; if(y<t)t=y; if(y>b)b=y; } }
+  if(r<0||r-l<8||b-t<8) return null;
   const p=4; l=Math.max(0,l-p); t=Math.max(0,t-p); r=Math.min(w-1,r+p); b=Math.min(h-1,b+p);
   const k=Math.min(1,360/Math.max(r-l+1,b-t+1)), o=document.createElement('canvas');
   o.width=Math.round((r-l+1)*k); o.height=Math.round((b-t+1)*k);
   o.getContext('2d').drawImage(c,l,t,r-l+1,b-t+1,0,0,o.width,o.height); return o;
 }
+// 점선(짧은 회색 조각이 고르게 반복되는 줄)을 찾아 격자 위치 추정 → {x,y,w} (원본 픽셀)
+function detectGrid(im){
+  const W0=im.naturalWidth, H0=im.naturalHeight, s=Math.min(1,1200/Math.max(W0,H0));
+  const w=Math.max(1,Math.round(W0*s)), h=Math.max(1,Math.round(H0*s));
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(im,0,0,w,h); const d=x.getImageData(0,0,w,h).data;
+  // 0: 그 밖, 1: 연회색(점선 조각), 2: 흰 바탕
+  const kd=new Uint8Array(w*h);
+  for(let i=0;i<w*h;i++){ const r=d[i*4],g=d[i*4+1],b=d[i*4+2], m=(r+g+b)/3, sat=Math.max(r,g,b)-Math.min(r,g,b);
+    kd[i]=m>=236?2:(m>90&&sat<40?1:0); }
+  const dashes=(get,len)=>{ // 짧은 회색 조각(2~24px) 다음에 짧은 흰 틈(2~24px)이 오는 횟수
+    let n=0, cur=-1, run=0, inkOk=false;
+    const fin=()=>{ const ok=run>=2&&run<=24; if(cur===1) inkOk=ok; else { if(cur===2&&inkOk&&ok) n++; inkOk=false; } };
+    for(let i=0;i<len;i++){ const v=get(i); if(v===cur){ run++; continue; } fin(); cur=v; run=1; }
+    fin(); return n; };
+  const kind=i=>kd[i];
+  const colS=Array.from({length:w},(_,X)=>dashes(Y=>kind(Y*w+X),h));
+  const rowS=Array.from({length:h},(_,Y)=>dashes(X=>kind(Y*w+X),w));
+  const lines=(S)=>{ const mx=Math.max(...S); if(mx<6) return []; const out=[]; let st=-1;
+    S.forEach((v,i)=>{ if(v>=mx*.45){ if(st<0) st=i; } else if(st>=0){ out.push((st+i-1)/2); st=-1; } }); if(st>=0) out.push((st+S.length-1)/2); return out; };
+  const xs=lines(colS), ys=lines(rowS);
+  if(xs.length<2||!ys.length) return null;
+  const gw=xs[xs.length-1]-xs[0]; if(gw<w*.25) return null;
+  return {x:xs[0]/s, y:ys[0]/s, w:gw/s};
+}
+function cutCards(im,g){
+  const k=g.w/GRID.W, out=[];
+  for(let i=0;i<26;i++){
+    const col=i%GRID.cols, row=i/GRID.cols|0, I=GRID.inset;
+    const sx=g.x+(col*GRID.px+I)*k, sy=g.y+(row*GRID.py+I)*k, sw=(GRID.cw-2*I)*k, sh=(GRID.ch-2*I)*k;
+    const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(sw)); c.height=Math.max(1,Math.round(sh));
+    const x=c.getContext('2d',{willReadFrequently:true}); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+    x.drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height); out.push(trimWhite(c));
+  }
+  return out;
+}
+// 어른이 칸을 맞추는 화면: 가운데를 끌면 이동, ● 를 끌면 크기
+function alignSheet(im,g0){
+  return new Promise(done=>{
+    const W0=im.naturalWidth, H0=im.naturalHeight;
+    const fw=Math.min(W0*.94,H0*.97*GRID.W/GRID.H); // 기본 칸은 그림 안에 다 들어오게
+    const g=g0||{x:(W0-fw)/2,y:(H0-fw*GRID.H/GRID.W)/2,w:fw};
+    const o=document.createElement('div'); o.className='overlay align';
+    o.innerHTML=`<div class="aw-tip">${g0?'점선 카드에 칸이 맞는지 확인해 주세요.':'칸을 점선 카드에 맞춰 주세요.'} 가운데를 끌면 움직이고, 오른쪽 아래 ● 를 끌면 크기가 바뀌어요.</div>
+      <div class="aw-box"><img alt="글자 카드 시트"><div class="aw-frame">${Array.from({length:26},(_,i)=>{ const c=i%5,r=i/5|0;
+        return `<i style="left:${c*GRID.px/GRID.W*100}%;top:${r*GRID.py/GRID.H*100}%;width:${GRID.cw/GRID.W*100}%;height:${GRID.ch/GRID.H*100}%"><b>${LETTERS[i]}</b></i>`; }).join('')}<span class="aw-h"></span></div></div>
+      <div class="row"><button class="big-btn alt" data-x="0">취소</button><button class="big-btn go" data-x="1">✂️ 이대로 자르기</button></div>`;
+    document.body.appendChild(o);
+    const img=o.querySelector('img'), box=o.querySelector('.aw-box'), fr=o.querySelector('.aw-frame'), hd=o.querySelector('.aw-h');
+    img.src=im.src;
+    const fit=()=>{ const mw=Math.min(innerWidth-32,900), mh=innerHeight-190, k=Math.min(mw/W0,mh/H0); box.style.width=W0*k+'px'; box.style.height=H0*k+'px'; return k; };
+    let k=fit();
+    const draw=()=>{ fr.style.left=g.x*k+'px'; fr.style.top=g.y*k+'px'; fr.style.width=g.w*k+'px'; fr.style.height=g.w*GRID.H/GRID.W*k+'px'; };
+    draw(); const onR=()=>{ k=fit(); draw(); }; addEventListener('resize',onR);
+    let drag=null;
+    const start=(mode)=>e=>{ e.preventDefault(); e.stopPropagation(); drag={mode,sx:e.clientX,sy:e.clientY,g:{...g}}; try{ e.target.setPointerCapture(e.pointerId); }catch(_){} };
+    fr.onpointerdown=start('move'); hd.onpointerdown=start('size');
+    const move=e=>{ if(!drag) return; const dx=(e.clientX-drag.sx)/k, dy=(e.clientY-drag.sy)/k;
+      if(drag.mode==='move'){ g.x=drag.g.x+dx; g.y=drag.g.y+dy; } else g.w=Math.max(W0*.1,drag.g.w+dx);
+      draw(); };
+    fr.onpointermove=move; hd.onpointermove=move;
+    fr.onpointerup=hd.onpointerup=fr.onpointercancel=hd.onpointercancel=()=>{ drag=null; };
+    o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ removeEventListener('resize',onR); o.remove(); done(b.dataset.x==='1'?g:null); });
+  });
+}
 async function loadSheet(file){
   const msg=document.getElementById('abMsg'), u=URL.createObjectURL(file);
   try{
     const im=new Image(); im.src=u; await im.decode();
-    const W=im.naturalWidth, H=im.naturalHeight;
-    if(Math.abs(W/H-SHEET.w/SHEET.h)>.06){ msg.textContent='이 그림은 글자 카드 시트 모양(5칸씩 6줄, 세로로 긴 한 장)과 달라요. 글자마다 🖼 그림으로 넣어 주세요.'; return; }
-    const k=W/SHEET.w, kh=H/SHEET.h; let ok=0;
+    let g0=null; try{ g0=detectGrid(im); }catch(e){}
+    const g=await alignSheet(im,g0); if(!g){ msg.textContent='취소했어요.'; return; }
+    msg.textContent='카드 자르는 중…';
+    const cards=cutCards(im,g); let ok=0;
     S.set.ab=S.set.ab||{}; S.set.imgUrls=S.set.imgUrls||{};
-    for(let i=0;i<26;i++){
-      const g=LETTERS[i], col=i%SHEET.cols, row=i/SHEET.cols|0;
-      msg.textContent=`카드 자르는 중… ${g} (${i+1}/26)`;
-      const sx=(SHEET.x0+col*SHEET.px+SHEET.inset)*k, sy=(SHEET.y0+row*SHEET.py+SHEET.inset)*kh;
-      const sw=(SHEET.cw-SHEET.inset*2)*k, sh=(SHEET.ch-SHEET.inset*2)*kh;
-      const c=document.createElement('canvas'); c.width=Math.round(sw); c.height=Math.round(sh);
-      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height);
-      const t=trimWhite(c); if(!t) continue;
+    for(let i=0;i<26;i++){ const t=cards[i]; if(!t) continue; const g=LETTERS[i];
       const blob=await new Promise(r=>t.toBlob(r,'image/png')); if(!blob) continue;
-      await putMedia('img:'+g,blob); delete S.set.imgUrls[g]; S.set.ab[g]='sheet'; ok++;
-    }
+      await putMedia('img:'+g,blob); delete S.set.imgUrls[g]; S.set.ab[g]='sheet'; ok++; }
     saveSet(); refreshRows();
-    msg.textContent=`${ok}/26 글자 카드를 넣었어요. 글자 소리 화면에서 확인해 보세요. 어긋난 글자는 아래에서 🖼 그림으로 바꿀 수 있어요.`;
-    toast('알파블록스 친구들이 왔어요! 🎉');
-  }catch(e){ msg.textContent='그림을 읽지 못했어요. 다른 사진으로 다시 해 주세요.'; }
+    msg.textContent=ok?`${ok}/26 글자 카드를 넣었어요. 아래 목록과 글자 소리 화면에서 확인해 보세요. 어긋났으면 다시 넣거나, 글자마다 🖼 그림으로 바꿀 수 있어요.`:'카드를 찾지 못했어요. 칸을 점선 카드에 맞춰 다시 해 주세요.';
+    if(ok) toast('알파블록스 친구들이 왔어요! 🎉');
+  }catch(e){ msg.textContent='그림을 읽지 못했어요. 사진 앱에서 JPG/PNG로 저장한 그림으로 다시 해 주세요.'; }
   finally{ URL.revokeObjectURL(u); }
 }
 
