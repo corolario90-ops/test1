@@ -171,6 +171,11 @@ pre{font-family:ui-monospace,monospace;font-size:12px;background:var(--soft);bor
 .wv-segs button{border:3px solid transparent;background:#fff;color:#2b2b3a;border-radius:14px;padding:6px 12px;font-size:20px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1}
 .wv-segs button small{font-size:12px;opacity:.7}
 .wv-segs button.on{border-color:#ff3d7f}
+.cards-pick{overflow:auto;justify-content:flex-start}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;width:100%;max-width:900px}
+.cp{background:#fff;border-radius:16px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.cp img{width:100%;height:100px;object-fit:contain}
+.cp select{width:100%;font-size:18px;color:#2b2b3a;background:#f6f2ff}
 .aw-h.tl{left:-16px;top:-16px;right:auto;bottom:auto;cursor:nwse-resize}
 .aw-h{position:absolute;right:-16px;bottom:-16px;width:32px;height:32px;border-radius:50%;background:#ff3d7f;border:3px solid #fff;cursor:nwse-resize;touch-action:none}
 .overlay iframe{width:min(96vw,960px);aspect-ratio:16/9;border:0;border-radius:16px;background:#000}
@@ -200,10 +205,18 @@ const SND={
   o:['aw','아'], p:['puh','프'], q:['kwuh','쿠'], r:['rrr','뤄'], s:['sss','스'], t:['tuh','트'], u:['uh','어'],
   v:['vvv','브'], w:['wuh','워'], x:['ks','크스'], y:['yuh','이으'], z:['zzz','즈'],
   sh:['shh','쉬'], ch:['chuh','취'], th:['thh','쓰'], ck:['kuh','크'], ll:['lll','르'], ss:['sss','스'],
+  wh:['wuh','워'], qu:['kwuh','쿠'], ng:['ung','응'], ph:['fff','프'], dd:['duh','드'], mm:['mmm','음'],
+  ar:['arr','아r'], or:['or','오r'], er:['err','어r'], ir:['err','어r'], ur:['err','어r'],
+  ai:['ay','에이'], ay:['ay','에이'], ee:['ee','이-'], ea:['ee','이-'], oa:['oh','오우'],
+  oo:['oo','우-'], ue:['oo','우-'], ou:['ow','아우'], ow:['ow','아우'], oi:['oy','오이'],
 };
+// 같은 소리를 내는 짝꿍끼리 (글자 화면에서 알려 줌)
+const SAME=[['er','ir','ur'],['ai','ay'],['ee','ea'],['oo','ue'],['ou','ow']];
 const VOWELS='aeiou';
 const LETTERS='abcdefghijklmnopqrstuvwxyz'.split('');
-const PAIRS=['sh','ch','th','ck','ll','ss'];
+const PAIRS_C=['sh','ch','th','ck','ss','ll','wh','qu','ng','ph'];   // 짝꿍 자음
+const PAIRS_V=['ar','or','er','ir','ur','ai','ay','ee','ea','oa','oo','ue','ou','ow','oi']; // 짝꿍 모음
+const PAIRS=[...PAIRS_C,...PAIRS_V];
 
 // 글자마다 대표 단어 (첫소리)
 const LW={
@@ -248,7 +261,7 @@ const LEVELS=[
     nut n-u-t 🥜 땅콩
     red r-e-d 🟥 빨간색
     kid k-i-d 🧒 아이`)},
-  {id:'pair', name:'짝꿍 소리', em:'🐥', list:W(`
+  {id:'pair', name:'짝꿍 자음', em:'🐥', list:W(`
     fish f-i-sh 🐟 물고기
     ship sh-i-p 🚢 배
     duck d-u-ck 🦆 오리
@@ -262,7 +275,67 @@ const LEVELS=[
     kiss k-i-ss 💋 뽀뽀
     chin ch-i-n 🧔 턱
     moth m-o-th 🦋 나방
-    shop sh-o-p 🏪 가게`)},
+    shop sh-o-p 🏪 가게
+    wheel wh-ee-l 🛞 바퀴
+    queen qu-ee-n 👸 여왕
+    king k-i-ng 🤴 왕
+    ring r-i-ng 💍 반지
+    sing s-i-ng 🎤 노래하다
+    dolphin d-o-l-ph-i-n 🐬 돌고래`)},
+  {id:'rv', name:'짝꿍 모음 (r)', em:'🦜', list:W(`
+    car c-ar 🚗 자동차
+    star s-t-ar ⭐ 별
+    shark sh-ar-k 🦈 상어
+    farm f-ar-m 🚜 농장
+    jar j-ar 🫙 병
+    arm ar-m 💪 팔
+    fork f-or-k 🍴 포크
+    corn c-or-n 🌽 옥수수
+    horn h-or-n 📯 나팔
+    storm s-t-or-m ⛈️ 폭풍
+    fern f-er-n 🌿 고사리
+    hammer h-a-mm-er 🔨 망치
+    ladder l-a-dd-er 🪜 사다리
+    bird b-ir-d 🐦 새
+    girl g-ir-l 👧 여자아이
+    shirt sh-ir-t 👕 셔츠
+    first f-ir-s-t 🥇 첫째
+    church ch-ur-ch ⛪ 교회
+    burn b-ur-n 🔥 불타다
+    surf s-ur-f 🏄 파도타기`)},
+  {id:'vv', name:'짝꿍 모음', em:'🦚', list:W(`
+    rain r-ai-n 🌧️ 비
+    snail s-n-ai-l 🐌 달팽이
+    train t-r-ai-n 🚆 기차
+    paint p-ai-n-t 🎨 물감
+    hay h-ay 🌾 건초
+    pray p-r-ay 🙏 기도
+    bee b-ee 🐝 벌
+    tree t-r-ee 🌳 나무
+    feet f-ee-t 🦶 발
+    sheep sh-ee-p 🐑 양
+    three th-r-ee 3️⃣ 셋
+    leaf l-ea-f 🍃 나뭇잎
+    tea t-ea 🍵 차
+    peach p-ea-ch 🍑 복숭아
+    sea s-ea 🌊 바다
+    boat b-oa-t ⛵ 배
+    goat g-oa-t 🐐 염소
+    coat c-oa-t 🧥 외투
+    soap s-oa-p 🧼 비누
+    moon m-oo-n 🌙 달
+    spoon s-p-oo-n 🥄 숟가락
+    boot b-oo-t 👢 부츠
+    roof r-oo-f 🏠 지붕
+    blue b-l-ue 🔵 파란색
+    glue g-l-ue 🧴 풀
+    cloud c-l-ou-d ☁️ 구름
+    mouth m-ou-th 👄 입
+    cow c-ow 🐄 소
+    owl ow-l 🦉 부엉이
+    crown c-r-ow-n 👑 왕관
+    coin c-oi-n 🪙 동전
+    oil oi-l 🛢️ 기름`)},
   {id:'long', name:'네 글자', em:'🐓', list:W(`
     frog f-r-o-g 🐸 개구리
     crab c-r-a-b 🦀 게
@@ -276,7 +349,6 @@ const LEVELS=[
     stop s-t-o-p 🛑 멈춰
     gift g-i-f-t 🎁 선물
     clock c-l-o-ck 🕰️ 시계
-    plum p-l-u-m 🍑 자두
     lamp l-a-m-p 💡 램프`)},
 ];
 // 스티커북에 모일 단어 전체 (중복 제거)
@@ -287,7 +359,7 @@ const ALLWORDS=(()=>{ const m=new Map();
 const WORD=Object.fromEntries(ALLWORDS.map(x=>[x.w,x]));
 
 const COLORS=['#ff7a59','#ffb703','#3fb6e8','#6ccf5f','#a07bff','#ff7fa8','#26bfb0','#f9844a','#5b8def'];
-const colorOf=g=>VOWELS.includes(g)?'#ff5d8f':COLORS[(g.charCodeAt(0)*7+(g.length>1?g.charCodeAt(1):0))%COLORS.length];
+const colorOf=g=>VOWELS.includes(g)||PAIRS_V.includes(g)?'#ff5d8f':COLORS[(g.charCodeAt(0)*7+(g.length>1?g.charCodeAt(1):0))%COLORS.length];
 
 /* ---------------- 저장소 ---------------- */
 const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
@@ -368,7 +440,7 @@ function friend(g,attrs=''){
   if(img) return `<div class="friend${g.length>1?' wide':''}" data-g="${g}" ${attrs}><img class="pic" src="${img}" alt="${g}"><span class="tag">${g}</span></div>`;
   const wide=g.length>1, W=wide?140:100, c=colorOf(g), cx=W/2;
   const ex=wide?[cx-24,cx+24]:[cx-15,cx+15];
-  const crown=VOWELS.includes(g)?`<path d="M${cx-14} 14 l6 -12 l8 9 l8 -9 l6 12 z" fill="#ffd23f" stroke="#e0a800" stroke-width="2"/>`:
+  const crown=VOWELS.includes(g)||PAIRS_V.includes(g)?`<path d="M${cx-14} 14 l6 -12 l8 9 l8 -9 l6 12 z" fill="#ffd23f" stroke="#e0a800" stroke-width="2"/>`:
     `<circle cx="${cx}" cy="6" r="5" fill="${c}"/><rect x="${cx-1.5}" y="8" width="3" height="10" fill="${c}"/>`;
   return `<div class="friend${wide?' wide':''}" data-g="${g}" ${attrs}><svg viewBox="0 0 ${W} 120" role="img" aria-label="${g}">
     ${crown}
@@ -437,13 +509,16 @@ SCREENS.letters=()=>{
   app.innerHTML=`${topBar('글자 소리')}
     <p class="sub">글자 친구를 누르면 소리를 알려줘요</p>
     <div class="board">${LETTERS.map(l=>`<div class="cell">${friend(l)}<span>${l.toUpperCase()} ${l}</span><span class="seen">${S.prog.letters[l]?'⭐':'&nbsp;'}</span></div>`).join('')}</div>
-    <h2 style="text-align:center">짝꿍 소리 — 두 글자가 한 소리!</h2>
-    <div class="board">${PAIRS.map(l=>`<div class="cell">${friend(l)}<span>${l}</span></div>`).join('')}</div>`;
+    <h2 style="text-align:center">짝꿍 자음 — 두 글자가 한 소리!</h2>
+    <div class="board">${PAIRS_C.map(l=>`<div class="cell">${friend(l)}<span>${l}</span></div>`).join('')}</div>
+    <h2 style="text-align:center">짝꿍 모음 — 모음 친구가 짝을 지으면!</h2>
+    <div class="board">${PAIRS_V.map(l=>`<div class="cell">${friend(l)}<span>${l}</span></div>`).join('')}</div>`;
   app.querySelectorAll('.board .friend').forEach(f=>f.onclick=()=>{ sfx.pop(); go('letter',f.dataset.g); });
 };
 
 /* 글자 하나 크게 */
-const PAIR_WORD={sh:'ship',ch:'chick',th:'bath',ck:'duck',ll:'bell',ss:'kiss'};
+const PAIR_WORD={sh:'ship',ch:'chick',th:'bath',ck:'duck',ll:'bell',ss:'kiss',wh:'wheel',qu:'queen',ng:'ring',ph:'dolphin',
+  ar:'car',or:'fork',er:'fern',ir:'bird',ur:'church',ai:'rain',ay:'hay',ee:'bee',ea:'leaf',oa:'boat',oo:'moon',ue:'blue',ou:'cloud',ow:'cow',oi:'coin'};
 SCREENS.letter=g=>{
   const isPair=g.length>1;
   const [w,e,k]=isPair?[PAIR_WORD[g],WORD[PAIR_WORD[g]].e,WORD[PAIR_WORD[g]].k]:LW[g];
@@ -455,7 +530,7 @@ SCREENS.letter=g=>{
     <div class="letter-view">
       <div class="bigAa">${isPair?g:`${g.toUpperCase()} ${g}`}</div>
       ${friend(g,'id="big"')}
-      ${S.set.koHint?`<div class="hint">${isPair?`${g[0]}+${g[1]} 가 만나면`:g}는 <b>[${SND[g][1]}]</b> 소리${g==='x'?' (단어 끝에 자주 나와요)':''}</div>`:''}
+      ${S.set.koHint?`<div class="hint">${isPair?`${g[0]}+${g[1]} 가 만나면`:g}는 <b>[${SND[g][1]}]</b> 소리${g==='x'?' (단어 끝에 자주 나와요)':''}${(()=>{ const s=SAME.find(x=>x.includes(g)); return s?`<br><small style="font-size:.7em">${s.filter(x=>x!==g).join(', ')}도 같은 소리예요</small>`:''; })()}</div>`:''}
       <div class="wordcard" id="wc"><span class="e">${e}</span><span>${hl}${S.set.koHint?`<small>${k}</small>`:''}</span></div>
       <div class="row" style="margin-top:6px">
         <button class="big-btn alt" id="prev">◀ ${prev}</button>
@@ -664,9 +739,11 @@ SCREENS.parent=()=>{
       엉뚱한 그림이 들어온 글자는 아래 목록에서 🖼 그림으로 바꾸거나 🗑로 지울 수 있어요.</p>
       <div class="row" style="justify-content:flex-start"><button class="big-btn small" id="abGo">⬇ 알파블록스 그림 받기</button>
         <button class="big-btn small" id="sheetGo">📄 글자 카드 시트 넣기</button>
+        <button class="big-btn small" id="cardGo">🃏 짝꿍 카드 시트 넣기</button>
         <button class="big-btn small alt" id="abDel">받은 그림 지우기</button></div>
       <p class="note">📄 글자 카드 시트: a~z 캐릭터가 5칸씩 점선 카드로 놓인 한 장짜리 그림을 고르면, 기기 안에서 26장으로 잘라 글자마다 넣어요.</p>
-      <input type="file" id="sheetFile" accept="image/*" hidden>
+      <p class="note">🃏 짝꿍 카드 시트: sh·ch·ai·ee처럼 두 글자 카드가 점선으로 놓인 그림을 고르면, 카드를 한 장씩 찾아 잘라요. 카드마다 어떤 소리인지 확인한 뒤 넣어요.</p>
+      <input type="file" id="sheetFile" accept="image/*" hidden><input type="file" id="cardFile" accept="image/*" hidden>
       <p class="note" id="abMsg">${abCount()?`지금 ${abCount()}/26 글자에 알파블록스 그림이 있어요.`:''}</p>
     </div>
 
@@ -708,6 +785,9 @@ SCREENS.parent=()=>{
   const sf=document.getElementById('sheetFile');
   document.getElementById('sheetGo').onclick=()=>sf.click();
   sf.onchange=async()=>{ const f=sf.files[0]; sf.value=''; if(f) await loadSheet(f); };
+  const cf=document.getElementById('cardFile');
+  document.getElementById('cardGo').onclick=()=>cf.click();
+  cf.onchange=async()=>{ const f=cf.files[0]; cf.value=''; if(f) await loadCardSheet(f); };
   document.getElementById('abDel').onclick=async()=>{ if(!confirm('받은 알파블록스 그림을 지울까요?')) return;
     for(const g of Object.keys(S.set.ab||{})) await delMedia('img:'+g);
     S.set.ab={}; S.set.imgUrls={}; saveSet(); go('parent'); toast('지웠어요'); };
@@ -1013,6 +1093,96 @@ async function loadSheet(file){
     saveSet(); refreshRows();
     msg.textContent=ok?`${ok}/26 글자 카드를 넣었어요. 아래 목록과 글자 소리 화면에서 확인해 보세요. 어긋났으면 다시 넣거나, 글자마다 🖼 그림으로 바꿀 수 있어요.`:'카드를 찾지 못했어요. 칸을 점선 카드에 맞춰 다시 해 주세요.';
     if(ok) toast('알파블록스 친구들이 왔어요! 🎉');
+  }catch(e){ msg.textContent='그림을 읽지 못했어요. 사진 앱에서 JPG/PNG로 저장한 그림으로 다시 해 주세요.'; }
+  finally{ URL.revokeObjectURL(u); }
+}
+
+/* 점선 카드 한 장 한 장 찾기 (카드 크기·배치가 고르지 않은 시트용) → [{x,y,w,h}] 원본 픽셀, 읽는 순서 */
+function detectCards(im){
+  const W0=im.naturalWidth, H0=im.naturalHeight, s=Math.min(1,1400/Math.max(W0,H0));
+  const w=Math.max(1,Math.round(W0*s)), h=Math.max(1,Math.round(H0*s));
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d',{willReadFrequently:true});
+  x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(im,0,0,w,h); const d=x.getImageData(0,0,w,h).data;
+  const kd=new Uint8Array(w*h);
+  for(let i=0;i<w*h;i++){ const r=d[i*4],g=d[i*4+1],b=d[i*4+2], m=(r+g+b)/3, sat=Math.max(r,g,b)-Math.min(r,g,b);
+    kd[i]=m>=236?2:(m>60&&sat<40?1:0); }
+  // 회색 조각과 흰 틈이 2~30px로 번갈아 이어지는 구간(점선) 찾기
+  const scan=(get,len,minLen,out)=>{
+    let st=-1, dashes=0, cur=-1, run=0, lastInk=-1, gapSum=0, gapN=0;
+    const close=()=>{ if(st>=0&&dashes>=6&&lastInk-st>=minLen) out(st,lastInk); st=-1; dashes=0; gapSum=0; gapN=0; };
+    const fin=(i)=>{ const ok=run>=2&&run<=30;
+      if(cur===1){ if(ok){ if(st<0) st=i-run; dashes++; lastInk=i-1; } else close(); }
+      else if(cur===2){ // 점선 틈보다 훨씬 넓은 흰 틈 = 옆 카드와의 사이 → 선을 끊음
+        const lim=gapN>=3?Math.max(6,gapSum/gapN*2.2):30;
+        if(ok&&run<=lim){ if(st>=0){ gapSum+=run; gapN++; } } else close(); }
+      else if(run>2) close(); };
+    for(let i=0;i<len;i++){ const v=get(i); if(v===cur){ run++; continue; } if(cur>=0) fin(i); cur=v; run=1; }
+    fin(len); close(); };
+  const H=[], V=[];
+  for(let y=0;y<h;y++) scan(X=>kd[y*w+X],w,w*.06,(a,b)=>H.push({p:y,a,b}));
+  for(let X=0;X<w;X++) scan(y=>kd[y*w+X],h,h*.04,(a,b)=>V.push({p:X,a,b}));
+  const merge=L=>{ const out=[]; L.sort((u,v)=>u.p-v.p);
+    for(const l of L){ const m=out.find(o=>Math.abs(o.p-l.p)<=8&&Math.abs(o.a-l.a)<14&&Math.abs(o.b-l.b)<14);
+      if(m){ m.a=Math.min(m.a,l.a); m.b=Math.max(m.b,l.b); m.p=(m.p*m.n+l.p)/(m.n+1); m.n++; } else out.push({...l,n:1}); } return out; };
+  const hs=merge(H), vs=merge(V), tol=w*.02+8, used=new Set(), cards=[];
+  hs.forEach((t,i)=>{ if(used.has(i)) return; let best=-1;
+    hs.forEach((b,j)=>{ if(j===i||used.has(j)||b.p<=t.p+h*.04||b.p>t.p+h*.6) return;
+      if(Math.abs(b.a-t.a)>tol||Math.abs(b.b-t.b)>tol) return; if(best<0||b.p<hs[best].p) best=j; });
+    if(best<0) return; const b=hs[best], x1=Math.min(t.a,b.a), x2=Math.max(t.b,b.b);
+    const side=X=>vs.some(v=>Math.abs(v.p-X)<=tol&&Math.min(v.b,b.p)-Math.max(v.a,t.p)>=(b.p-t.p)*.5);
+    if(!side(x1)&&!side(x2)) return;
+    used.add(i); used.add(best); cards.push({x:x1/s,y:t.p/s,w:(x2-x1)/s,h:(b.p-t.p)/s}); });
+  // 크기가 보통 카드와 많이 다르거나 다른 카드와 겹치는 것은 빼기 (끊긴 점선 조각으로 생긴 가짜)
+  const med=k=>cards.map(c=>c[k]).sort((a,b)=>a-b)[cards.length>>1];
+  const mw=med('w'), mh0=med('h'), keep=[];
+  cards.filter(c=>c.w>mw*.7&&c.w<mw*1.45&&c.h>mh0*.7&&c.h<mh0*1.45).sort((a,b)=>b.w*b.h-a.w*a.h).forEach(c=>{
+    const ov=keep.some(k=>Math.min(k.x+k.w,c.x+c.w)-Math.max(k.x,c.x)>0&&Math.min(k.y+k.h,c.y+c.h)-Math.max(k.y,c.y)>0);
+    if(!ov) keep.push(c); });
+  cards.length=0; cards.push(...keep);
+  // 읽는 순서: 줄(위→아래) 다음 칸(왼→오)
+  const mh=cards.length?cards.map(c=>c.h).sort((a,b)=>a-b)[cards.length>>1]:0;
+  cards.sort((a,b)=>Math.abs(a.y-b.y)<mh*.4?a.x-b.x:a.y-b.y);
+  return cards;
+}
+function cutCard(im,r){
+  const I=Math.max(4,r.w*.02), sw=r.w-2*I, sh=r.h-2*I;
+  const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(sw)); c.height=Math.max(1,Math.round(sh));
+  const x=c.getContext('2d',{willReadFrequently:true}); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+  x.drawImage(im,r.x+I,r.y+I,sw,sh,0,0,c.width,c.height); return trimWhite(c);
+}
+// 알려진 시트 순서 (카드 수로 짐작, 겹치거나 모르는 카드는 비워 둠)
+const KNOWN_SHEETS={
+  12:['wh','qu','ng','ar','or','er','ir','ur','oa','ue','ai','ck'],
+  18:['sh','ch','th','ck','ss','ll','ph','ee','ea','oo','ai','','ou','','ay','','ow','oi'],
+  26:LETTERS,
+};
+async function loadCardSheet(file){
+  const msg=document.getElementById('abMsg'), u=URL.createObjectURL(file);
+  try{
+    const im=new Image(); im.src=u; await im.decode();
+    msg.textContent='점선 카드를 찾는 중…'; await sleep(30);
+    const rects=detectCards(im);
+    if(!rects.length){ msg.textContent='점선 카드를 찾지 못했어요. 글자·짝꿍마다 🖼 그림으로 넣어 주세요 (필요한 부분만 잘라 쓸 수 있어요).'; return; }
+    const cards=rects.map(r=>cutCard(im,r)).filter(Boolean), guess=KNOWN_SHEETS[cards.length]||[];
+    const blobs=await Promise.all(cards.map(c=>new Promise(r=>c.toBlob(r,'image/png'))));
+    const urls=blobs.map(b=>URL.createObjectURL(b));
+    const opts=(sel)=>`<option value="">— 안 씀 —</option><optgroup label="짝꿍 자음">${PAIRS_C.map(g=>`<option${g===sel?' selected':''}>${g}</option>`).join('')}</optgroup>
+      <optgroup label="짝꿍 모음">${PAIRS_V.map(g=>`<option${g===sel?' selected':''}>${g}</option>`).join('')}</optgroup>
+      <optgroup label="글자">${LETTERS.map(g=>`<option${g===sel?' selected':''}>${g}</option>`).join('')}</optgroup>`;
+    const o=document.createElement('div'); o.className='overlay align cards-pick';
+    o.innerHTML=`<div class="aw-tip">카드 ${cards.length}장을 찾았어요. ${guess.length?'카드 순서로 이름을 짐작해 붙였어요. ':''}카드마다 어떤 소리인지 확인하고, 다르면 바꿔 주세요. 겹치는 카드는 '안 씀'으로 두면 돼요.</div>
+      <div class="cp-grid">${urls.map((u,i)=>`<label class="cp"><img src="${u}" alt=""><select data-i="${i}">${opts(guess[i]||'')}</select></label>`).join('')}</div>
+      <div class="row"><button class="big-btn alt" data-x="0">취소</button><button class="big-btn go" data-x="1">💾 넣기</button></div>`;
+    document.body.appendChild(o);
+    const pick=await new Promise(res=>o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>res(b.dataset.x==='1'?[...o.querySelectorAll('select')].map(s=>s.value):null)));
+    o.remove(); urls.forEach(x=>URL.revokeObjectURL(x));
+    if(!pick){ msg.textContent='취소했어요.'; return; }
+    S.set.ab=S.set.ab||{}; S.set.imgUrls=S.set.imgUrls||{}; const done=[];
+    for(let i=0;i<pick.length;i++){ const g=pick[i]; if(!g||!blobs[i]) continue;
+      await putMedia('img:'+g,blobs[i]); delete S.set.imgUrls[g]; S.set.ab[g]='sheet'; done.push(g); }
+    saveSet(); refreshRows();
+    msg.textContent=done.length?`${done.length}장을 넣었어요: ${done.join(', ')}`:'넣은 카드가 없어요.';
+    if(done.length) toast('카드 친구들이 왔어요! 🎉');
   }catch(e){ msg.textContent='그림을 읽지 못했어요. 사진 앱에서 JPG/PNG로 저장한 그림으로 다시 해 주세요.'; }
   finally{ URL.revokeObjectURL(u); }
 }
