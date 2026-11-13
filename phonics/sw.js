@@ -1,6 +1,6 @@
 // 글자 친구 파닉스: 한 번 열고 나면 인터넷 없이도 열리도록 앱 파일을 기기에 보관
 // (진행 상황은 localStorage, 받은 그림·녹음은 IndexedDB. 기기에 저장하지 못한 알파블록스 그림만 여기서 따로 보관)
-const CACHE = 'phonics-2c60d2782c';
+const CACHE = 'phonics-238d241412';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icons/phonics-192.png", "icons/phonics-512.png", "../fonts/jua.woff2"];
 
 self.addEventListener('install', e => {
