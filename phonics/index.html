@@ -829,8 +829,8 @@ async function toggleRec(g){
   r.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
   r.onstop=async()=>{ stream.getTracks().forEach(t=>t.stop()); clearTimeout(r.tm); if(recorder===r) recorder=null;
     if(chunks.length){ await putMedia('snd:'+g,new Blob(chunks,{type:r.mimeType||'audio/mp4'})); refreshRows(); play([{g}]); } else refreshRows(); };
-  r.start(); r.tm=setTimeout(()=>{ if(r.state==='recording') r.stop(); },3000);
-  refreshRows(); toast('🎙 '+g+' 소리를 짧게 말해 주세요 (3초)',1800);
+  r.start(); r.tm=setTimeout(()=>{ if(r.state==='recording') r.stop(); },7000);
+  refreshRows(); toast('🎙 '+g+' 소리를 말해 주세요 (최대 7초 · 다 하면 ⏹ 멈추기)',2600);
 }
 // 소리 파일에서 쓸 부분 고르기: 말소리 덩어리를 찾아 보여 주고, 눌러 들어 본 뒤 그 부분만 저장 (기기 안에서만)
 function audioCtx(){ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }
