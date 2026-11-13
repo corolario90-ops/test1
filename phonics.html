@@ -66,7 +66,7 @@ h3{font-weight:normal;font-size:19px;margin:16px 0 8px}
 /* ---------- 글자 친구 ---------- */
 .friend{display:inline-flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;--fw:84px;transition:transform .35s}
 .friend svg,.friend .pic{width:var(--fw);height:calc(var(--fw)*1.2);display:block;overflow:visible}
-.friend.wide svg{width:calc(var(--fw)*1.4)}
+.friend.wide svg,.friend.wide .pic{width:calc(var(--fw)*1.4)}
 .friend .pic{object-fit:contain;background:#fff;border-radius:18px;padding:4px;box-shadow:0 4px 0 rgba(0,0,0,.15)}
 .friend .tag{position:absolute;bottom:-4px;right:-4px;background:var(--card);border-radius:12px;padding:0 8px;font-size:calc(var(--fw)*.28);box-shadow:0 2px 0 rgba(0,0,0,.15)}
 .friend .pupil{animation:blink 4.6s infinite;transform-box:fill-box;transform-origin:center}
@@ -162,6 +162,7 @@ pre{font-family:ui-monospace,monospace;font-size:12px;background:var(--soft);bor
 .aw-frame{position:absolute;outline:2px solid #ff3d7f;cursor:move;touch-action:none}
 .aw-frame i{position:absolute;border:2px solid #ff3d7f;background:rgba(255,61,127,.08);pointer-events:none}
 .aw-frame b{position:absolute;left:2px;top:0;font-weight:normal;font-size:12px;color:#fff;background:#ff3d7f;border-radius:0 0 6px 0;padding:0 4px}
+.aw-h.tl{left:-16px;top:-16px;right:auto;bottom:auto;cursor:nwse-resize}
 .aw-h{position:absolute;right:-16px;bottom:-16px;width:32px;height:32px;border-radius:50%;background:#ff3d7f;border:3px solid #fff;cursor:nwse-resize;touch-action:none}
 .overlay iframe{width:min(96vw,960px);aspect-ratio:16/9;border:0;border-radius:16px;background:#000}
 .cheer{text-align:center;font-size:clamp(30px,8vw,46px)}
@@ -354,8 +355,8 @@ const sfx={ pop:()=>tone([[660,.08],[990,.12]]), yay:()=>tone([[523,.12],[659,.1
 /* ---------------- 그리기 도우미 ---------------- */
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function friend(g,attrs=''){
-  const img=g.length===1&&(MEDIA.get('img:'+g)||(S.set.imgUrls||{})[g]);
-  if(img) return `<div class="friend" data-g="${g}" ${attrs}><img class="pic" src="${img}" alt="${g}"><span class="tag">${g}</span></div>`;
+  const img=MEDIA.get('img:'+g)||(S.set.imgUrls||{})[g];
+  if(img) return `<div class="friend${g.length>1?' wide':''}" data-g="${g}" ${attrs}><img class="pic" src="${img}" alt="${g}"><span class="tag">${g}</span></div>`;
   const wide=g.length>1, W=wide?140:100, c=colorOf(g), cx=W/2;
   const ex=wide?[cx-24,cx+24]:[cx-15,cx+15];
   const crown=VOWELS.includes(g)?`<path d="M${cx-14} 14 l6 -12 l8 9 l8 -9 l6 12 z" fill="#ffd23f" stroke="#e0a800" stroke-width="2"/>`:
@@ -439,7 +440,7 @@ SCREENS.letter=g=>{
   const [w,e,k]=isPair?[PAIR_WORD[g],WORD[PAIR_WORD[g]].e,WORD[PAIR_WORD[g]].k]:LW[g];
   const order=isPair?PAIRS:LETTERS, i=order.indexOf(g);
   const prev=order[(i-1+order.length)%order.length], next=order[(i+1)%order.length];
-  const vid=!isPair&&S.set.videos[g];
+  const vid=S.set.videos[g];
   const hl=isPair?w.replace(g,`<u>${g}</u>`):(g==='x'?w.replace('x','<u>x</u>'):`<u>${w[0]}</u>${w.slice(1)}`);
   app.innerHTML=`${topBar(isPair?'짝꿍 소리':'글자 소리')}
     <div class="letter-view">
@@ -626,14 +627,13 @@ function renderVoiceSel(){
 let recorder=null;
 function letterRows(){
   return [...LETTERS,...PAIRS].map(g=>{
-    const one=g.length===1;
     return `<div class="lrow" data-row="${g}">${friend(g)}<div class="tools">
       <button data-a="test">▶ 소리</button>
       <button data-a="rec" class="${recorder&&recorder.g===g?'rec':''}">${recorder&&recorder.g===g?'⏹ 멈추기':'🎙 녹음'}</button>
       ${MEDIA.has('snd:'+g)?'<button data-a="delsnd">🗑 녹음</button>':''}
-      ${one?`<button data-a="img">🖼 그림</button>${MEDIA.has('img:'+g)||(S.set.imgUrls||{})[g]?'<button data-a="delimg">🗑 그림</button>':''}
+      <button data-a="img">🖼 그림</button>${MEDIA.has('img:'+g)||(S.set.imgUrls||{})[g]?'<button data-a="delimg">🗑 그림</button>':''}
       <input type="url" data-a="vid" placeholder="${g} 영상 링크 (YouTube)" value="${esc(S.set.videos[g]||'')}">
-      <button data-a="find" title="YouTube에서 찾아보기">🔎</button>`:''}
+      <button data-a="find" title="YouTube에서 찾아보기">🔎</button>
     </div></div>`; }).join('');
 }
 SCREENS.parent=()=>{
@@ -710,7 +710,8 @@ let imgTarget=null;
 function bindRows(){
   const file=document.getElementById('file');
   file.onchange=async()=>{ const f=file.files[0]; file.value=''; if(!f||!imgTarget) return;
-    try{ await putMedia('img:'+imgTarget,await shrink(f)); toast(imgTarget+' 그림을 넣었어요'); }catch(e){ toast('그림을 넣지 못했어요'); } refreshRows(); };
+    const g=imgTarget;
+    try{ const part=await cropPick(f,g); if(!part) return; await putMedia('img:'+g,await shrink(part)); toast(g+' 그림을 넣었어요'); }catch(e){ toast('그림을 넣지 못했어요'); } refreshRows(); };
   document.querySelectorAll('.lrow').forEach(row=>{ const g=row.dataset.row;
     row.querySelector('.friend').onclick=()=>{ hop(row.querySelector('.friend')); play([{g}]); };
     row.querySelectorAll('[data-a]').forEach(el=>{ const a=el.dataset.a;
@@ -721,7 +722,7 @@ function bindRows(){
         else if(a==='delsnd'){ await delMedia('snd:'+g); refreshRows(); }
         else if(a==='img'){ imgTarget=g; file.click(); }
         else if(a==='delimg'){ await delMedia('img:'+g); if(S.set.ab) delete S.set.ab[g]; if(S.set.imgUrls) delete S.set.imgUrls[g]; saveSet(); refreshRows(); }
-        else if(a==='find') window.open('https://www.youtube.com/results?search_query='+encodeURIComponent('Alphablocks official letter '+g.toUpperCase()),'_blank','noopener');
+        else if(a==='find') window.open('https://www.youtube.com/results?search_query='+encodeURIComponent('Alphablocks official '+(g.length>1?g:'letter '+g.toUpperCase())),'_blank','noopener');
       };
     });
   });
@@ -737,6 +738,45 @@ async function toggleRec(g){
     if(chunks.length){ await putMedia('snd:'+g,new Blob(chunks,{type:r.mimeType||'audio/mp4'})); refreshRows(); play([{g}]); } else refreshRows(); };
   r.start(); r.tm=setTimeout(()=>{ if(r.state==='recording') r.stop(); },3000);
   refreshRows(); toast('🎙 '+g+' 소리를 짧게 말해 주세요 (3초)',1800);
+}
+// 그림에서 쓸 부분 고르기: 칸 가운데를 끌면 이동, 모서리 ● 로 크기 (한 장에 여러 글자가 있을 때)
+function cropPick(file,g){
+  return new Promise(async(done,fail)=>{
+    const u=URL.createObjectURL(file), im=new Image(); im.src=u;
+    try{ await im.decode(); }catch(e){ URL.revokeObjectURL(u); fail(e); return; }
+    const W0=im.naturalWidth, H0=im.naturalHeight, r={x:W0*.05,y:H0*.05,w:W0*.9,h:H0*.9};
+    const o=document.createElement('div'); o.className='overlay align';
+    o.innerHTML=`<div class="aw-tip"><b style="font-size:22px">${esc(g)}</b> 그림으로 쓸 부분을 분홍 칸으로 감싸 주세요. 가운데를 끌면 움직이고, 모서리 ● 를 끌면 크기가 바뀌어요.</div>
+      <div class="aw-box"><img alt=""><div class="aw-frame crop"><span class="aw-h tl"></span><span class="aw-h"></span></div></div>
+      <div class="row"><button class="big-btn alt" data-x="0">취소</button><button class="big-btn alt" data-x="all">그림 전체 쓰기</button><button class="big-btn go" data-x="1">✂️ 이 부분 쓰기</button></div>`;
+    document.body.appendChild(o);
+    const box=o.querySelector('.aw-box'), fr=o.querySelector('.aw-frame'), [tl,br]=o.querySelectorAll('.aw-h');
+    o.querySelector('img').src=u;
+    const fit=()=>{ const k=Math.min(Math.min(innerWidth-32,900)/W0,(innerHeight-200)/H0); box.style.width=W0*k+'px'; box.style.height=H0*k+'px'; return k; };
+    let k=fit();
+    const draw=()=>{ fr.style.left=r.x*k+'px'; fr.style.top=r.y*k+'px'; fr.style.width=r.w*k+'px'; fr.style.height=r.h*k+'px'; };
+    draw(); const onR=()=>{ k=fit(); draw(); }; addEventListener('resize',onR);
+    const clamp=()=>{ const m=Math.max(8,Math.min(W0,H0)*.05);
+      r.w=Math.max(m,Math.min(r.w,W0)); r.h=Math.max(m,Math.min(r.h,H0)); r.x=Math.max(0,Math.min(r.x,W0-r.w)); r.y=Math.max(0,Math.min(r.y,H0-r.h)); };
+    let drag=null;
+    const start=mode=>e=>{ e.preventDefault(); e.stopPropagation(); drag={mode,sx:e.clientX,sy:e.clientY,r:{...r}}; try{ e.target.setPointerCapture(e.pointerId); }catch(_){} };
+    const move=e=>{ if(!drag) return; const dx=(e.clientX-drag.sx)/k, dy=(e.clientY-drag.sy)/k, a=drag.r;
+      if(drag.mode==='move'){ r.x=a.x+dx; r.y=a.y+dy; }
+      else if(drag.mode==='br'){ r.w=a.w+dx; r.h=a.h+dy; }
+      else { const nx=Math.max(0,Math.min(a.x+dx,a.x+a.w-8)), ny=Math.max(0,Math.min(a.y+dy,a.y+a.h-8)); r.w=a.x+a.w-nx; r.h=a.y+a.h-ny; r.x=nx; r.y=ny; }
+      clamp(); draw(); };
+    const end=()=>{ drag=null; };
+    fr.onpointerdown=start('move'); br.onpointerdown=start('br'); tl.onpointerdown=start('tl');
+    [fr,br,tl].forEach(el=>{ el.onpointermove=move; el.onpointerup=el.onpointercancel=end; });
+    o.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{
+      removeEventListener('resize',onR); o.remove(); const x=b.dataset.x;
+      if(x==='0'){ URL.revokeObjectURL(u); done(null); return; }
+      if(x==='all'){ URL.revokeObjectURL(u); done(file); return; }
+      const c=document.createElement('canvas'); c.width=Math.round(r.w); c.height=Math.round(r.h);
+      c.getContext('2d').drawImage(im,r.x,r.y,r.w,r.h,0,0,c.width,c.height); URL.revokeObjectURL(u);
+      c.toBlob(bl=>bl?done(bl):fail(new Error('toBlob')),'image/png');
+    });
+  });
 }
 async function shrink(blob){
   const u=URL.createObjectURL(blob);
@@ -905,9 +945,9 @@ async function loadPack(){
   catch(e){ msg.textContent='팩을 받지 못했어요. 주소와 CORS 허용 여부를 확인해 주세요.'; return; }
   const L=pack&&pack.letters||{}, jobs=[];
   Object.entries(L).forEach(([g,v])=>{ if(!SND[g]||!v) return;
-    if(v.image&&g.length===1) jobs.push(['img:'+g,v.image]);
+    if(v.image) jobs.push(['img:'+g,v.image]);
     if(v.sound) jobs.push(['snd:'+g,v.sound]);
-    if(v.video&&g.length===1) S.set.videos[g]=String(v.video); });
+    if(v.video) S.set.videos[g]=String(v.video); });
   saveSet();
   let ok=0, fail=0;
   for(const [k,src] of jobs){
