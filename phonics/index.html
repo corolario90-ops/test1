@@ -395,9 +395,14 @@ async function putMedia(k,blob){ await idb.put(k,blob); if(MEDIA.has(k)) URL.rev
 async function delMedia(k){ try{ await idb.del(k); }catch(e){} if(MEDIA.has(k)){ URL.revokeObjectURL(MEDIA.get(k)); MEDIA.delete(k); } }
 
 /* ---------------- 소리 ---------------- */
-const NOVELTY=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|bells/i;
+const NOVELTY=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical/i;
+// iPad의 '엘로퀀스' 음성(Eddy·Flo·Grandma…)은 기계음이라 목록 뒤로
+const ROBOTIC=/\b(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley)\b|eloquence|compact/i;
+// 음성 품질: iPad는 이름에 안 쓰고 voiceURI(com.apple.voice.premium.…)에만 적기도 함
+const voiceTier=v=>{ const t=v.name+' '+v.voiceURI; return /premium|고품질/i.test(t)?2:/enhanced|향상/i.test(t)?1:0; };
+const tierLabel=v=>['',' ⭐ 향상된 품질',' ⭐⭐ 고품질'][voiceTier(v)];
 function voiceList(lang){ try{ return speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().startsWith(lang)&&!NOVELTY.test(v.name)); }catch(e){ return []; } }
-function voiceScore(v){ const n=v.name; return (/premium|고품질/i.test(n)?6:0)+(/enhanced|향상/i.test(n)?4:0)+(/natural|neural|online/i.test(n)?3:0)+(/samantha|google us|ava|allison|yuna|sora/i.test(n)?2:0)+(/en-us/i.test(v.lang)?1:0); }
+function voiceScore(v){ const n=v.name, t=n+' '+v.voiceURI; return voiceTier(v)*6+(/natural|neural|online/i.test(t)?3:0)+(/samantha|google us|ava|zoe|evan|allison|yuna|sora/i.test(n)?2:0)+(/en-us/i.test(v.lang)?1:0)-(ROBOTIC.test(t)?8:0); }
 const rankVoices=lang=>voiceList(lang).sort((a,b)=>voiceScore(b)-voiceScore(a));
 let enV=null, koV=null;
 function pickVoices(){ const one=(lang,uri)=>{ const vs=rankVoices(lang); return (uri&&vs.find(v=>v.voiceURI===uri))||vs[0]||null; };
@@ -703,12 +708,21 @@ function showVideo(url){
 function seg(key,opts){ return `<div class="seg">${opts.map(([v,t])=>`<button data-k="${key}" data-v="${v}" class="${S.set[key]===v?'on':''}">${t}</button>`).join('')}</div>`; }
 function renderVoiceSel(){
   const box=document.getElementById('voices'); if(!box) return;
-  const opt=(lang,cur)=>{ const vs=rankVoices(lang); return `<option value="">자동${vs[0]?` (${esc(vs[0].name)})`:''}</option>`+
-    vs.map(v=>`<option value="${esc(v.voiceURI)}"${v.voiceURI===cur?' selected':''}>${esc(v.name)}${voiceScore(v)>=4?' ⭐':''}</option>`).join(''); };
-  box.innerHTML=`<div class="row" style="justify-content:flex-start"><span style="width:60px">영어</span><select id="vEn">${opt('en',S.set.voiceEn)}</select></div>
-    <div class="row" style="justify-content:flex-start;margin-top:8px"><span style="width:60px">한국어</span><select id="vKo">${opt('ko',S.set.voiceKo)}</select></div>`;
-  box.querySelector('#vEn').onchange=e=>{ S.set.voiceEn=e.target.value; saveSet(); pickVoices(); play([{t:'cat'},{g:'c'},{g:'a'},{g:'t'}]); };
-  box.querySelector('#vKo').onchange=e=>{ S.set.voiceKo=e.target.value; saveSet(); pickVoices(); play([{ko:'참 잘했어요'}]); };
+  const opt=(lang,cur)=>{ const vs=rankVoices(lang); return `<option value="">자동 (가장 좋은 음성)${vs[0]?`: ${esc(vs[0].name)}${tierLabel(vs[0])}`:''}</option>`+
+    vs.map(v=>`<option value="${esc(v.voiceURI)}"${v.voiceURI===cur?' selected':''}>${esc(v.name)} · ${esc(v.lang)}${tierLabel(v)}</option>`).join(''); };
+  const now=v=>v?`<b>${esc(v.name)}</b>${tierLabel(v)||' (기본 음성)'}`:'찾지 못함';
+  const good=voiceList('en').some(v=>voiceTier(v)>0);
+  box.innerHTML=`<div class="row" style="justify-content:flex-start"><span style="width:60px">영어</span><select id="vEn">${opt('en',S.set.voiceEn)}</select>
+      <button class="big-btn small alt" data-vt="en">▶ 들어 보기</button></div>
+    <div class="row" style="justify-content:flex-start;margin-top:8px"><span style="width:60px">한국어</span><select id="vKo">${opt('ko',S.set.voiceKo)}</select>
+      <button class="big-btn small alt" data-vt="ko">▶ 들어 보기</button></div>
+    <p class="note">지금 쓰는 음성 — 영어: ${now(enV)} · 한국어: ${now(koV)}<br>
+    ${good?'⭐ 표시가 있는 음성이 받은 고품질 음성이에요. \'자동\'으로 두면 그중 가장 좋은 음성을 골라요.'
+      :'받은 고품질 음성이 목록에 보이지 않아요. iPad를 한 번 껐다 켜거나, 앱을 완전히 닫고 다시 열어 보세요. 그래도 없다면 이 iPadOS의 Safari가 고품질 음성을 웹앱에 열어 주지 않는 경우예요.'}</p>`;
+  const test={en:()=>play([{t:'Hello! I am your letter friend.',r:.95},{wait:200},{g:'c'},{g:'a'},{g:'t'},{t:'cat'}]), ko:()=>play([{ko:'안녕! 같이 영어 놀이 하자.'}])};
+  box.querySelectorAll('[data-vt]').forEach(b=>b.onclick=()=>{ if(!S.set.sound){ toast('소리가 꺼져 있어요'); return; } test[b.dataset.vt](); });
+  box.querySelector('#vEn').onchange=e=>{ S.set.voiceEn=e.target.value; saveSet(); pickVoices(); renderVoiceSel(); test.en(); };
+  box.querySelector('#vKo').onchange=e=>{ S.set.voiceKo=e.target.value; saveSet(); pickVoices(); renderVoiceSel(); test.ko(); };
 }
 let recorder=null;
 function letterRows(){
