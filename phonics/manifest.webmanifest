@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "글자 친구 파닉스",
+  "short_name": "글자친구",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffcf4d",
+  "theme_color": "#ffcf4d",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icons/phonics-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/phonics-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
