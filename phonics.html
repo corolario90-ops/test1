@@ -153,6 +153,27 @@ h3{font-weight:normal;font-size:19px;margin:16px 0 8px}
 .crayons button{width:38px;height:38px;border-radius:50%;border:4px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.18);cursor:pointer}
 .crayons button.on{outline:3px solid var(--ink);outline-offset:1px}
 
+/* 포켓몬 */
+.pkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.pkc{border:3px solid transparent;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:15px}
+.pkc img,.pkc .pk-q{width:84px;height:84px;object-fit:contain}
+.pk-q{display:flex;align-items:center;justify-content:center;font-size:40px;opacity:.3}
+.pkc .pr{font-size:15px;color:#c27a00}
+.pkc.own{border-color:var(--ok)}.pkc.own .pr{color:var(--ok)}
+.pkc img.shadow{filter:brightness(0);opacity:.18}
+.pkc.lock .nm{opacity:.5}
+.pk-over{background:rgba(20,16,40,.6)}
+.pk-card{position:relative;background:var(--card);color:var(--ink);border-radius:28px;padding:20px 18px;width:min(92vw,460px);display:flex;flex-direction:column;align-items:center;gap:8px;animation:popin .4s cubic-bezier(.3,1.6,.6,1)}
+.pk-x{position:absolute;right:10px;top:10px;width:46px;height:46px;font-size:20px}
+.pk-big img,.pk-big .pk-q{width:min(60vw,240px);height:min(60vw,240px);object-fit:contain}
+.pk-en{font-size:clamp(30px,8vw,42px)}
+.pk-ko{font-size:18px;opacity:.7;margin-top:-6px}
+.pk-types{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.ptype{color:#fff;border-radius:999px;padding:6px 16px;font-size:22px;text-shadow:0 1px 0 rgba(0,0,0,.25);display:inline-flex;align-items:center;gap:6px}
+.ptype small{font-size:14px;opacity:.9}
+.pk-own{font-size:20px;color:var(--ok)}
+.pk-need{margin:0;font-size:16px;opacity:.8;text-align:center}
+
 /* 스티커북 */
 .stickers{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
 .sticker{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:8px 4px;text-align:center;cursor:pointer;font-size:46px;line-height:1.1}
@@ -393,7 +414,7 @@ const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.pars
 const SET_KEY='phonics-set', PROG_KEY='phonics-prog';
 const S={
   set:Object.assign({sound:true,koVoice:true,koHint:true,voiceEn:'',voiceKo:'',slow:false,videos:{}},store.get(SET_KEY,{})),
-  prog:Object.assign({stars:0,words:{},letters:{}},store.get(PROG_KEY,{})),
+  prog:Object.assign({stars:0,words:{},letters:{},pk:{},written:{}},store.get(PROG_KEY,{})),
 };
 const saveSet=()=>store.set(SET_KEY,S.set), saveProg=()=>store.set(PROG_KEY,S.prog);
 
@@ -520,6 +541,7 @@ SCREENS.home=()=>{
       <button class="mode" data-go="blend" style="background:#a07bff"><span class="em">🪄</span>단어 합체<small>c-a-t → 🐱</small></button>
       <button class="mode" data-go="first" style="background:#3fb6e8"><span class="em">👂</span>첫소리 찾기<small>무슨 글자로 시작할까?</small></button>
       <button class="mode" data-go="listen" style="background:#26bfb0"><span class="em">🖼️</span>듣고 고르기<small>어떤 그림일까?</small></button>
+      <button class="mode" data-go="shop" style="background:#ef4f4f"><span class="em">🛒</span>포켓몬 상점<small>별로 포켓몬 데려오기</small></button>
       <button class="mode" data-go="write" style="background:#ff7fa8"><span class="em">✏️</span>따라 쓰기<small>점선 따라 슥슥</small></button>
       <button class="mode" data-go="book" style="background:#ffb703"><span class="em">📒</span>스티커북<small>${Object.keys(S.prog.words).length} / ${ALLWORDS.length}</small></button>
     </div>`;
@@ -705,10 +727,120 @@ SCREENS.listen=()=>{
   ask();
 };
 
+/* 포켓몬 상점 — 모은 별로 포켓몬을 데려와 스티커로 모으기
+   그림·이름·속성은 앱에 들어 있지 않음: 어른 메뉴에서 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)의
+   공식 일러스트와 데이터(CSV)를 받아 기기 안에만 저장 */
+const PK_N=151, PK_KEY='phonics-pk';
+const PK_ART=id=>`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const PK_CSV=f=>`https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/${f}.csv`;
+let PK=store.get(PK_KEY,{}); // id → {en, ko, types:['fire'], bst}
+const PK_IDS=Array.from({length:PK_N},(_,i)=>i+1);
+// 속성: [그림, 색, 한국어]
+const TYPES={normal:['⭐','#9c9a74','노말'],fire:['🔥','#ee8130','불꽃'],water:['💧','#5b8def','물'],grass:['🌿','#5fae3a','풀'],
+  electric:['⚡','#d9a800','전기'],ice:['❄️','#3fb6c4','얼음'],fighting:['🥊','#c22e28','격투'],poison:['☠️','#a33ea1','독'],
+  ground:['⛰️','#b8913a','땅'],flying:['🕊️','#7f6fe0','비행'],psychic:['🔮','#f0507f','에스퍼'],bug:['🐛','#8a9c18','벌레'],
+  rock:['🪨','#a8932c','바위'],ghost:['👻','#735797','고스트'],dragon:['🐉','#6f35fc','드래곤'],dark:['🌑','#6b5546','악'],
+  steel:['⚙️','#7f7f9c','강철'],fairy:['🧚','#d16fa3','페어리']};
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+const typeSay=t=>t.map(cap).join(' and ')+' type';                  // "Grass and Poison type"
+const typeBadges=t=>t.map(x=>{ const T=TYPES[x]||['❔','#888',x]; return `<span class="ptype" style="background:${T[1]}">${T[0]} ${cap(x)}${S.set.koHint?`<small>${T[2]}</small>`:''}</span>`; }).join('');
+const pkPrice=id=>{ const b=(PK[id]||{}).bst||400; return b<=320?3:b<=420?5:b<=500?8:b<=580?12:20; };
+const pkReady=()=>PK_IDS.some(id=>PK[id]&&MEDIA.has('pk:'+id));
+const pkCount=()=>PK_IDS.filter(id=>MEDIA.has('pk:'+id)).length;
+function parseCSV(text){ const rows=[]; let row=[], f='', q=false;
+  for(let i=0;i<text.length;i++){ const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+    else if(c==='"') q=true; else if(c===','){ row.push(f); f=''; } else if(c==='\n'){ row.push(f); rows.push(row); row=[]; f=''; } else if(c!=='\r') f+=c; }
+  if(f||row.length){ row.push(f); rows.push(row); } return rows.slice(1); }
+function setStars(){ const el=document.querySelector('.stars b'); if(el) el.textContent=S.prog.stars; }
+async function pkDownload(){
+  const msg=document.getElementById('pkMsg'), btn=document.getElementById('pkGo'); if(!msg) return;
+  if(!navigator.onLine){ msg.textContent='인터넷에 연결된 뒤 다시 눌러 주세요.'; return; }
+  btn.disabled=true; msg.textContent='포켓몬 이름과 속성을 받는 중…';
+  try{
+    const [types,ptypes,stats,names]=await Promise.all(['types','pokemon_types','pokemon_stats','pokemon_species_names'].map(async f=>{
+      const r=await fetch(PK_CSV(f)); if(!r.ok) throw new Error(f); return parseCSV(await r.text()); }));
+    const tname=Object.fromEntries(types.map(r=>[r[0],r[1]])), info={};
+    PK_IDS.forEach(id=>info[id]={en:'',ko:'',types:[],bst:0});
+    ptypes.forEach(([p,t,slot])=>{ const x=info[+p]; if(x) x.types[+slot-1]=tname[t]; });
+    stats.forEach(([p,,v])=>{ const x=info[+p]; if(x) x.bst+=+v; });
+    names.forEach(([sp,lang,name])=>{ const x=info[+sp]; if(!x) return; if(lang==='9') x.en=name; else if(lang==='3') x.ko=name; });
+    PK_IDS.forEach(id=>{ info[id].types=info[id].types.filter(Boolean); });
+    PK=info; store.set(PK_KEY,PK);
+  }catch(e){ btn.disabled=false; msg.textContent='포켓몬 정보를 받지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.'; return; }
+  const todo=PK_IDS.filter(id=>!MEDIA.has('pk:'+id)); let ok=0, fail=0, i=0;
+  const worker=async()=>{ while(i<todo.length){ const id=todo[i++];
+    try{ const r=await fetch(PK_ART(id)); if(!r.ok) throw 0; await putMedia('pk:'+id,await shrink(await r.blob())); ok++; }catch(e){ fail++; }
+    msg.textContent=`포켓몬 그림 받는 중… ${ok+fail} / ${todo.length}`; } };
+  await Promise.all(Array.from({length:6},worker));
+  btn.disabled=false;
+  msg.textContent=`포켓몬 ${pkCount()} / ${PK_N}마리 그림이 있어요.`+(fail?` (${fail}장은 받지 못했어요. 다시 누르면 빠진 것만 받아요)`:' 이제 인터넷 없이도 써요.');
+  if(ok) toast('포켓몬 친구들이 왔어요! ⚡');
+}
+async function pkDelete(){
+  if(!confirm('받은 포켓몬 그림과 정보를 지울까요? (데려온 기록은 남아요)')) return;
+  for(const id of PK_IDS) await delMedia('pk:'+id);
+  PK={}; store.set(PK_KEY,PK); go('parent'); toast('지웠어요');
+}
+function pkImg(id,cls=''){ const u=MEDIA.get('pk:'+id); return u?`<img class="${cls}" src="${u}" alt="">`:`<span class="pk-q ${cls}">?</span>`; }
+const pkName=id=>(PK[id]||{}).en||('#'+id);
+// 포켓몬 한 마리 크게 보기 (상점·스티커북 공통)
+function pkModal(id,onChange){
+  const x=PK[id]||{types:[]}, own=()=>!!(S.prog.pk||{})[id], price=pkPrice(id);
+  const say=()=>play([{t:pkName(id),r:.9},{wait:250},...(x.types.length?[{t:typeSay(x.types),r:.9}]:[]),
+    ...(S.set.koHint&&x.types.length?[{ko:x.types.map(t=>(TYPES[t]||[])[2]||t).join(', ')+' 타입'}]:[])]);
+  const o=document.createElement('div'); o.className='overlay pk-over';
+  const draw=()=>{ const need=price-S.prog.stars;
+    o.innerHTML=`<div class="pk-card">
+      <button class="icon-btn pk-x" aria-label="닫기">✖</button>
+      <div class="pk-big">${pkImg(id)}</div>
+      <div class="pk-en">${esc(pkName(id))}</div>${S.set.koHint&&x.ko?`<div class="pk-ko">${esc(x.ko)}</div>`:''}
+      <div class="pk-types">${typeBadges(x.types)}</div>
+      <div class="row"><button class="big-btn alt" data-a="say">🔊 다시 듣기</button>
+      ${own()?'<span class="pk-own">✓ 내 포켓몬 친구</span>':`<button class="big-btn ${need>0?'alt':'go'}" data-a="buy">⭐ ${price}개로 데려오기</button>`}</div>
+      ${!own()&&need>0?`<p class="pk-need">별이 ${need}개 더 필요해요! 단어 합체·퀴즈·따라 쓰기로 모아요</p>`:''}
+    </div>`;
+    o.querySelector('.pk-x').onclick=()=>{ o.remove(); stopSound(); };
+    o.querySelector('[data-a=say]').onclick=say;
+    const b=o.querySelector('[data-a=buy]');
+    if(b) b.onclick=()=>{ if(S.prog.stars<price){ hop(b,'wob'); sfx.no(); play([{ko:`별이 ${price-S.prog.stars}개 더 필요해요`}]); return; }
+      S.prog.stars-=price; S.prog.pk=S.prog.pk||{}; S.prog.pk[id]=Date.now(); saveProg(); setStars();
+      confetti(60); sfx.yay(); draw(); hop(o.querySelector('.pk-big'));
+      play([{t:'You got '+pkName(id)+'!',r:1},{wait:200},...(x.types.length?[{t:typeSay(x.types),r:.9}]:[])]);
+      if(onChange) onChange(); };
+  };
+  o.onclick=e=>{ if(e.target===o){ o.remove(); stopSound(); } };
+  draw(); document.body.appendChild(o); say();
+}
+SCREENS.shop=()=>{
+  if(!pkReady()){ app.innerHTML=`${topBar('포켓몬 상점')}<div class="panel" style="text-align:center;font-size:22px">
+      <div style="font-size:70px">🛒</div>아직 포켓몬이 오지 않았어요.<br>어른에게 <b>⚙️ 어른 메뉴 › 포켓몬 그림 받기</b>를 부탁해요!</div>`; return; }
+  const own=S.prog.pk||{}, n=PK_IDS.filter(id=>own[id]).length;
+  app.innerHTML=`${topBar('포켓몬 상점')}
+    <p class="sub">별 ⭐을 모아 포켓몬을 데려와요! 데려온 포켓몬은 스티커북에 붙어요 · ${n} / ${PK_N}</p>
+    <div class="pkgrid">${PK_IDS.map(id=>`<button class="pkc${own[id]?' own':''}" data-id="${id}">${pkImg(id)}<span class="nm">${esc(pkName(id))}</span>
+      <span class="pr">${own[id]?'✓ 내 친구':`⭐ ${pkPrice(id)}`}</span></button>`).join('')}</div>`;
+  app.querySelectorAll('.pkc').forEach(c=>c.onclick=()=>{ sfx.pop(); const id=+c.dataset.id;
+    pkModal(id,()=>{ c.classList.add('own'); c.querySelector('.pr').textContent='✓ 내 친구'; }); });
+};
+
 /* 스티커북 */
-SCREENS.book=()=>{
-  const got=ALLWORDS.filter(x=>S.prog.words[x.w]).length;
-  app.innerHTML=`${topBar('스티커북')}
+let bookTab='w';
+SCREENS.book=tab=>{
+  if(tab) bookTab=tab;
+  const got=ALLWORDS.filter(x=>S.prog.words[x.w]).length, own=S.prog.pk||{}, pn=PK_IDS.filter(id=>own[id]).length;
+  const tabs=`<div class="levels"><button data-tab="w" class="${bookTab==='w'?'on':''}">📒 단어 ${got}/${ALLWORDS.length}</button><button data-tab="pk" class="${bookTab==='pk'?'on':''}">⚡ 포켓몬 ${pn}/${PK_N}</button></div>`;
+  if(bookTab==='pk'){
+    app.innerHTML=`${topBar('스티커북')}${tabs}
+      <p class="sub">${pn?'누르면 이름과 속성을 영어로 말해요':'아직 포켓몬 스티커가 없어요. 🛒 상점에서 별로 데려와요!'}</p>
+      <div class="pkgrid book">${PK_IDS.map(id=>own[id]?`<button class="pkc own" data-id="${id}">${pkImg(id)}<span class="nm">${esc(pkName(id))}</span></button>`:
+        `<button class="pkc lock" data-id="${id}">${pkImg(id,'shadow')}<span class="nm">#${id}</span></button>`).join('')}</div>`;
+    app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ sfx.pop(); go('book',b.dataset.tab); });
+    app.querySelectorAll('.pkc.own').forEach(c=>c.onclick=()=>pkModal(+c.dataset.id));
+    app.querySelectorAll('.pkc.lock').forEach(c=>c.onclick=()=>{ hop(c,'wob'); toast('🛒 포켓몬 상점에서 데려올 수 있어요'); });
+    return;
+  }
+  app.innerHTML=`${topBar('스티커북')}${tabs}
     <p class="sub">모은 스티커 <b>${got}</b> / ${ALLWORDS.length} · 누르면 말해요</p>
     <div class="stickers">${ALLWORDS.map(x=>S.prog.words[x.w]?
       `<div class="sticker" data-w="${x.w}">${x.e}<small>${x.w}</small></div>`:
@@ -716,6 +848,7 @@ SCREENS.book=()=>{
   app.querySelectorAll('.sticker[data-w]').forEach(s=>s.onclick=()=>{ const x=WORD[s.dataset.w]; hop(s);
     play([...(x.g?x.g.flatMap(g=>[{g},{wait:60}]):[]),{t:x.w},...(S.set.koHint?[{ko:x.k}]:[])]); });
   app.querySelectorAll('.sticker.lock').forEach(s=>s.onclick=()=>{ hop(s,'wob'); toast('단어 합체나 퀴즈로 모아요!'); });
+  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ sfx.pop(); go('book',b.dataset.tab); });
 };
 
 /* 따라 쓰기 — 채점 없이 가이드를 따라 써 보기
@@ -898,6 +1031,16 @@ SCREENS.parent=()=>{
       <p class="note" id="abMsg">${abCount()?`지금 ${abCount()}/26 글자에 알파블록스 그림이 있어요.`:''}</p>
     </div>
 
+    <div class="panel"><h3 style="margin-top:0">포켓몬 그림 받기</h3>
+      <p class="note">이 앱에는 포켓몬 그림이 <b>들어 있지 않아요</b>. 버튼을 누르면 이 기기가 PokeAPI 공개 저장소(raw.githubusercontent.com)에서
+      1~151번 포켓몬의 공식 일러스트와 이름·속성 정보를 받아 작게 줄인 뒤 <b>기기 안에만</b> 저장해요(약 10MB). 한 번 받으면 인터넷 없이도 써요.
+      그림의 저작권은 Nintendo·Creatures·GAME FREAK에 있으니 가정에서만 써 주세요.</p>
+      <div class="row" style="justify-content:flex-start"><button class="big-btn small" id="pkGo">⬇ 포켓몬 그림 받기</button>
+        <button class="big-btn small alt" id="pkDel">포켓몬 그림 지우기</button></div>
+      <p class="note" id="pkMsg">${pkCount()?`포켓몬 ${pkCount()} / ${PK_N}마리 그림이 있어요.`:''}</p>
+      <p class="note">값: 약한 포켓몬 ⭐3 · 보통 ⭐5 · 진화형 ⭐8 · 강한 포켓몬 ⭐12 · 전설 ⭐20 (기본 능력치 합으로 정해요)</p>
+    </div>
+
     <div class="panel"><h3 style="margin-top:0">글자 친구 꾸미기 · 자료 연결</h3>
       <p class="note">이 앱에는 다른 회사의 캐릭터·영상·소리가 <b>들어 있지 않아요</b>. 알파블록스처럼 아이가 좋아하는 캐릭터가 있다면,
       가정에서 정당하게 가진 그림 파일을 글자마다 넣거나 공식 채널 영상 링크를 연결할 수 있어요. 넣은 그림과 녹음은 <b>이 기기 안(IndexedDB)에만</b> 저장되고 어디에도 올라가지 않아요.
@@ -933,6 +1076,7 @@ SCREENS.parent=()=>{
   bindRows();
   document.getElementById('packGo').onclick=loadPack;
   document.getElementById('abGo').onclick=loadAlphablocks;
+  document.getElementById('pkGo').onclick=pkDownload; document.getElementById('pkDel').onclick=pkDelete;
   const sf=document.getElementById('sheetFile');
   document.getElementById('sheetGo').onclick=()=>sf.click();
   sf.onchange=async()=>{ const f=sf.files[0]; sf.value=''; if(f) await loadSheet(f); };
@@ -942,7 +1086,7 @@ SCREENS.parent=()=>{
   document.getElementById('abDel').onclick=async()=>{ if(!confirm('받은 알파블록스 그림을 지울까요?')) return;
     for(const g of Object.keys(S.set.ab||{})) await delMedia('img:'+g);
     S.set.ab={}; S.set.imgUrls={}; saveSet(); go('parent'); toast('지웠어요'); };
-  document.getElementById('resetProg').onclick=()=>{ if(confirm('별과 스티커를 처음부터 다시 모을까요?')){ S.prog={stars:0,words:{},letters:{}}; saveProg(); go('parent'); } };
+  document.getElementById('resetProg').onclick=()=>{ if(confirm('별과 스티커를 처음부터 다시 모을까요?')){ S.prog={stars:0,words:{},letters:{},pk:{},written:{}}; saveProg(); go('parent'); } };
   document.getElementById('wipe').onclick=async()=>{ if(!confirm('넣은 그림·녹음·영상 링크를 모두 지울까요?')) return;
     try{ await idb.clear(); }catch(e){} MEDIA.forEach(u=>URL.revokeObjectURL(u)); MEDIA.clear(); S.set.videos={}; saveSet(); go('parent'); toast('지웠어요'); };
 };
