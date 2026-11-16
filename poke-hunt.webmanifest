@@ -1,0 +1,16 @@
+{
+  "id": "./poke-hunt.html",
+  "name": "포켓몬 숨은그림 찾기",
+  "short_name": "숨은그림 찾기",
+  "start_url": "./poke-hunt.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffe88a",
+  "theme_color": "#ffd84d",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/hunt-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/hunt-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
