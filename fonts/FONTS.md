@@ -6,6 +6,7 @@
 - `jua.woff2` — Jua Regular. Copyright 2018 The BM JUA Project Authors 라이선스: SIL Open Font License 1.1
 - `noto-500.woff2` — Noto Sans KR Medium. (c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. 라이선스: SIL Open Font License 1.1
 - `noto-700.woff2` — Noto Sans KR Bold. (c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. 라이선스: SIL Open Font License 1.1
+- `frame-digits-200.woff2`, `frame-digits-300.woff2` — Noto Sans KR ExtraLight·Light에서 숫자와 `: - . % °`만 남긴 글꼴 (우리집 액자의 큰 시계용). (c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. 라이선스: SIL Open Font License 1.1
 - `gaegu.woff2` — Gaegu Regular. Copyright 2018 The Gaegu Project Authors 라이선스: SIL Open Font License 1.1
 - `hi-melody.woff2` — Hi Melody Regular. Copyright (c) YoonDesign Inc. All Rights Reserved. 라이선스: SIL Open Font License 1.1
 - `gamja-flower.woff2` — Gamja Flower Regular. Copyright (c) YoonDesign Inc. All Rights Reserved. 라이선스: SIL Open Font License 1.1

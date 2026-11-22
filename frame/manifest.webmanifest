@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "우리집 액자",
+  "short_name": "우리집 액자",
+  "description": "사진 액자에 시계·날씨·달력을 함께 띄워 두는 앱",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/frame-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/frame-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
