@@ -1,0 +1,59 @@
+# 우리집 액자 안드로이드 앱(APK)을 만들어 Releases의 'frame-apk'에 올림.
+# 태블릿에서 받는 주소는 늘 같음:
+#   https://github.com/corolario90-ops/test1/releases/download/frame-apk/ourhome-frame.apk
+name: 우리집 액자 APK
+
+on:
+  push:
+    paths:
+      - 'android/**'
+      - 'photo-frame.html'
+      - '.github/workflows/frame-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frame-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: 액자 페이지를 앱 안에 넣기
+        run: python3 android/sync-web.py
+
+      - name: APK 만들기
+        run: gradle -p android assembleRelease --no-daemon --stacktrace
+
+      - name: Releases에 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk ourhome-frame.apk
+          ls -l ourhome-frame.apk
+          NOTES="태블릿에서 ourhome-frame.apk 를 눌러 내려받은 뒤 설치하세요. (만든 커밋: ${GITHUB_SHA::7})"
+          if gh release view frame-apk >/dev/null 2>&1; then
+            gh release upload frame-apk ourhome-frame.apk --clobber
+            gh release edit frame-apk --notes "$NOTES"
+          else
+            gh release create frame-apk ourhome-frame.apk --target "$GITHUB_SHA" --title "우리집 액자 안드로이드 앱" --notes "$NOTES"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ourhome-frame-apk
+          path: ourhome-frame.apk

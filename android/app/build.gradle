@@ -1,0 +1,51 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'kr.ourhome.frame'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'kr.ourhome.frame'
+        minSdk 21          // 안드로이드 5.0 이상
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    // 직접 설치용 서명 키 (안드로이드 디버그 키와 같은 공개 비밀번호 'android'를 씀).
+    // 늘 같은 키로 서명해야 새 버전을 덮어 설치해도 사진·설정이 남음. 플레이 스토어용이 아님.
+    signingConfigs {
+        frame {
+            storeFile file('frame-debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.frame
+        }
+        debug {
+            signingConfig signingConfigs.frame
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

@@ -196,6 +196,12 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
 .help b{color:#fff;font-weight:500}
 .foot{font-size:12px;color:var(--ink3);text-align:center;margin:26px 0 0;line-height:1.6}
 #awakeStatus{font-size:14px;line-height:1.5}
+/* 안드로이드 앱(APK) 안에서 열렸을 때: 브라우저용 안내·버튼은 숨기고 앱용을 보여 줌 */
+.row.appOnly,#helpApp{display:none}
+.app .row.appOnly{display:flex}
+.app #helpApp{display:block}
+.app #helpWeb,.app #bFull{display:none}
+.dream #emptyHint,.dream #bar{display:none!important}
 #awakeStatus.ok{color:#7be3a7}
 #awakeStatus.warn{color:#ffcf7a}
 </style>
@@ -325,6 +331,7 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
           <div class="row"><div class="grow lbl">화면 꺼짐 방지</div>
             <select id="sAwake"><option value="charging">충전 중일 때만</option><option value="always">항상</option><option value="off">사용 안 함</option></select></div>
           <div class="pad" id="awakeStatus"></div>
+          <div class="row appOnly"><div class="grow"><div class="lbl">태블릿을 켜면 액자 자동 실행</div><div class="hint" id="bootHint">태블릿을 다시 켰을 때 액자가 저절로 떠요</div></div><input type="checkbox" class="sw" id="sBoot"></div>
           <div class="row"><div class="grow"><div class="lbl">야간 모드</div><div class="hint">밤에는 눈부시지 않게 어둡게 해요. 화면을 누르면 1분 동안 밝아져요.</div></div>
             <select id="sNight"><option value="off">사용 안 함</option><option value="dim">어둡게</option><option value="clock">시계만 어둡게</option></select></div>
           <div class="row"><div class="grow lbl">야간 시간</div><span><input type="time" id="sNightStart"> ~ <input type="time" id="sNightEnd"></span></div>
@@ -334,7 +341,13 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
 
       <section class="sec"><h2>24시간 켜 두는 방법</h2>
         <div class="card help">
-          <ol>
+          <ol id="helpApp">
+            <li>충전기를 꽂아 두면 이 앱이 <b>화면을 계속 켜 둬요</b>. 충전기를 빼면 평소처럼 꺼져서 배터리를 아껴요.</li>
+            <li>충전기만 꽂으면 <b>액자가 저절로 뜨게</b> 하려면, 태블릿의 화면 보호기를 <b>우리집 액자</b>로 고르고 시작 시기를 <b>충전 중</b>으로 정해 주세요. 충전 중에 화면이 꺼질 시간이 되면 액자가 대신 떠요. <button class="btn" id="dreamBtn">화면 보호기 설정 열기</button></li>
+            <li>밤에는 야간 모드에 맞춰 <b>화면 밝기도 함께</b> 낮춰요.</li>
+            <li>하루 종일 같은 자리에 글자가 떠 있으면 화면에 잔상이 남을 수 있어서, 글자 위치를 몇 분마다 아주 조금씩 옮기고 있어요.</li>
+          </ol>
+          <ol id="helpWeb">
             <li>크롬에서 이 화면을 연 다음 메뉴(⋮) → <b>홈 화면에 추가</b>를 누르세요. 홈 화면 아이콘으로 열면 주소창 없이 전체 화면으로 떠요. <button class="btn" id="installBtn" hidden>지금 홈 화면에 추가</button></li>
             <li>충전기를 꽂아 두면, 이 앱이 화면에 떠 있는 동안 <b>화면이 꺼지지 않아요</b>. 충전기를 빼면 평소처럼 꺼져서 배터리를 아껴요.</li>
             <li>더 확실하게 하려면 태블릿 <b>설정 → 태블릿 정보 → 소프트웨어 정보 → 빌드 번호</b>를 7번 눌러 개발자 옵션을 켠 뒤, <b>설정 → 개발자 옵션 → 화면 켜짐 상태 유지</b>를 켜 주세요. 충전하는 동안은 태블릿이 스스로 화면을 끄지 않아요.</li>
@@ -387,6 +400,11 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
     return o;
   })();
   function save() { lsSet(SKEY, JSON.stringify(S)); }
+
+  // 안드로이드 앱(APK) 안에서 열렸으면 화면 켜짐·밝기·배터리 확인은 앱이 맡음
+  const APP = (function () { try { const a = window.FrameApp; return a && typeof a.setKeepAwake === 'function' ? a : null; } catch (e) { return null; } })();
+  const IN_DREAM = (function () { try { return !!(APP && APP.isDream()); } catch (e) { return false; } })();
+  if (APP) document.documentElement.className += ' app' + (IN_DREAM ? ' dream' : '');
 
   /* ================= 알림 문구 ================= */
   let toastT = null;
@@ -1052,6 +1070,7 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
   }
   function stopVideo() { const v = $('wakeVid'); if (awake.video || !v.paused) { v.pause(); } awake.video = false; }
   async function applyAwake() {
+    if (APP) { try { APP.setKeepAwake(S.keepAwake); } catch (e) { /* 오래된 앱 */ } updateAwakeUI(); return; }
     const want = wantAwake() && document.visibilityState !== 'hidden';
     if (want) {
       if (hasWakeLock) {
@@ -1088,6 +1107,7 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
     let msg, cls = '';
     if (S.keepAwake === 'off') msg = '화면 꺼짐 방지를 쓰지 않아요';
     else if (!wantAwake()) msg = '충전기를 꽂으면 화면이 꺼지지 않게 할게요';
+    else if (APP) { msg = '앱이 화면을 켜 두고 있어요 ✓'; cls = 'ok'; }
     else if (awake.lock) { msg = '화면이 꺼지지 않게 붙잡고 있어요 ✓'; cls = 'ok'; }
     else if (awake.video) { msg = '화면이 꺼지지 않게 붙잡고 있어요 ✓ (호환 방식)'; cls = 'ok'; }
     else if (awake.needTap) { msg = '화면을 한 번 누르면 꺼짐 방지가 시작돼요'; cls = 'warn'; }
@@ -1096,19 +1116,26 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
     st.className = 'pad ' + cls;
     st.textContent = pow + ' · ' + msg;
   }
+  let powerSeen = false;
+  function onPower(charging, level) {
+    const was = awake.charging;
+    awake.charging = charging; awake.level = level;
+    if (powerSeen && was !== charging && S.keepAwake === 'charging') {
+      toast(charging ? '충전 중이에요 · 화면을 계속 켜 둘게요' : '충전기가 빠졌어요 · 화면이 평소처럼 꺼질 수 있어요');
+    }
+    powerSeen = true;
+    applyAwake();
+  }
   function setupBattery() {
+    if (APP) {
+      // 앱이 충전기를 꽂고 뺄 때마다 window.frameAppPower(충전 중?, 퍼센트)를 불러 줌
+      window.frameAppPower = (charging, pct) => onPower(!!charging, pct >= 0 ? pct / 100 : null);
+      try { window.frameAppPower(APP.isCharging(), APP.batteryLevel()); } catch (e) { applyAwake(); }
+      return;
+    }
     if (!navigator.getBattery) { applyAwake(); return; }
     navigator.getBattery().then(bt => {
-      let first = true;
-      const upd = () => {
-        const was = awake.charging;
-        awake.charging = !!bt.charging; awake.level = bt.level;
-        if (!first && was !== awake.charging && S.keepAwake === 'charging') {
-          toast(awake.charging ? '충전 중이에요 · 화면을 계속 켜 둘게요' : '충전기가 빠졌어요 · 화면이 평소처럼 꺼질 수 있어요');
-        }
-        first = false;
-        applyAwake();
-      };
+      const upd = () => onPower(!!bt.charging, bt.level);
       bt.addEventListener('chargingchange', upd);
       bt.addEventListener('levelchange', () => { awake.level = bt.level; updateAwakeUI(); });
       upd();
@@ -1116,7 +1143,7 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
   }
 
   /* ================= 야간 모드 · 잔상 방지 ================= */
-  let nightClock = false, nightUntil = 0;
+  let nightClock = false, nightUntil = 0, nightSent = '';
   const toMin = s => { const p = String(s || '0:0').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); };
   function inNight(now) {
     if (S.nightMode === 'off') return false;
@@ -1129,7 +1156,11 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
     const clk = on && S.nightMode === 'clock';
     document.body.classList.toggle('night', on);
     document.body.classList.toggle('nightclock', clk);
-    $('dim').style.opacity = on ? String(S.nightLevel) : '0';
+    $('dim').style.opacity = on ? String(APP ? S.nightLevel * 0.55 : S.nightLevel) : '0';
+    if (APP) {
+      const key = on ? 'on' + S.nightLevel : 'off';
+      if (key !== nightSent) { nightSent = key; try { APP.setNight(on, S.nightLevel); } catch (e) { /* 오래된 앱 */ } }
+    }
     if (clk !== nightClock) {
       nightClock = clk;
       setCaption();
@@ -1244,6 +1275,11 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
     $('sAwake').value = S.keepAwake; $('sNight').value = S.nightMode;
     $('sNightStart').value = S.nightStart; $('sNightEnd').value = S.nightEnd; $('sNightLevel').value = String(S.nightLevel);
     $('sLunar').disabled = !LF;
+    if (APP) {
+      try { $('sBoot').checked = !!APP.getAutoStart(); } catch (e) { $('sBoot').checked = false; }
+      let sdk = 0; try { sdk = APP.sdkInt(); } catch (e) { sdk = 0; }
+      if (sdk >= 29) { $('sBoot').disabled = true; $('bootHint').textContent = '안드로이드 10 이상에서는 막혀 있어요. 아래 화면 보호기를 써 주세요'; }
+    }
     renderPlace(); renderEvents(); renderThumbs(); updateAwakeUI();
   }
   function openSheet() {
@@ -1284,6 +1320,14 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
   bind('sNightStart', el => { if (el.value) S.nightStart = el.value; });
   bind('sNightEnd', el => { if (el.value) S.nightEnd = el.value; });
   bind('sNightLevel', el => { S.nightLevel = +el.value || 0.7; });
+  $('sBoot').addEventListener('change', () => { if (APP) try { APP.setAutoStart($('sBoot').checked); } catch (e) { /* 오래된 앱 */ } });
+  $('dreamBtn').onclick = () => { if (APP) try { APP.openScreensaverSettings(); } catch (e) { toast('설정 → 디스플레이 → 화면 보호기에서 고를 수 있어요'); } };
+  // 앱의 뒤로 가기 버튼: 설정·도구 막대가 열려 있으면 닫고, 아니면 앱이 알아서 뒤로 감
+  window.frameAppBack = () => {
+    if (sheetOpen) { closeSheet(); return true; }
+    if ($('bar').classList.contains('show')) { hideBar(); return true; }
+    return false;
+  };
 
   // 지역
   function setPlace(name, lat, lon) {
@@ -1448,7 +1492,7 @@ input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
     goNext();
   });
 
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (!APP && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 </script>
 </body>
