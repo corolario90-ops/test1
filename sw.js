@@ -1,5 +1,5 @@
-// 도형놀이·한글 드라이브·색칠놀이·주사위 모험·면허 모의시험·그림놀이·농장 가게·택배 기차·미로 탐험 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
-const CACHE = 'kidsplay-v10';
+// 도형놀이·한글 드라이브·색칠놀이·주사위 모험·면허 모의시험·그림놀이·농장 가게·택배 기차·미로 탐험·우리집 액자 오프라인 지원: 먼저 네트워크, 안 되면 저장된 사본
+const CACHE = 'kidsplay-v11';
 const SHELL = ['./shape-play.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png',
   './word-drive.html', './word-drive.webmanifest', './icons/drive-192.png', './icons/drive-512.png',
   './coloring.html', './coloring.webmanifest', './icons/color-192.png', './icons/color-512.png',
@@ -8,7 +8,8 @@ const SHELL = ['./shape-play.html', './manifest.webmanifest', './icons/icon-192.
   './draw.html', './draw.webmanifest', './icons/draw-192.png', './icons/draw-512.png',
   './farm-shop.html', './farm-shop.webmanifest', './icons/farm-192.png', './icons/farm-512.png',
   './space-train.html', './space-train.webmanifest', './icons/train-192.png', './icons/train-512.png',
-  './poke-maze.html', './poke-maze.webmanifest', './icons/maze-192.png', './icons/maze-512.png'];
+  './poke-maze.html', './poke-maze.webmanifest', './icons/maze-192.png', './icons/maze-512.png',
+  './photo-frame.html', './photo-frame.webmanifest', './icons/frame-192.png', './icons/frame-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -22,6 +23,8 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   // 캐릭터 그림은 앱이 IndexedDB에 따로 저장하므로 여기서는 두 번 담지 않음
   if (/^https:\/\/raw\.githubusercontent\.com\//.test(e.request.url)) return;
+  // 액자의 날씨는 앱이 직접 시각과 함께 저장하므로, 옛 날씨를 새것처럼 돌려주지 않도록 캐시하지 않음
+  if (/open-meteo\.com\//.test(e.request.url)) return;
   e.respondWith(
     fetch(e.request).then(res => {
       if (res.ok || res.type === 'opaque') {
