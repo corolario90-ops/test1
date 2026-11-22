@@ -1,0 +1,1461 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>우리집 액자</title>
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="우리집 액자">
+<meta name="robots" content="noindex, nofollow, noimageindex, noarchive">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/frame-192.png">
+<link rel="icon" href="icons/frame-192.png">
+<style>
+/* 인터넷 없이도 같은 모양이 나오도록 사이트에 넣어 둔 글꼴을 씀 (얇은 숫자 글꼴은 숫자·기호만 담은 것) */
+@font-face{font-family:"Frame Digits";font-weight:200;font-style:normal;font-display:swap;src:url("../fonts/frame-digits-200.woff2") format("woff2")}
+@font-face{font-family:"Frame Digits";font-weight:300;font-style:normal;font-display:swap;src:url("../fonts/frame-digits-300.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans KR";font-weight:500;font-style:normal;font-display:swap;src:url("../fonts/noto-500.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans KR";font-weight:700;font-style:normal;font-display:swap;src:url("../fonts/noto-700.woff2") format("woff2")}
+/* 액자는 언제나 사진 위에 흰 글자를 얹으므로 밝은·어두운 모드 모두 같은 색을 씀.
+   구형 갤럭시탭의 오래된 크롬에서도 돌도록 flex gap·inset·clamp·?. 같은 최신 문법은 쓰지 않음 */
+:root{
+  --scale:1;
+  --u:calc(var(--scale) * 1vmin);
+  --ink:#ffffff; --ink2:rgba(255,255,255,.84); --ink3:rgba(255,255,255,.6);
+  --sun:#ffc94a; --holiday:#ff8f86; --saturday:#9fcbff;
+  --sheet:#14161b; --sheet2:#1d2027; --field:#2a2e37; --line:rgba(255,255,255,.09);
+  --accent:#ffb44d; --accentInk:#221500; --danger:#ff7a72;
+  --aq0:#4da3ff; --aq1:#3ecf8e; --aq2:#ffb02e; --aq3:#ff5a5a;
+  --shadow:0 1px 3px rgba(0,0,0,.55),0 0 14px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#000;color:var(--ink);overflow:hidden}
+body{font-family:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.full{position:fixed;top:0;left:0;right:0;bottom:0}
+
+/* ---------- 사진 무대 ---------- */
+#stage{background:#000;overflow:hidden;transition:opacity 3s ease}
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;transition:opacity 1.6s ease;will-change:opacity;overflow:hidden}
+.slide.on{opacity:1}
+.slide canvas{position:absolute;top:-6%;left:-6%;width:112%;height:112%;object-fit:cover;opacity:.62}
+.slide img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+#stage.fit-contain .slide img{object-fit:contain}
+#stage.fit-cover .slide canvas,.slide.grad canvas,.slide.grad img{display:none}
+.kb{animation-timing-function:linear;animation-fill-mode:both}
+@keyframes kb0{from{transform:scale(1.02) translate(0,0)}to{transform:scale(1.1) translate(-1.6%,-1%)}}
+@keyframes kb1{from{transform:scale(1.1) translate(1.4%,1%)}to{transform:scale(1.02) translate(0,0)}}
+@keyframes kb2{from{transform:scale(1.03) translate(1%,-.8%)}to{transform:scale(1.1) translate(-1%,1%)}}
+@keyframes kb3{from{transform:scale(1.1) translate(-1.2%,0)}to{transform:scale(1.03) translate(1%,.6%)}}
+@media (prefers-reduced-motion:reduce){.kb{animation:none!important}}
+
+/* 글자가 잘 보이도록 위·아래만 살짝 어둡게 */
+#scrimB{position:fixed;left:0;right:0;bottom:0;height:58%;pointer-events:none;
+  background:linear-gradient(to top,rgba(0,0,0,.66),rgba(0,0,0,.3) 45%,rgba(0,0,0,0))}
+#scrimT{position:fixed;left:0;right:0;top:0;height:34%;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(0,0,0,.4),rgba(0,0,0,0))}
+
+/* ---------- 시계·날씨 ---------- */
+#hud{position:fixed;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+  padding:0 calc(var(--u) * 4.5) calc(var(--u) * 4);pointer-events:none;text-shadow:var(--shadow);transition:transform 2.5s ease}
+#clockBox{max-width:100%}
+#time,#wTemp,.wd{font-family:'Frame Digits','Noto Sans KR',system-ui,sans-serif}
+#date{margin-top:calc(var(--u) * 2)!important}
+#time{font-weight:200;font-size:calc(var(--u) * 19);line-height:.92;letter-spacing:-.02em;white-space:nowrap;
+  font-variant-numeric:tabular-nums;font-feature-settings:'tnum'}
+#tAp{font-size:.24em;font-weight:400;letter-spacing:0;margin-right:.3em}
+#tSec{font-size:.34em;font-weight:300;letter-spacing:0;color:var(--ink2);margin-left:.1em}
+#date{font-size:calc(var(--u) * 4.4);font-weight:400;margin-top:calc(var(--u) * 1.4);white-space:nowrap}
+#lunar{font-size:calc(var(--u) * 2.6);color:var(--ink2);margin-top:calc(var(--u) * .5)}
+#upcoming{margin-top:calc(var(--u) * 1.4);font-size:calc(var(--u) * 2.4);max-width:calc(var(--u) * 70)}
+#upcoming .up{display:inline-block;margin:calc(var(--u) * .5) calc(var(--u) * 1.6) 0 0;white-space:nowrap}
+#upcoming b{display:inline-block;font-weight:600;font-size:.82em;padding:.12em .5em;margin-right:.45em;border-radius:.6em;
+  background:rgba(255,255,255,.2);text-shadow:none;vertical-align:.08em}
+#upcoming .up.today b{background:var(--accent);color:var(--accentInk)}
+
+#weatherBox{margin-left:auto;padding-left:calc(var(--u) * 4);text-align:right}
+#wPlace{font-size:calc(var(--u) * 2.3);color:var(--ink2)}
+#wNow{display:flex;align-items:center;justify-content:flex-end;margin-top:calc(var(--u) * .2)}
+#wNow svg{width:calc(var(--u) * 10.5);height:calc(var(--u) * 10.5);margin-right:calc(var(--u) * 1);filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+#wTemp{font-size:calc(var(--u) * 10.5);font-weight:300;line-height:1;letter-spacing:-.02em}
+#wDesc{font-size:calc(var(--u) * 3);margin-top:calc(var(--u) * .4)}
+#wMeta{font-size:calc(var(--u) * 2.4);color:var(--ink2);margin-top:calc(var(--u) * .5)}
+#wAir{font-size:calc(var(--u) * 2.4);color:var(--ink2);margin-top:calc(var(--u) * .4)}
+#wAir .aq{white-space:nowrap;margin-left:calc(var(--u) * 1.4)}
+#wAir i{display:inline-block;width:.62em;height:.62em;border-radius:50%;margin-right:.35em;vertical-align:.05em;box-shadow:0 0 0 2px rgba(0,0,0,.18)}
+#wDays{display:flex;justify-content:flex-end;margin-top:calc(var(--u) * 1.6)}
+.wd{width:calc(var(--u) * 7.6);text-align:center;font-size:calc(var(--u) * 2.2);color:var(--ink2)}
+.wd svg{display:block;width:calc(var(--u) * 4.8);height:calc(var(--u) * 4.8);margin:calc(var(--u) * .3) auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+.wd .hi{color:var(--ink)}
+.wd .lo{color:var(--ink3);margin-left:.2em}
+
+/* ---------- 달력 (오른쪽 위) ---------- */
+#calBox{position:fixed;top:calc(var(--u) * 4);right:calc(var(--u) * 4.5);padding:calc(var(--u) * 1.6) calc(var(--u) * 1.8) calc(var(--u) * 1.2);
+  border-radius:calc(var(--u) * 2.2);background:rgba(0,0,0,.3);text-shadow:0 1px 2px rgba(0,0,0,.45);pointer-events:none;transition:transform 2.5s ease,opacity 3s}
+.calHead{font-size:calc(var(--u) * 2.6);font-weight:500;margin:0 0 calc(var(--u) * .8) calc(var(--u) * .6)}
+.calGrid{display:grid;grid-template-columns:repeat(7,calc(var(--u) * 4.3))}
+.cw,.cd{height:calc(var(--u) * 3.9);line-height:calc(var(--u) * 3.9);text-align:center;font-size:calc(var(--u) * 2.05);position:relative;font-variant-numeric:tabular-nums}
+.cw{font-size:calc(var(--u) * 1.8);color:var(--ink3)}
+.cw.sun,.cd.sun{color:var(--holiday)}
+.cw.sat,.cd.sat{color:var(--saturday)}
+.cd span{display:inline-block;width:calc(var(--u) * 3.5);height:calc(var(--u) * 3.5);line-height:calc(var(--u) * 3.5);border-radius:50%}
+.cd.today span{background:#fff;color:#14161b;font-weight:600;text-shadow:none}
+.cd.today.sun span{background:var(--holiday);color:#fff}
+.cd i{position:absolute;left:50%;bottom:calc(var(--u) * .1);width:calc(var(--u) * .7);height:calc(var(--u) * .7);margin-left:calc(var(--u) * -.35);border-radius:50%;background:var(--accent)}
+
+/* ---------- 왼쪽 위: 배터리·사진 날짜 ---------- */
+#topLeft{position:fixed;top:calc(var(--u) * 4);left:calc(var(--u) * 4.5);font-size:calc(var(--u) * 2.3);color:var(--ink2);
+  text-shadow:var(--shadow);pointer-events:none;transition:transform 2.5s ease,opacity 3s;max-width:50%}
+#batt{display:inline-block;background:rgba(0,0,0,.45);color:#fff;border-radius:999px;padding:.28em .8em .32em;margin-bottom:.7em;text-shadow:none;font-size:.92em}
+#batt svg{width:1.4em;height:.8em;margin-right:.4em;vertical-align:-.05em}
+
+/* ---------- 사진이 없을 때 ---------- */
+#emptyHint{position:fixed;left:50%;top:36%;transform:translate(-50%,-50%);z-index:12;text-align:center;width:88%;max-width:560px;
+  background:rgba(10,12,18,.55);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:26px 24px 20px}
+#emptyHint .t{font-size:22px;font-weight:500}
+#emptyHint .s{font-size:15px;color:var(--ink2);margin:8px 0 18px;line-height:1.5}
+#emptyHint .btn{margin:4px}
+
+/* ---------- 야간 ---------- */
+#dim{background:#000;opacity:0;pointer-events:none;transition:opacity 3s ease;z-index:5}
+body.nightclock #stage,body.nightclock #scrimB,body.nightclock #scrimT,body.nightclock #calBox,body.nightclock #topLeft{opacity:0}
+body.nightclock #weatherBox,body.nightclock #upcoming{display:none}
+body.nightclock #hud{top:0;align-items:center;justify-content:center;text-align:center}
+
+/* ---------- 누르면 나오는 도구 막대 ---------- */
+#tap{z-index:10}
+#bar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+  padding:18px 12px 30px;background:linear-gradient(to bottom,rgba(0,0,0,.72),rgba(0,0,0,0));
+  opacity:0;transform:translateY(-100%);transition:opacity .25s,transform .25s;pointer-events:none}
+#bar.show{opacity:1;transform:none;pointer-events:auto}
+.tb{height:54px;min-width:54px;border-radius:27px;border:0;background:rgba(255,255,255,.17);margin:5px;padding:0 16px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#fff}
+.tb:active{background:rgba(255,255,255,.3)}
+.tb svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tb.lbl svg{margin-right:8px}
+.tb .fillsvg{fill:#fff;stroke:none}
+.sep{width:14px}
+
+#toast{position:fixed;left:50%;top:14%;transform:translateX(-50%);z-index:40;background:rgba(18,20,26,.92);color:#fff;
+  padding:12px 20px;border-radius:14px;font-size:16px;max-width:88%;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;
+  box-shadow:0 6px 24px rgba(0,0,0,.4)}
+#toast.show{opacity:1}
+
+/* ---------- 설정 ---------- */
+#sheet{z-index:30;background:rgba(0,0,0,.55);display:flex;justify-content:center}
+#sheetInner{width:100%;max-width:760px;height:100%;background:var(--sheet);display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.6)}
+#sheetHead{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 12px 22px;border-bottom:1px solid var(--line)}
+#sheetHead h1{font-size:20px;font-weight:600;margin:0}
+#sheetBody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 48px;-webkit-user-select:text;user-select:text}
+.sec{margin-top:24px}
+.sec h2{font-size:14px;font-weight:600;color:var(--accent);margin:0 0 8px 6px;letter-spacing:.02em}
+.card{background:var(--sheet2);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;min-height:58px;border-top:1px solid var(--line)}
+.card>.row:first-child,.card>:first-child .row:first-child{border-top:0}
+.row>.grow{flex:1;min-width:0;padding-right:12px}
+.lbl{font-size:16px}
+.hint{font-size:13px;color:var(--ink3);margin-top:3px;line-height:1.45}
+.pad{padding:12px 16px}
+select,input[type=time],input[type=text]{background:var(--field);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:9px 10px;font-size:15px;color:#fff;max-width:100%}
+select{padding-right:6px}
+input[type=text]{min-width:0;flex:1}
+input[type=range]{width:180px;max-width:50%;accent-color:var(--accent)}
+.btn{background:var(--field);border:0;border-radius:11px;padding:10px 15px;font-size:15px;color:#fff;white-space:nowrap}
+.btn:active{opacity:.75}
+.btn.primary{background:var(--accent);color:var(--accentInk);font-weight:600}
+.btn.danger{color:var(--danger)}
+.btn[disabled]{opacity:.4}
+.btn+.btn{margin-left:8px}
+.link{background:none;border:0;color:var(--accent);font-size:15px;padding:8px;text-decoration:underline}
+.sw{-webkit-appearance:none;appearance:none;width:52px;height:30px;border-radius:15px;background:#3c414c;position:relative;outline:none;flex:none;margin:0;transition:background .2s;cursor:pointer}
+.sw::before{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw:checked{background:var(--accent)}
+.sw:checked::before{transform:translateX(22px)}
+.searchRow{display:flex;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.searchRow .btn{margin-left:8px}
+.chips{padding:2px 12px 12px}
+.chip{display:inline-block;margin:4px;padding:8px 14px;border-radius:999px;background:var(--field);border:0;font-size:14px;color:#fff}
+.chip.on{background:var(--accent);color:var(--accentInk);font-weight:600}
+.res{display:block;width:100%;text-align:left;padding:11px 16px;background:none;border:0;border-top:1px solid var(--line);color:#fff}
+.res b{font-weight:500;font-size:16px}
+.res span{display:block;font-size:13px;color:var(--ink3);margin-top:2px}
+#thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));grid-gap:6px;padding:0 12px 12px}
+#thumbs:empty{display:none}
+.th{position:relative;padding:0;padding-top:100%;border:0;border-radius:9px;overflow:hidden;background:#262a33}
+.th img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.th.sel::after{content:'✓';position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:700;color:#fff;background:rgba(255,120,100,.5);box-shadow:inset 0 0 0 3px var(--danger);border-radius:9px}
+.evAdd{display:flex;flex-wrap:wrap;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.evAdd>*{margin:4px 8px 4px 0}
+.evAdd input[type=text]{flex:1 1 160px}
+.evAdd label{font-size:15px;display:inline-flex;align-items:center}
+.evAdd label input{width:20px;height:20px;margin:0 6px 0 0;accent-color:var(--accent)}
+.help{padding:6px 18px 14px;font-size:15px;line-height:1.65;color:var(--ink2)}
+.help ol{margin:8px 0;padding-left:20px}
+.help li{margin:6px 0}
+.help b{color:#fff;font-weight:500}
+.foot{font-size:12px;color:var(--ink3);text-align:center;margin:26px 0 0;line-height:1.6}
+#awakeStatus{font-size:14px;line-height:1.5}
+#awakeStatus.ok{color:#7be3a7}
+#awakeStatus.warn{color:#ffcf7a}
+</style>
+</head>
+<body>
+
+<div id="stage" class="full fit-cover">
+  <div class="slide" id="slideA"><canvas width="2" height="2"></canvas><img alt=""></div>
+  <div class="slide" id="slideB"><canvas width="2" height="2"></canvas><img alt=""></div>
+</div>
+<div id="scrimT"></div>
+<div id="scrimB"></div>
+
+<div id="topLeft">
+  <div id="batt" hidden></div>
+  <div id="photoDate"></div>
+</div>
+
+<div id="calBox"></div>
+
+<div id="hud">
+  <div id="clockBox">
+    <div id="time"><span id="tAp" hidden></span><span id="tHm">--:--</span><span id="tSec"></span></div>
+    <div id="date"></div>
+    <div id="lunar"></div>
+    <div id="upcoming"></div>
+  </div>
+  <div id="weatherBox">
+    <div id="wPlace"></div>
+    <div id="wNow"></div>
+    <div id="wDesc"></div>
+    <div id="wMeta"></div>
+    <div id="wAir"></div>
+    <div id="wDays"></div>
+  </div>
+</div>
+
+<div id="dim" class="full"></div>
+<div id="tap" class="full"></div>
+
+<div id="emptyHint" hidden>
+  <div class="t">사진을 넣어 액자를 채워 보세요</div>
+  <div class="s">태블릿 갤러리에서 사진을 고르면 액자처럼 번갈아 보여 드려요.<br>시계·날씨·달력은 사진 위에 늘 함께 떠 있어요.</div>
+  <button class="btn primary" id="ehAdd">사진 추가</button>
+  <button class="btn" id="ehLater">당분간 색 배경으로 쓰기</button>
+  <div><button class="link" id="ehPlace">날씨 지역 바꾸기</button></div>
+</div>
+
+<div id="bar">
+  <button class="tb" id="bPrev" aria-label="이전 사진"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="tb" id="bPlay" aria-label="일시정지"></button>
+  <button class="tb" id="bNext" aria-label="다음 사진"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <span class="sep"></span>
+  <button class="tb lbl" id="bAdd"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>사진 추가</button>
+  <button class="tb lbl" id="bSet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>설정</button>
+  <button class="tb" id="bFull" aria-label="전체 화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="sheet" class="full" hidden>
+  <div id="sheetInner" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div id="sheetHead"><h1 id="sheetTitle">설정</h1><button class="btn primary" id="sheetDone">완료</button></div>
+    <div id="sheetBody">
+
+      <section class="sec" id="secPhotos"><h2>사진</h2>
+        <div class="card">
+          <div class="row"><div class="grow"><div class="lbl" id="photoCount">사진 0장</div>
+            <div class="hint">원본은 그대로 두고, 화면 크기에 맞게 줄인 사본을 이 태블릿 안에만 저장해요.</div></div>
+            <button class="btn primary" id="addPhotos">사진 추가</button></div>
+          <div id="thumbs"></div>
+          <div class="row" id="selRow"><div class="grow hint" id="selInfo">사진을 누르면 골라서 지울 수 있어요</div>
+            <span><button class="btn" id="selAll">전체 선택</button><button class="btn danger" id="delSel" disabled>지우기</button></span></div>
+        </div>
+      </section>
+
+      <section class="sec"><h2>슬라이드쇼</h2>
+        <div class="card">
+          <div class="row"><div class="grow lbl">사진 바뀌는 간격</div>
+            <select id="sInterval"><option value="10">10초</option><option value="20">20초</option><option value="30">30초</option><option value="60">1분</option><option value="120">2분</option><option value="300">5분</option><option value="600">10분</option><option value="1800">30분</option><option value="3600">1시간</option></select></div>
+          <div class="row"><div class="grow lbl">순서</div>
+            <select id="sOrder"><option value="shuffle">무작위</option><option value="added">추가한 순서</option><option value="taken">찍은 날짜 순서</option></select></div>
+          <div class="row"><div class="grow lbl">보여 주는 방식</div>
+            <select id="sFit"><option value="cover">화면 가득 채우기</option><option value="contain">사진 전체 보기 (빈 곳은 흐리게)</option></select></div>
+          <div class="row"><div class="grow"><div class="lbl">천천히 움직이는 효과</div><div class="hint">사진이 아주 천천히 다가오거나 흘러가요</div></div><input type="checkbox" class="sw" id="sKen"></div>
+          <div class="row"><div class="grow"><div class="lbl">사진 찍은 날짜 표시</div><div class="hint">왼쪽 위에 작게 보여요 (예: 3년 전 오늘)</div></div><input type="checkbox" class="sw" id="sPhotoDate"></div>
+        </div>
+      </section>
+
+      <section class="sec" id="secWeather"><h2>날씨</h2>
+        <div class="card">
+          <div class="row"><div class="grow lbl">날씨 표시</div><input type="checkbox" class="sw" id="sWeather"></div>
+          <div class="row"><div class="grow"><div class="lbl">지역</div><div class="hint" id="placeNow">서울</div></div><button class="btn" id="placeHere">현재 위치</button></div>
+          <div class="searchRow"><input type="text" id="placeQ" placeholder="도시·지역 이름 (예: 수원, 분당, 해운대)" enterkeyhint="search"><button class="btn" id="placeGo">검색</button></div>
+          <div id="placeResults"></div>
+          <div class="chips" id="placePresets"></div>
+          <div class="row"><div class="grow"><div class="lbl">미세먼지 표시</div><div class="hint">환경부 기준 좋음·보통·나쁨·매우나쁨</div></div><input type="checkbox" class="sw" id="sAir"></div>
+        </div>
+      </section>
+
+      <section class="sec"><h2>시계 · 달력</h2>
+        <div class="card">
+          <div class="row"><div class="grow lbl">24시간제</div><input type="checkbox" class="sw" id="s24"></div>
+          <div class="row"><div class="grow lbl">초 표시</div><input type="checkbox" class="sw" id="sSec"></div>
+          <div class="row"><div class="grow lbl">음력 날짜 표시</div><input type="checkbox" class="sw" id="sLunar"></div>
+          <div class="row"><div class="grow"><div class="lbl">달력 표시</div><div class="hint">공휴일·대체공휴일은 빨간 날로 보여요</div></div><input type="checkbox" class="sw" id="sCal"></div>
+          <div class="row"><div class="grow lbl">글자 크기</div>
+            <select id="sScale"><option value="0.85">작게</option><option value="1">보통</option><option value="1.15">크게</option><option value="1.3">아주 크게</option></select></div>
+        </div>
+      </section>
+
+      <section class="sec"><h2>기념일</h2>
+        <div class="card">
+          <div id="evList"></div>
+          <div class="evAdd">
+            <input type="text" id="evName" placeholder="예: 엄마 생신, 결혼기념일" maxlength="20">
+            <select id="evM"></select><select id="evD"></select>
+            <label><input type="checkbox" id="evLunar">음력</label>
+            <button class="btn primary" id="evAddBtn">추가</button>
+          </div>
+          <div class="hint pad" style="padding-top:0">매년 돌아오는 날을 달력에 점으로 표시하고, 가까워지면 시계 아래에 D-day로 알려 줘요.</div>
+        </div>
+      </section>
+
+      <section class="sec" id="secAwake"><h2>화면 켜짐 · 야간 모드</h2>
+        <div class="card">
+          <div class="row"><div class="grow lbl">화면 꺼짐 방지</div>
+            <select id="sAwake"><option value="charging">충전 중일 때만</option><option value="always">항상</option><option value="off">사용 안 함</option></select></div>
+          <div class="pad" id="awakeStatus"></div>
+          <div class="row"><div class="grow"><div class="lbl">야간 모드</div><div class="hint">밤에는 눈부시지 않게 어둡게 해요. 화면을 누르면 1분 동안 밝아져요.</div></div>
+            <select id="sNight"><option value="off">사용 안 함</option><option value="dim">어둡게</option><option value="clock">시계만 어둡게</option></select></div>
+          <div class="row"><div class="grow lbl">야간 시간</div><span><input type="time" id="sNightStart"> ~ <input type="time" id="sNightEnd"></span></div>
+          <div class="row"><div class="grow lbl">어둡기</div><input type="range" id="sNightLevel" min="0.3" max="0.92" step="0.02"></div>
+        </div>
+      </section>
+
+      <section class="sec"><h2>24시간 켜 두는 방법</h2>
+        <div class="card help">
+          <ol>
+            <li>크롬에서 이 화면을 연 다음 메뉴(⋮) → <b>홈 화면에 추가</b>를 누르세요. 홈 화면 아이콘으로 열면 주소창 없이 전체 화면으로 떠요. <button class="btn" id="installBtn" hidden>지금 홈 화면에 추가</button></li>
+            <li>충전기를 꽂아 두면, 이 앱이 화면에 떠 있는 동안 <b>화면이 꺼지지 않아요</b>. 충전기를 빼면 평소처럼 꺼져서 배터리를 아껴요.</li>
+            <li>더 확실하게 하려면 태블릿 <b>설정 → 태블릿 정보 → 소프트웨어 정보 → 빌드 번호</b>를 7번 눌러 개발자 옵션을 켠 뒤, <b>설정 → 개발자 옵션 → 화면 켜짐 상태 유지</b>를 켜 주세요. 충전하는 동안은 태블릿이 스스로 화면을 끄지 않아요.</li>
+            <li>다른 앱을 열었다 돌아오거나 태블릿을 다시 켜면 이 앱 아이콘만 누르면 돼요. 사진과 설정은 그대로 남아 있어요.</li>
+            <li>하루 종일 같은 자리에 글자가 떠 있으면 화면에 잔상이 남을 수 있어서, 글자 위치를 몇 분마다 아주 조금씩 옮기고 있어요. 밤에는 야간 모드를 켜 두면 더 좋아요.</li>
+          </ol>
+        </div>
+      </section>
+
+      <p class="foot">사진·설정·기념일은 이 태블릿 안에만 저장되고 어디에도 올라가지 않아요.<br>날씨·미세먼지: Open-Meteo · 공휴일은 태블릿에서 직접 계산해요 (선거일 등 임시공휴일은 빠질 수 있어요)</p>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="filePick" accept="image/*" multiple hidden>
+<video id="wakeVid" muted loop playsinline aria-hidden="true" style="position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:.01;pointer-events:none"></video>
+
+<script>
+'use strict';
+(function () {
+  const $ = id => document.getElementById(id);
+  const pad = n => (n < 10 ? '0' : '') + n;
+  const noon = d => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12);
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, 12);
+  const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const WD = ['일', '월', '화', '수', '목', '금', '토'];
+  const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ESC[c]);
+  const WAKE_WEBM = 'data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAH9EU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHYTbuMU6uEElTDZ1OsggEeTbuMU6uEHFO7a1OsggHn7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsirXsYMPQkBNgI1MYXZmNjAuMTYuMTAwV0GNTGF2ZjYwLjE2LjEwMESJiECfQAAAAAAAFlSua8GuAQAAAAAAADjXgQFzxYhm7XqT6pmHqZyBACK1nIN1bmSIgQCGhVZfVlA4g4EBI+ODhDuaygDgibCBELqBEJqBAhJUw2f8c3OgY8CAZ8iaRaOHRU5DT0RFUkSHjUxhdmY2MC4xNi4xMDBzc9ZjwItjxYhm7XqT6pmHqWfIoUWjh0VOQ09ERVJEh5RMYXZjNjAuMzEuMTAyIGxpYnZweGfIoUWjiERVUkFUSU9ORIeTMDA6MDA6MDIuMDAwMDAwMDAwAB9DtnXD54EAo6OBAACAEAIAnQEqEAAQAABHCIWFiJmEiAICAAwNYAD+/6tQgKOZgQPoALEBAAEQEAAYADA/9AwAAAD+/6tQgBxTu2uRu4+zgQC3iveBAfGCAZ/wgQM=';
+  const WAKE_MP4 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMrbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlV0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHNbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAgABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABeG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAThzdGJsAAAAuHN0c2QAAAAAAAAAAQAAAKhhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAALmF2Y0MBQsAK/+EAFmdCwArZHsBEAAADAAQAAAMACDxImSABAAVoy4PLIAAAABBwYXNwAAAAAQAAAAEAAAAUYnRydAAAAAAAAApAAAAKQAAAABhzdHRzAAAAAAAAAAEAAAACAABAAAAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAACAAAAAQAAABxzdHN6AAAAAAAAAAAAAAACAAAChgAAAAoAAAAUc3RjbwAAAAAAAAABAAADWwAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNjAuMTYuMTAwAAAACGZyZWUAAAKYbWRhdAAAAnAGBf//bNxF6b3m2Ui3lizYINkj7u94MjY0IC0gY29yZSAxNjQgcjMxMDggMzFlMTlmOSAtIEguMjY0L01QRUctNCBBVkMgY29kZWMgLSBDb3B5bGVmdCAyMDAzLTIwMjMgLSBodHRwOi8vd3d3LnZpZGVvbGFuLm9yZy94MjY0Lmh0bWwgLSBvcHRpb25zOiBjYWJhYz0wIHJlZj0zIGRlYmxvY2s9MTowOjAgYW5hbHlzZT0weDE6MHgxMTEgbWU9aGV4IHN1Ym1lPTcgcHN5PTEgcHN5X3JkPTEuMDA6MC4wMCBtaXhlZF9yZWY9MSBtZV9yYW5nZT0xNiBjaHJvbWFfbWU9MSB0cmVsbGlzPTEgOHg4ZGN0PTAgY3FtPTAgZGVhZHpvbmU9MjEsMTEgZmFzdF9wc2tpcD0xIGNocm9tYV9xcF9vZmZzZXQ9LTIgdGhyZWFkcz0xIGxvb2thaGVhZF90aHJlYWRzPTEgc2xpY2VkX3RocmVhZHM9MCBucj0wIGRlY2ltYXRlPTEgaW50ZXJsYWNlZD0wIGJsdXJheV9jb21wYXQ9MCBjb25zdHJhaW5lZF9pbnRyYT0wIGJmcmFtZXM9MCB3ZWlnaHRwPTAga2V5aW50PTI1MCBrZXlpbnRfbWluPTEgc2NlbmVjdXQ9NDAgaW50cmFfcmVmcmVzaD0wIHJjX2xvb2thaGVhZD00MCByYz1jcmYgbWJ0cmVlPTEgY3JmPTIzLjAgcWNvbXA9MC42MCBxcG1pbj0wIHFwbWF4PTY5IHFwc3RlcD00IGlwX3JhdGlvPTEuNDAgYXE9MToxLjAwAIAAAAAOZYiEBb///w9FAAFPf4AAAAAGQZo4CvqA';
+  const ORIENT_TEST = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAABAAYAAAAAAAD/2wBDAFA3PEY8MlBGQUZaVVBfeMiCeG5uePWvuZHI////////////////////////////////////////////////////2wBDAVVaWnhpeOuCguv/////////////////////////////////////////////////////////////////////////wAARCAABAAIDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAP/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAwT/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCQA1j/2Q==';
+
+  /* ================= 설정 ================= */
+  const SKEY = 'photoFrame.settings.v1';
+  const DEFAULTS = {
+    interval: 60, order: 'shuffle', fit: 'cover', kenburns: true, showPhotoDate: true,
+    clock24: true, showSeconds: false, showLunar: true, showCalendar: true, hudScale: 1,
+    showWeather: true, showAir: true, place: { name: '서울', lat: 37.5665, lon: 126.978 },
+    keepAwake: 'charging', nightMode: 'dim', nightStart: '23:00', nightEnd: '07:00', nightLevel: 0.7,
+    hideEmptyHint: false, events: []
+  };
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  const S = (function () {
+    let s = null;
+    try { s = JSON.parse(lsGet(SKEY) || 'null'); } catch (e) { s = null; }
+    const o = Object.assign({}, DEFAULTS, s && typeof s === 'object' ? s : {});
+    o.events = Array.isArray(o.events) ? o.events.filter(e => e && e.name && e.m && e.d) : [];
+    if (!o.place || typeof o.place.lat !== 'number' || typeof o.place.lon !== 'number') o.place = Object.assign({}, DEFAULTS.place);
+    return o;
+  })();
+  function save() { lsSet(SKEY, JSON.stringify(S)); }
+
+  /* ================= 알림 문구 ================= */
+  let toastT = null;
+  function toast(msg, stay) {
+    const t = $('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT);
+    if (!stay) toastT = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  /* ================= 사진 저장소 (IndexedDB, 안 되면 이번 실행 동안만 메모리) ================= */
+  const mem = {};
+  const DB = {
+    db: null,
+    open() {
+      return new Promise(res => {
+        let r;
+        try { r = indexedDB.open('photoFrame', 1); } catch (e) { res(false); return; }
+        r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' }); };
+        r.onsuccess = () => { DB.db = r.result; res(true); };
+        r.onerror = () => res(false);
+        r.onblocked = () => res(false);
+      });
+    },
+    put(rec) {
+      if (!DB.db) { mem[rec.id] = rec; return Promise.resolve(); }
+      return new Promise((res, rej) => {
+        const t = DB.db.transaction('photos', 'readwrite');
+        t.objectStore('photos').put(rec);
+        t.oncomplete = () => res();
+        t.onerror = () => rej(t.error);
+        t.onabort = () => rej(t.error || new Error('abort'));
+      });
+    },
+    get(id) {
+      if (!DB.db) return Promise.resolve(mem[id] || null);
+      return new Promise(res => {
+        try {
+          const r = DB.db.transaction('photos', 'readonly').objectStore('photos').get(id);
+          r.onsuccess = () => res(r.result || null);
+          r.onerror = () => res(null);
+        } catch (e) { res(null); }
+      });
+    },
+    del(ids) {
+      ids.forEach(id => { delete mem[id]; });
+      if (!DB.db) return Promise.resolve();
+      return new Promise(res => {
+        const t = DB.db.transaction('photos', 'readwrite');
+        const st = t.objectStore('photos');
+        ids.forEach(id => st.delete(id));
+        t.oncomplete = t.onerror = t.onabort = () => res();
+      });
+    },
+    list() {
+      if (!DB.db) return Promise.resolve(Object.keys(mem).map(k => ({ id: k, taken: mem[k].taken, added: mem[k].added })));
+      return new Promise(res => {
+        const out = [];
+        try {
+          const r = DB.db.transaction('photos', 'readonly').objectStore('photos').openCursor();
+          r.onsuccess = () => {
+            const c = r.result;
+            if (c) { const v = c.value; out.push({ id: v.id, taken: v.taken || null, added: v.added || 0 }); c.continue(); } else res(out);
+          };
+          r.onerror = () => res(out);
+        } catch (e) { res(out); }
+      });
+    }
+  };
+
+  /* ================= 사진 가져오기: 회전 바로잡고 화면 크기로 줄여 저장 ================= */
+  let autoOrient = true; // 최신 크롬은 EXIF 회전을 스스로 적용함. 오래된 브라우저면 직접 돌림
+  function detectAutoOrient() {
+    return new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(im.naturalWidth === 1 && im.naturalHeight === 2);
+      im.onerror = () => res(true);
+      im.src = ORIENT_TEST;
+    });
+  }
+  function readSlice(file, a, b) {
+    return new Promise(res => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => res(null);
+      fr.readAsArrayBuffer(file.slice(a, b));
+    });
+  }
+  function readAscii(v, o, n) {
+    let s = '';
+    for (let i = 0; i < n && o + i < v.byteLength; i++) { const c = v.getUint8(o + i); if (!c) break; s += String.fromCharCode(c); }
+    return s;
+  }
+  // JPEG의 EXIF에서 회전 정보와 찍은 날짜만 읽음
+  function parseExif(buf) {
+    const out = { orientation: 1, taken: null };
+    if (!buf) return out;
+    try {
+      const v = new DataView(buf);
+      if (v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return out;
+      let off = 2;
+      while (off + 4 <= v.byteLength) {
+        const marker = v.getUint16(off);
+        if ((marker & 0xFF00) !== 0xFF00 || marker === 0xFFDA) break;
+        const len = v.getUint16(off + 2);
+        if (marker === 0xFFE1 && v.getUint32(off + 4) === 0x45786966) {
+          const t = off + 10, le = v.getUint16(t) === 0x4949;
+          const u16 = o => v.getUint16(o, le), u32 = o => v.getUint32(o, le);
+          if (u16(t + 2) !== 42) break;
+          const ifd0 = t + u32(t + 4);
+          let exifPtr = 0, dt = null;
+          for (let i = 0, n = u16(ifd0); i < n; i++) {
+            const e = ifd0 + 2 + i * 12, tag = u16(e);
+            if (tag === 0x0112) out.orientation = u16(e + 8);
+            else if (tag === 0x8769) exifPtr = u32(e + 8);
+            else if (tag === 0x0132) dt = readAscii(v, t + u32(e + 8), 19);
+          }
+          if (exifPtr) {
+            const ifd = t + exifPtr;
+            for (let i = 0, n = u16(ifd); i < n; i++) {
+              const e = ifd + 2 + i * 12;
+              if (u16(e) === 0x9003) { dt = readAscii(v, t + u32(e + 8), 19) || dt; break; }
+            }
+          }
+          const m = dt && /^(\d{4}):(\d{2}):(\d{2})/.exec(dt);
+          if (m && +m[1] > 1970) out.taken = m[1] + '-' + m[2] + '-' + m[3];
+          break;
+        }
+        off += 2 + len;
+      }
+    } catch (e) { /* 깨진 EXIF는 무시 */ }
+    if (!(out.orientation >= 1 && out.orientation <= 8)) out.orientation = 1;
+    return out;
+  }
+  function loadImage(url) {
+    return new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = () => rej(new Error('decode'));
+      im.src = url;
+    });
+  }
+  function renderJpeg(img, orient, dw, dh, q) {
+    const c = document.createElement('canvas');
+    c.width = dw; c.height = dh;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = true;
+    try { g.imageSmoothingQuality = 'high'; } catch (e) { /* 오래된 브라우저 */ }
+    switch (orient) {
+      case 2: g.transform(-1, 0, 0, 1, dw, 0); break;
+      case 3: g.transform(-1, 0, 0, -1, dw, dh); break;
+      case 4: g.transform(1, 0, 0, -1, 0, dh); break;
+      case 5: g.transform(0, 1, 1, 0, 0, 0); break;
+      case 6: g.transform(0, 1, -1, 0, dw, 0); break;
+      case 7: g.transform(0, -1, -1, 0, dw, dh); break;
+      case 8: g.transform(0, -1, 1, 0, 0, dh); break;
+    }
+    const swap = orient >= 5;
+    g.drawImage(img, 0, 0, swap ? dh : dw, swap ? dw : dh);
+    return new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error('encode'))), 'image/jpeg', q));
+  }
+  function targetSide() {
+    const dpr = window.devicePixelRatio || 1;
+    const side = Math.max(screen.width || 0, screen.height || 0, window.innerWidth, window.innerHeight) * dpr;
+    return Math.max(1280, Math.min(2560, Math.round(side)));
+  }
+  async function processFile(file) {
+    const exif = parseExif(await readSlice(file, 0, 256 * 1024));
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await loadImage(url);
+      const orient = autoOrient ? 1 : exif.orientation;
+      const swap = orient >= 5;
+      const ow = swap ? img.naturalHeight : img.naturalWidth, oh = swap ? img.naturalWidth : img.naturalHeight;
+      if (!ow || !oh) throw new Error('empty');
+      const k = Math.min(1, targetSide() / Math.max(ow, oh));
+      const full = await renderJpeg(img, orient, Math.round(ow * k), Math.round(oh * k), 0.88);
+      const tk = Math.min(1, 320 / Math.max(ow, oh));
+      const thumb = await renderJpeg(img, orient, Math.max(1, Math.round(ow * tk)), Math.max(1, Math.round(oh * tk)), 0.8);
+      return { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8), full, thumb, taken: exif.taken, added: Date.now() };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  let importing = false;
+  async function importFiles(fileList) {
+    const files = Array.prototype.filter.call(fileList || [], f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name));
+    if (!files.length || importing) return;
+    importing = true;
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    let ok = 0, fail = 0, full = false;
+    const added = [];
+    for (let i = 0; i < files.length; i++) {
+      toast('사진 담는 중… ' + (i + 1) + ' / ' + files.length, true);
+      try {
+        const rec = await processFile(files[i]);
+        await DB.put(rec);
+        const p = { id: rec.id, taken: rec.taken, added: rec.added };
+        photos.push(p); added.push(p.id); ok++;
+      } catch (e) {
+        fail++;
+        if (e && (e.name === 'QuotaExceededError' || /quota/i.test(e.message || ''))) { full = true; break; }
+      }
+    }
+    importing = false;
+    if (added.length) queue.splice(qpos, 0, ...added); // 새로 넣은 사진부터 바로 보여 줌
+    let msg = ok ? '사진 ' + ok + '장을 액자에 담았어요' : '사진을 담지 못했어요';
+    if (full) msg += ' · 저장 공간이 가득 찼어요';
+    else if (fail) msg += ' (' + fail + '장은 열 수 없는 형식이었어요)';
+    if (ok && !DB.db) msg += ' · 이 브라우저에서는 다시 열면 사라져요';
+    toast(msg);
+    updateEmptyHint();
+    if (sheetOpen) renderThumbs();
+    if (ok) goNext(); // 방금 넣은 사진을 바로 보여 줌
+  }
+
+  /* ================= 슬라이드쇼 ================= */
+  const stage = $('stage');
+  const slides = [$('slideA'), $('slideB')].map(el => ({ el, img: el.querySelector('img'), cv: el.querySelector('canvas'), url: null }));
+  const GRADS = [
+    'linear-gradient(140deg,#0f2027,#203a43 50%,#2c5364)',
+    'linear-gradient(140deg,#355c7d,#6c5b7b 55%,#c06c84)',
+    'linear-gradient(160deg,#134e5e,#3f7f6e 60%,#71b280)',
+    'linear-gradient(150deg,#1e3c72,#2a5298)',
+    'linear-gradient(140deg,#3a1c71,#a14f74 60%,#d98b6a)',
+    'linear-gradient(160deg,#232526,#414345)',
+    'linear-gradient(150deg,#0b486b,#6a5a8c 55%,#c46d5e)'
+  ];
+  let front = 0, photos = [], queue = [], qpos = 0, hist = [], curId = null, curTaken = null;
+  let timer = null, paused = false, showToken = 0, gradIdx = Math.floor(Math.random() * GRADS.length);
+
+  function sortedIds() {
+    const arr = photos.slice();
+    if (S.order === 'taken') arr.sort((a, b) => { const x = a.taken || '9999', y = b.taken || '9999'; return x < y ? -1 : x > y ? 1 : a.added - b.added; });
+    else arr.sort((a, b) => a.added - b.added);
+    return arr.map(p => p.id);
+  }
+  function rebuildQueue() {
+    queue = sortedIds();
+    if (S.order === 'shuffle') {
+      for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = queue[i]; queue[i] = queue[j]; queue[j] = t; }
+      if (queue.length > 1 && queue[0] === curId) queue.push(queue.shift());
+      qpos = 0;
+    } else {
+      const i = queue.indexOf(curId);
+      qpos = i >= 0 ? i + 1 : 0;
+    }
+  }
+  function nextId() {
+    if (!photos.length) return null;
+    if (qpos >= queue.length) { if (S.order === 'shuffle') rebuildQueue(); else { queue = sortedIds(); qpos = 0; } }
+    return queue[qpos++];
+  }
+  function forget(ids) {
+    const gone = {};
+    ids.forEach(id => { gone[id] = 1; });
+    photos = photos.filter(p => !gone[p.id]);
+    let before = 0;
+    for (let i = 0; i < qpos && i < queue.length; i++) if (gone[queue[i]]) before++;
+    queue = queue.filter(id => !gone[id]);
+    qpos = Math.max(0, qpos - before);
+    hist = hist.filter(id => !gone[id]);
+  }
+  function schedule(ms) {
+    clearTimeout(timer);
+    if (paused || nightClock) return;
+    timer = setTimeout(goNext, ms || (photos.length ? S.interval * 1000 : Math.max(60, S.interval) * 1000));
+  }
+  function goNext() {
+    const id = nextId();
+    if (id == null) { showGradient(); return; }
+    if (curId) { hist.push(curId); if (hist.length > 80) hist.shift(); }
+    show(id);
+  }
+  function goPrev() {
+    if (!hist.length) { toast('더 이전 사진이 없어요'); return; }
+    const id = hist.pop();
+    if (curId) queue.splice(qpos, 0, curId);
+    show(id);
+  }
+  function loadInto(img, url) {
+    return new Promise(res => {
+      let done = false;
+      const fin = v => { if (done) return; done = true; img.onload = img.onerror = null; res(v); };
+      img.onload = () => { if (img.decode) img.decode().then(() => fin(true), () => fin(true)); else fin(true); };
+      img.onerror = () => fin(false);
+      img.src = url;
+    });
+  }
+  function paintBlur(sl) {
+    if (S.fit !== 'contain' || !sl.img.naturalWidth) return;
+    const w = 40, h = Math.max(1, Math.round(40 * sl.img.naturalHeight / sl.img.naturalWidth));
+    sl.cv.width = w; sl.cv.height = h;
+    const g = sl.cv.getContext('2d');
+    if ('filter' in g) g.filter = 'blur(2px)';
+    g.drawImage(sl.img, -2, -2, w + 4, h + 4);
+  }
+  function startKB(sl) {
+    sl.img.classList.remove('kb');
+    sl.img.style.animationName = '';
+    if (!S.kenburns || sl.el.classList.contains('grad')) return;
+    void sl.img.offsetWidth; // 애니메이션을 처음부터 다시 시작
+    sl.img.style.animationName = 'kb' + Math.floor(Math.random() * 4);
+    sl.img.style.animationDuration = (S.interval + 3) + 's';
+    sl.img.classList.add('kb');
+  }
+  function swapTo(back) {
+    const old = slides[front];
+    back.el.classList.add('on');
+    old.el.classList.remove('on');
+    front = slides.indexOf(back);
+  }
+  async function show(id) {
+    const tok = ++showToken;
+    clearTimeout(timer);
+    const rec = await DB.get(id);
+    if (tok !== showToken) return;
+    if (!rec || !rec.full) { forget([id]); schedule(500); return; }
+    const back = slides[1 - front];
+    if (back.url) URL.revokeObjectURL(back.url);
+    back.url = URL.createObjectURL(rec.full);
+    back.el.classList.remove('grad');
+    back.el.style.background = '';
+    const ok = await loadInto(back.img, back.url);
+    if (tok !== showToken) return;
+    if (!ok) { schedule(800); return; }
+    curId = id; curTaken = rec.taken || null;
+    paintBlur(back);
+    startKB(back);
+    swapTo(back);
+    setCaption();
+    schedule();
+  }
+  function showGradient() {
+    ++showToken;
+    const back = slides[1 - front];
+    if (back.url) { URL.revokeObjectURL(back.url); back.url = null; }
+    back.img.removeAttribute('src');
+    back.img.classList.remove('kb');
+    back.el.classList.add('grad');
+    back.el.style.background = GRADS[gradIdx++ % GRADS.length];
+    curId = null; curTaken = null;
+    swapTo(back);
+    setCaption();
+    schedule();
+  }
+  function setCaption() {
+    const el = $('photoDate');
+    if (!S.showPhotoDate || !curTaken || nightClock) { el.textContent = ''; return; }
+    const p = curTaken.split('-').map(Number), now = new Date();
+    const yearsAgo = now.getFullYear() - p[0];
+    if (p[1] === now.getMonth() + 1 && p[2] === now.getDate() && yearsAgo > 0) el.textContent = yearsAgo + '년 전 오늘';
+    else el.textContent = p[0] + '년 ' + p[1] + '월 ' + p[2] + '일';
+  }
+  function setPaused(v) {
+    paused = v;
+    $('bPlay').innerHTML = paused
+      ? '<svg viewBox="0 0 24 24"><path class="fillsvg" d="M8 5v14l11-7z"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path class="fillsvg" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>';
+    $('bPlay').setAttribute('aria-label', paused ? '다시 재생' : '일시정지');
+    if (paused) clearTimeout(timer); else schedule();
+  }
+
+  /* ================= 음력 · 공휴일 · 기념일 ================= */
+  const LF = (function () {
+    const tries = ['ko-KR-u-ca-dangi', 'ko-KR-u-ca-chinese'];
+    for (let i = 0; i < tries.length; i++) {
+      try {
+        const f = new Intl.DateTimeFormat(tries[i], { year: 'numeric', month: 'numeric', day: 'numeric' });
+        const c = f.resolvedOptions().calendar;
+        if ((c === 'dangi' || c === 'chinese') && f.formatToParts) return f;
+      } catch (e) { /* 지원 안 함 */ }
+    }
+    return null;
+  })();
+  const lunarCache = {};
+  function lunarOf(d) {
+    if (!LF) return null;
+    const k = ymd(d);
+    if (lunarCache[k] !== undefined) return lunarCache[k];
+    let m = 0, dd = 0, leap = false;
+    try {
+      LF.formatToParts(noon(d)).forEach(p => {
+        if (p.type === 'month') { leap = /윤|闰|bis/.test(p.value); m = parseInt(p.value.replace(/\D/g, ''), 10); }
+        else if (p.type === 'day') dd = parseInt(p.value.replace(/\D/g, ''), 10);
+      });
+    } catch (e) { m = 0; }
+    return (lunarCache[k] = m && dd ? { m, d: dd, leap } : null);
+  }
+  const lunarYears = {};
+  function lunarYear(y) {
+    if (lunarYears[y]) return lunarYears[y];
+    const out = [];
+    for (let dt = new Date(y, 0, 1, 12); dt.getFullYear() === y; dt = addDays(dt, 1)) { const L = lunarOf(dt); if (L) out.push({ dt, L }); }
+    return (lunarYears[y] = out);
+  }
+  function findLunar(y, m, d) { return lunarYear(y).filter(x => !x.L.leap && x.L.m === m && x.L.d === d).map(x => x.dt); }
+
+  // 이미 정해진 선거일 (임시공휴일은 그때그때 정해져서 계산할 수 없음)
+  const ELECTIONS = { '2026-06-03': '지방선거', '2028-04-12': '국회의원 선거' };
+  const holCache = {};
+  // 「관공서의 공휴일에 관한 규정」 기준: 고정 공휴일 + 음력 공휴일 + 대체공휴일
+  function koHolidays(y) {
+    if (holCache[y]) return holCache[y];
+    const H = {};
+    const add = (dt, name) => { const k = ymd(dt); (H[k] = H[k] || []).push(name); };
+    const D = (m, d) => new Date(y, m - 1, d, 12);
+    const fixed = [[1, 1, '신정'], [3, 1, '삼일절'], [5, 5, '어린이날'], [6, 6, '현충일'], [8, 15, '광복절'], [10, 3, '개천절'], [10, 9, '한글날'], [12, 25, '성탄절']];
+    fixed.forEach(f => add(D(f[0], f[1]), f[2]));
+    const seol = LF ? findLunar(y, 1, 1)[0] : null;
+    const buddha = LF ? findLunar(y, 4, 8)[0] : null;
+    const chuseok = LF ? findLunar(y, 8, 15)[0] : null;
+    if (seol) { add(addDays(seol, -1), '설날 연휴'); add(seol, '설날'); add(addDays(seol, 1), '설날 연휴'); }
+    if (buddha) add(buddha, '부처님오신날');
+    if (chuseok) { add(addDays(chuseok, -1), '추석 연휴'); add(chuseok, '추석'); add(addDays(chuseok, 1), '추석 연휴'); }
+    Object.keys(ELECTIONS).forEach(k => { if (+k.slice(0, 4) === y) add(new Date(y, +k.slice(5, 7) - 1, +k.slice(8, 10), 12), ELECTIONS[k]); });
+    // 대체공휴일 규칙: 설·추석은 일요일이나 다른 공휴일과 겹칠 때, 어린이날은 토·일·다른 공휴일과 겹칠 때,
+    // 삼일절·부처님오신날·광복절·개천절·한글날·성탄절은 토·일과 겹칠 때 → 그다음 첫 평일
+    const rules = [];
+    if (seol) rules.push({ days: [addDays(seol, -1), seol, addDays(seol, 1)], sat: false, overlap: true });
+    if (chuseok) rules.push({ days: [addDays(chuseok, -1), chuseok, addDays(chuseok, 1)], sat: false, overlap: true });
+    rules.push({ days: [D(5, 5)], sat: true, overlap: true });
+    [D(3, 1), D(8, 15), D(10, 3), D(10, 9), D(12, 25)].concat(buddha ? [buddha] : []).forEach(d => rules.push({ days: [d], sat: true, overlap: false }));
+    rules.sort((a, b) => a.days[0] - b.days[0]);
+    rules.forEach(r => {
+      const hit = r.days.some(dt => dt.getDay() === 0 || (r.sat && dt.getDay() === 6) || (r.overlap && H[ymd(dt)].length > 1));
+      if (!hit) return;
+      let s = addDays(r.days[r.days.length - 1], 1);
+      while (s.getDay() === 0 || s.getDay() === 6 || H[ymd(s)]) s = addDays(s, 1);
+      add(s, '대체공휴일');
+    });
+    return (holCache[y] = H);
+  }
+  function eventDates(ev, y) {
+    if (ev.lunar) {
+      if (!LF) return [];
+      let r = findLunar(y, ev.m, ev.d);
+      if (!r.length && ev.d === 30) r = findLunar(y, ev.m, 29); // 그해 음력 그달이 29일까지면 29일로
+      return r;
+    }
+    const dt = new Date(y, ev.m - 1, ev.d, 12);
+    return dt.getMonth() === ev.m - 1 ? [dt] : [];
+  }
+  let marksCache = {};
+  function marks(y) {
+    if (marksCache[y]) return marksCache[y];
+    const M = {}, H = koHolidays(y);
+    Object.keys(H).forEach(k => { M[k] = { hol: H[k].slice(), ev: [] }; });
+    S.events.forEach(ev => eventDates(ev, y).forEach(dt => { const k = ymd(dt); (M[k] = M[k] || { hol: [], ev: [] }).ev.push(ev.name); }));
+    return (marksCache[y] = M);
+  }
+  function nextOccurrence(ev, from) {
+    const ys = [from.getFullYear(), from.getFullYear() + 1];
+    for (let i = 0; i < ys.length; i++) { const ds = eventDates(ev, ys[i]).filter(d => d >= from); if (ds.length) return ds[0]; }
+    return null;
+  }
+
+  /* ================= 시계 · 날짜 · 달력 ================= */
+  let lastClock = '', lastDay = '', calKey = '';
+  function renderClock(now) {
+    let h = now.getHours(), ap = '';
+    if (!S.clock24) { ap = h < 12 ? '오전' : '오후'; h = h % 12 || 12; }
+    const hm = (S.clock24 ? pad(h) : String(h)) + ':' + pad(now.getMinutes());
+    const key = ap + hm + (S.showSeconds ? now.getSeconds() : '');
+    if (key === lastClock) return;
+    lastClock = key;
+    $('tAp').textContent = ap; $('tAp').hidden = !ap;
+    $('tHm').textContent = hm;
+    $('tSec').textContent = S.showSeconds ? ':' + pad(now.getSeconds()) : '';
+  }
+  function renderDate(now) {
+    $('date').textContent = (now.getMonth() + 1) + '월 ' + now.getDate() + '일 ' + WD[now.getDay()] + '요일';
+    const L = S.showLunar ? lunarOf(now) : null;
+    $('lunar').textContent = L ? '음력 ' + (L.leap ? '윤' : '') + L.m + '월 ' + L.d + '일' : '';
+    $('lunar').hidden = !L;
+    renderUpcoming(now);
+    renderCalendar(now);
+  }
+  function renderUpcoming(now) {
+    const items = [], t0 = noon(now);
+    for (let i = 0; i <= 45 && items.length < 3; i++) {
+      const d = addDays(t0, i), mk = marks(d.getFullYear())[ymd(d)];
+      if (!mk) continue;
+      mk.ev.forEach(n => items.push({ i, n }));
+      mk.hol.forEach(n => { if (i > 0 && / 연휴$/.test(n)) return; items.push({ i, n }); });
+    }
+    $('upcoming').innerHTML = items.slice(0, 3).map(it =>
+      '<span class="up' + (it.i === 0 ? ' today' : '') + '"><b>' + (it.i === 0 ? '오늘' : it.i === 1 ? '내일' : 'D-' + it.i) + '</b>' + esc(it.n) + '</span>'
+    ).join('');
+  }
+  function renderCalendar(now) {
+    const box = $('calBox');
+    box.hidden = !S.showCalendar;
+    if (!S.showCalendar) return;
+    const key = ymd(now) + '|' + JSON.stringify(S.events);
+    if (key === calKey) return;
+    calKey = key;
+    const y = now.getFullYear(), m = now.getMonth();
+    const start = new Date(y, m, 1, 12).getDay(), days = new Date(y, m + 1, 0, 12).getDate();
+    const M = marks(y);
+    let h = '<div class="calHead">' + y + '년 ' + (m + 1) + '월</div><div class="calGrid">';
+    WD.forEach((w, i) => { h += '<div class="cw' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '">' + w + '</div>'; });
+    const cells = Math.ceil((start + days) / 7) * 7;
+    for (let i = 0; i < cells; i++) {
+      const dn = i - start + 1;
+      if (dn < 1 || dn > days) { h += '<div class="cd"></div>'; continue; }
+      const mk = M[ymd(new Date(y, m, dn, 12))], w = i % 7;
+      let cls = 'cd';
+      if (w === 0 || (mk && mk.hol.length)) cls += ' sun'; else if (w === 6) cls += ' sat';
+      if (dn === now.getDate()) cls += ' today';
+      h += '<div class="' + cls + '"><span>' + dn + '</span>' + (mk && mk.ev.length ? '<i></i>' : '') + '</div>';
+    }
+    box.innerHTML = h + '</div>';
+  }
+
+  /* ================= 날씨 (Open-Meteo, 키 필요 없음) ================= */
+  const WKEY = 'photoFrame.weather.v1';
+  let weather = null, weatherErr = false, weatherTry = 0, weatherBusy = false;
+  try { weather = JSON.parse(lsGet(WKEY) || 'null'); } catch (e) { weather = null; }
+  const WDESC = { 0: '맑음', 1: '대체로 맑음', 2: '구름 조금', 3: '흐림', 45: '안개', 48: '짙은 안개', 51: '약한 이슬비', 53: '이슬비', 55: '짙은 이슬비',
+    56: '어는 이슬비', 57: '어는 이슬비', 61: '약한 비', 63: '비', 65: '강한 비', 66: '어는 비', 67: '어는 비', 71: '약한 눈', 73: '눈', 75: '많은 눈',
+    77: '싸락눈', 80: '소나기', 81: '소나기', 82: '강한 소나기', 85: '소낙눈', 86: '강한 소낙눈', 95: '뇌우', 96: '우박 동반 뇌우', 99: '우박 동반 뇌우' };
+  function getJSON(url) {
+    return new Promise((res, rej) => {
+      let ctl = null;
+      try { ctl = new AbortController(); } catch (e) { ctl = null; }
+      const to = setTimeout(() => { if (ctl) ctl.abort(); rej(new Error('timeout')); }, 15000);
+      fetch(url, ctl ? { signal: ctl.signal, cache: 'no-store' } : { cache: 'no-store' })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(j => { clearTimeout(to); res(j); }, e => { clearTimeout(to); rej(e); });
+    });
+  }
+  function placeKey() { return S.place.lat.toFixed(3) + ',' + S.place.lon.toFixed(3); }
+  async function refreshWeather(force) {
+    if (!S.showWeather || weatherBusy) return;
+    const key = placeKey();
+    if (!force && weather && weather.key === key && Date.now() - weather.at < 20 * 60e3) return;
+    weatherBusy = true; weatherTry = Date.now();
+    const q = 'latitude=' + S.place.lat + '&longitude=' + S.place.lon + '&timezone=auto';
+    try {
+      const fc = await getJSON('https://api.open-meteo.com/v1/forecast?' + q +
+        '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day' +
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=6');
+      let aq = null;
+      try { aq = await getJSON('https://air-quality-api.open-meteo.com/v1/air-quality?' + q + '&current=pm10,pm2_5'); } catch (e) { aq = weather && weather.key === key ? weather.aq : null; }
+      if (key === placeKey()) {
+        weather = { key, at: Date.now(), fc, aq };
+        weatherErr = false;
+        lsSet(WKEY, JSON.stringify(weather));
+      }
+    } catch (e) { weatherErr = true; }
+    weatherBusy = false;
+    renderWeather();
+    if (key !== placeKey()) refreshWeather(true); // 받는 사이 지역이 바뀌었으면 새 지역으로 다시
+  }
+  const T = v => (v == null || isNaN(v) ? '-' : (Math.round(v) || 0) + '°');
+  function wType(code, day) {
+    if (code <= 1) return day ? 'sun' : 'moon';
+    if (code === 2) return day ? 'sunCloud' : 'moonCloud';
+    if (code === 3) return 'clouds';
+    if (code === 45 || code === 48) return 'fog';
+    if (code >= 51 && code <= 57) return 'drizzle';
+    if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+    if (code >= 95) return 'thunder';
+    return 'clouds';
+  }
+  const CLOUD = 'M18 50H46A9 9 0 0 0 47 32A13 13 0 0 0 22 30A10 10 0 0 0 18 50Z';
+  function sunG(cx, cy, r) {
+    let s = '<g stroke="#ffc94a" stroke-width="3.6" stroke-linecap="round">';
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4, c = Math.cos(a), n = Math.sin(a);
+      s += '<line x1="' + (cx + c * (r + 4)).toFixed(1) + '" y1="' + (cy + n * (r + 4)).toFixed(1) + '" x2="' + (cx + c * (r + 8.5)).toFixed(1) + '" y2="' + (cy + n * (r + 8.5)).toFixed(1) + '"/>';
+    }
+    return s + '</g><circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="#ffc94a"/>';
+  }
+  function moonG(cx, cy, r) {
+    const ax = cx + r * 0.5, ay = cy - r * 0.866, by = cy + r * 0.866;
+    return '<path transform="rotate(-18 ' + cx + ' ' + cy + ')" fill="#ffe3a1" d="M' + ax + ' ' + ay + 'A' + r + ' ' + r + ' 0 1 0 ' + ax + ' ' + by + 'A' + r + ' ' + r + ' 0 0 1 ' + ax + ' ' + ay + 'Z"/>';
+  }
+  function cloudG(tf, fill) { return '<path transform="' + tf + '" fill="' + (fill || '#f3f6fa') + '" d="' + CLOUD + '"/>'; }
+  function wIcon(code, day) {
+    const t = wType(code, day);
+    let b = '';
+    if (t === 'sun') b = sunG(32, 32, 12);
+    else if (t === 'moon') b = moonG(32, 32, 16);
+    else if (t === 'sunCloud') b = sunG(25, 24, 9) + cloudG('translate(6 4) scale(.92)');
+    else if (t === 'moonCloud') b = moonG(26, 22, 12) + cloudG('translate(6 4) scale(.92)');
+    else if (t === 'clouds') b = cloudG('translate(10 -7) scale(.8)', '#aebbc9') + cloudG('translate(-2 3)');
+    else if (t === 'fog') b = cloudG('translate(0 -8)') + '<g stroke="#e3e9f0" stroke-width="3.4" stroke-linecap="round"><line x1="14" y1="50" x2="50" y2="50"/><line x1="20" y1="57" x2="44" y2="57"/></g>';
+    else {
+      b = cloudG('translate(0 -8)');
+      if (t === 'rain') b += '<g stroke="#79c0ff" stroke-width="3.4" stroke-linecap="round"><line x1="24" y1="47" x2="21" y2="56"/><line x1="33" y1="47" x2="30" y2="56"/><line x1="42" y1="47" x2="39" y2="56"/></g>';
+      else if (t === 'drizzle') b += '<g fill="#79c0ff"><circle cx="24" cy="50" r="2.2"/><circle cx="34" cy="54" r="2.2"/><circle cx="43" cy="49" r="2.2"/></g>';
+      else if (t === 'snow') b += '<g fill="#eaf5ff"><circle cx="23" cy="50" r="2.8"/><circle cx="33" cy="56" r="2.8"/><circle cx="43" cy="50" r="2.8"/></g>';
+      else b += '<path fill="#ffd54a" d="M34 42L26 54H32L29 63L41 49H35L38 42Z"/>';
+    }
+    return '<svg viewBox="0 0 64 64" aria-hidden="true">' + b + '</svg>';
+  }
+  const AQL = ['좋음', '보통', '나쁨', '매우나쁨'];
+  function aqGrade(v, cuts) { if (v == null || isNaN(v)) return -1; return v <= cuts[0] ? 0 : v <= cuts[1] ? 1 : v <= cuts[2] ? 2 : 3; }
+  function renderWeather() {
+    const box = $('weatherBox');
+    box.hidden = !S.showWeather;
+    if (!S.showWeather) return;
+    const W = weather && weather.key === placeKey() ? weather : null;
+    $('wPlace').textContent = S.place.name;
+    if (!W || !W.fc || !W.fc.current) {
+      $('wNow').innerHTML = ''; $('wAir').innerHTML = ''; $('wDays').innerHTML = '';
+      $('wDesc').textContent = weatherErr ? '날씨를 불러오지 못했어요' : '날씨 불러오는 중…';
+      $('wMeta').textContent = weatherErr ? '인터넷 연결을 확인해 주세요' : '';
+      return;
+    }
+    const c = W.fc.current, d = W.fc.daily || {}, code = c.weather_code;
+    $('wNow').innerHTML = wIcon(code, c.is_day !== 0) + '<span id="wTemp">' + T(c.temperature_2m) + '</span>';
+    $('wDesc').textContent = (WDESC[code] || '') + ' · 체감 ' + T(c.apparent_temperature);
+    const times = d.time || [];
+    let ti = times.indexOf(ymd(new Date()));
+    const age = Date.now() - W.at;
+    let meta = '';
+    if (ti >= 0) {
+      meta = '최고 ' + T(d.temperature_2m_max[ti]) + ' · 최저 ' + T(d.temperature_2m_min[ti]);
+      const pp = d.precipitation_probability_max && d.precipitation_probability_max[ti];
+      if (pp != null) meta += ' · 강수 ' + pp + '%';
+    } else if (c.relative_humidity_2m != null) meta = '습도 ' + c.relative_humidity_2m + '%';
+    if (age > 3 * 3600e3) { const at = new Date(W.at); meta += ' · ' + (at.getMonth() + 1) + '/' + at.getDate() + ' ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 기준'; }
+    $('wMeta').textContent = meta;
+    let air = '';
+    if (S.showAir && W.aq && W.aq.current) {
+      const g10 = aqGrade(W.aq.current.pm10, [30, 80, 150]), g25 = aqGrade(W.aq.current.pm2_5, [15, 35, 75]);
+      if (g10 >= 0) air += '<span class="aq"><i style="background:var(--aq' + g10 + ')"></i>미세먼지 ' + AQL[g10] + '</span>';
+      if (g25 >= 0) air += '<span class="aq"><i style="background:var(--aq' + g25 + ')"></i>초미세 ' + AQL[g25] + '</span>';
+    }
+    $('wAir').innerHTML = air;
+    // 인터넷이 며칠 끊겨 예보가 오래됐어도 지난 날은 빼고 앞으로의 날만 보여 줌
+    const today = ymd(new Date()), tomorrow = ymd(addDays(new Date(), 1));
+    let days = '';
+    for (let i = 0, n = 0; i < times.length && n < 4; i++) {
+      if (times[i] <= today) continue;
+      n++;
+      const p = times[i].split('-').map(Number), dt = new Date(p[0], p[1] - 1, p[2], 12);
+      days += '<div class="wd">' + (times[i] === tomorrow ? '내일' : WD[dt.getDay()]) + wIcon(d.weather_code[i], true) +
+        '<span class="hi">' + T(d.temperature_2m_max[i]) + '</span><span class="lo">' + T(d.temperature_2m_min[i]) + '</span></div>';
+    }
+    $('wDays').innerHTML = days;
+  }
+
+  /* ================= 화면 꺼짐 방지 (충전 중에만) ================= */
+  const awake = { lock: null, pending: false, charging: null, level: null, video: false, needTap: false, failed: false };
+  const hasWakeLock = !!(navigator.wakeLock && navigator.wakeLock.request);
+  function wantAwake() {
+    if (S.keepAwake === 'off') return false;
+    if (S.keepAwake === 'always') return true;
+    return awake.charging !== false; // 충전 상태를 알 수 없으면 켜 둠
+  }
+  function startVideo() {
+    const v = $('wakeVid');
+    if (!v.firstChild) {
+      v.innerHTML = '<source src="' + WAKE_WEBM + '" type="video/webm"><source src="' + WAKE_MP4 + '" type="video/mp4">';
+      v.load();
+    }
+    const p = v.play();
+    if (p && p.then) p.then(() => { awake.video = true; awake.needTap = false; updateAwakeUI(); }, () => { awake.video = false; awake.needTap = true; updateAwakeUI(); });
+    else awake.video = true;
+  }
+  function stopVideo() { const v = $('wakeVid'); if (awake.video || !v.paused) { v.pause(); } awake.video = false; }
+  async function applyAwake() {
+    const want = wantAwake() && document.visibilityState !== 'hidden';
+    if (want) {
+      if (hasWakeLock) {
+        if (!awake.lock && !awake.pending) {
+          awake.pending = true;
+          try {
+            const lock = await navigator.wakeLock.request('screen');
+            awake.lock = lock; awake.failed = false; stopVideo();
+            lock.addEventListener('release', () => { if (awake.lock === lock) awake.lock = null; updateAwakeUI(); });
+          } catch (e) { awake.failed = true; startVideo(); }
+          awake.pending = false;
+          if (!wantAwake()) { applyAwake(); return; }
+        }
+      } else if (!awake.video) startVideo();
+    } else {
+      if (awake.lock) { const l = awake.lock; awake.lock = null; try { await l.release(); } catch (e) { /* 이미 풀림 */ } }
+      stopVideo();
+    }
+    updateAwakeUI();
+  }
+  const BATT_SVG = '<svg viewBox="0 0 28 16" aria-hidden="true"><rect x="1" y="1" width="23" height="14" rx="3" fill="none" stroke="#fff" stroke-width="2"/><rect x="25" y="5" width="2.5" height="6" rx="1" fill="#fff"/><rect x="4" y="4" width="LEVEL" height="8" rx="1" fill="#fff"/></svg>';
+  function updateAwakeUI() {
+    const b = $('batt');
+    if (awake.charging === false) {
+      const lv = awake.level != null ? Math.round(awake.level * 100) : null;
+      b.innerHTML = BATT_SVG.replace('LEVEL', lv == null ? 17 : Math.max(1.5, 17 * lv / 100).toFixed(1)) +
+        (lv != null ? lv + '% · ' : '') + '충전기 연결 안 됨';
+      b.hidden = false;
+    } else b.hidden = true;
+    if (!sheetOpen) return;
+    const st = $('awakeStatus');
+    const lv = awake.level != null ? ' ' + Math.round(awake.level * 100) + '%' : '';
+    const pow = awake.charging === true ? '지금 충전 중' + lv : awake.charging === false ? '지금 배터리로 동작 중' + lv : '충전 상태를 알 수 없음';
+    let msg, cls = '';
+    if (S.keepAwake === 'off') msg = '화면 꺼짐 방지를 쓰지 않아요';
+    else if (!wantAwake()) msg = '충전기를 꽂으면 화면이 꺼지지 않게 할게요';
+    else if (awake.lock) { msg = '화면이 꺼지지 않게 붙잡고 있어요 ✓'; cls = 'ok'; }
+    else if (awake.video) { msg = '화면이 꺼지지 않게 붙잡고 있어요 ✓ (호환 방식)'; cls = 'ok'; }
+    else if (awake.needTap) { msg = '화면을 한 번 누르면 꺼짐 방지가 시작돼요'; cls = 'warn'; }
+    else if (awake.failed) { msg = '이 브라우저에서는 꺼짐 방지가 안 돼요. 아래 "화면 켜짐 상태 유지"를 켜 주세요'; cls = 'warn'; }
+    else msg = '준비 중…';
+    st.className = 'pad ' + cls;
+    st.textContent = pow + ' · ' + msg;
+  }
+  function setupBattery() {
+    if (!navigator.getBattery) { applyAwake(); return; }
+    navigator.getBattery().then(bt => {
+      let first = true;
+      const upd = () => {
+        const was = awake.charging;
+        awake.charging = !!bt.charging; awake.level = bt.level;
+        if (!first && was !== awake.charging && S.keepAwake === 'charging') {
+          toast(awake.charging ? '충전 중이에요 · 화면을 계속 켜 둘게요' : '충전기가 빠졌어요 · 화면이 평소처럼 꺼질 수 있어요');
+        }
+        first = false;
+        applyAwake();
+      };
+      bt.addEventListener('chargingchange', upd);
+      bt.addEventListener('levelchange', () => { awake.level = bt.level; updateAwakeUI(); });
+      upd();
+    }, () => applyAwake());
+  }
+
+  /* ================= 야간 모드 · 잔상 방지 ================= */
+  let nightClock = false, nightUntil = 0;
+  const toMin = s => { const p = String(s || '0:0').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); };
+  function inNight(now) {
+    if (S.nightMode === 'off') return false;
+    const t = now.getHours() * 60 + now.getMinutes(), a = toMin(S.nightStart), b = toMin(S.nightEnd);
+    if (a === b) return false;
+    return a < b ? t >= a && t < b : t >= a || t < b;
+  }
+  function applyNight(now) {
+    const on = inNight(now) && Date.now() > nightUntil;
+    const clk = on && S.nightMode === 'clock';
+    document.body.classList.toggle('night', on);
+    document.body.classList.toggle('nightclock', clk);
+    $('dim').style.opacity = on ? String(S.nightLevel) : '0';
+    if (clk !== nightClock) {
+      nightClock = clk;
+      setCaption();
+      updateEmptyHint();
+      if (clk) clearTimeout(timer); else schedule(1500);
+    }
+  }
+  function shiftHud() {
+    const u = Math.min(window.innerWidth, window.innerHeight) / 100;
+    const r = () => (Math.random() * 2 - 1) * u * 1.1;
+    $('hud').style.transform = 'translate(' + r().toFixed(1) + 'px,' + (r() * 0.6).toFixed(1) + 'px)';
+    $('calBox').style.transform = 'translate(' + r().toFixed(1) + 'px,' + (r() * 0.6).toFixed(1) + 'px)';
+    $('topLeft').style.transform = 'translate(' + r().toFixed(1) + 'px,' + (r() * 0.6).toFixed(1) + 'px)';
+  }
+
+  /* ================= 매초·매분 ================= */
+  const startedAt = Date.now();
+  let lastMin = -1;
+  function tick() {
+    const now = new Date();
+    renderClock(now);
+    if (now.getMinutes() !== lastMin) { lastMin = now.getMinutes(); minuteTasks(now); }
+    setTimeout(tick, 1000 - now.getMilliseconds() + 8);
+  }
+  function minuteTasks(now) {
+    const day = ymd(now);
+    if (day !== lastDay) { lastDay = day; renderDate(now); setCaption(); renderWeather(); }
+    applyNight(now);
+    if (now.getMinutes() % 3 === 0) shiftHud();
+    if (Date.now() - weatherTry > (weatherErr ? 5 : 20) * 60e3) refreshWeather();
+    // 며칠씩 켜 두면 브라우저가 무거워질 수 있어 새벽에 한 번 새로 고침 (새 버전도 이때 받아 옴)
+    if (now.getHours() === 4 && now.getMinutes() === 7 && Date.now() - startedAt > 6 * 3600e3 && !sheetOpen && !importing) location.reload();
+  }
+
+  /* ================= 화면 배치 ================= */
+  function applyLayout() {
+    document.documentElement.style.setProperty('--scale', String(S.hudScale));
+    stage.className = 'full fit-' + S.fit;
+    lastClock = ''; lastDay = ''; calKey = '';
+    const now = new Date();
+    renderClock(now); renderDate(now); renderWeather(); setCaption(); applyNight(now);
+    const f = slides[front];
+    if (!f.el.classList.contains('grad')) { paintBlur(f); if (!S.kenburns) { f.img.classList.remove('kb'); f.img.style.animationName = ''; } }
+  }
+  function updateEmptyHint() { $('emptyHint').hidden = !!(photos.length || S.hideEmptyHint || nightClock || sheetOpen); }
+
+  /* ================= 도구 막대 · 손동작 ================= */
+  let barT = null;
+  function showBar() { $('bar').classList.add('show'); clearTimeout(barT); barT = setTimeout(hideBar, 6000); }
+  function hideBar() { $('bar').classList.remove('show'); clearTimeout(barT); }
+  function wakeTouch() {
+    if (awake.needTap) startVideo();
+    if (document.body.classList.contains('night')) { nightUntil = Date.now() + 60e3; applyNight(new Date()); return true; }
+    nightUntil = Math.max(nightUntil, Date.now() + 60e3);
+    return false;
+  }
+  let touch = null;
+  $('tap').addEventListener('touchstart', e => { const t = e.touches[0]; touch = { x: t.clientX, y: t.clientY }; }, { passive: true });
+  $('tap').addEventListener('touchend', e => {
+    if (!touch) return;
+    const t = e.changedTouches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y;
+    touch = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      e.preventDefault();
+      wakeTouch();
+      if (dx < 0) goNext(); else goPrev();
+    }
+  });
+  $('tap').addEventListener('click', () => {
+    if (wakeTouch()) return; // 밤에 누르면 먼저 밝게만
+    if ($('bar').classList.contains('show')) hideBar(); else showBar();
+  });
+  $('bar').addEventListener('click', () => { clearTimeout(barT); barT = setTimeout(hideBar, 6000); });
+  $('bPrev').onclick = () => goPrev();
+  $('bNext').onclick = () => goNext();
+  $('bPlay').onclick = () => { setPaused(!paused); toast(paused ? '사진을 멈췄어요' : '다시 넘겨요'); };
+  $('bAdd').onclick = $('ehAdd').onclick = $('addPhotos').onclick = () => { $('filePick').click(); };
+  $('bSet').onclick = () => openSheet();
+  $('ehPlace').onclick = () => { openSheet(); setTimeout(() => $('secWeather').scrollIntoView(), 50); };
+  $('ehLater').onclick = () => { S.hideEmptyHint = true; save(); updateEmptyHint(); toast('설정 → 사진에서 언제든 사진을 넣을 수 있어요'); };
+  $('bFull').onclick = () => {
+    const d = document, el = d.documentElement;
+    const isFull = d.fullscreenElement || d.webkitFullscreenElement;
+    try {
+      if (isFull) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+      else { const fn = el.requestFullscreen || el.webkitRequestFullscreen; const p = fn.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); }
+    } catch (e) { toast('이 브라우저는 전체 화면을 지원하지 않아요'); }
+    hideBar();
+  };
+  $('filePick').addEventListener('change', e => { const fl = e.target.files; importFiles(fl).then(() => { e.target.value = ''; }); });
+  document.addEventListener('keydown', e => {
+    if (sheetOpen) { if (e.key === 'Escape') closeSheet(); return; }
+    if (e.key === 'ArrowRight') goNext();
+    else if (e.key === 'ArrowLeft') goPrev();
+    else if (e.key === ' ') setPaused(!paused);
+    else if (e.key === 's' || e.key === 'S') openSheet();
+  });
+
+  /* ================= 설정 화면 ================= */
+  let sheetOpen = false;
+  const PRESETS = [['서울', 37.5665, 126.978], ['인천', 37.4563, 126.7052], ['수원', 37.2636, 127.0286], ['성남', 37.4200, 127.1265], ['고양', 37.6584, 126.832],
+    ['춘천', 37.8813, 127.7298], ['강릉', 37.7519, 128.8761], ['대전', 36.3504, 127.3845], ['세종', 36.48, 127.289], ['청주', 36.6424, 127.489],
+    ['전주', 35.8242, 127.148], ['광주', 35.1595, 126.8526], ['대구', 35.8714, 128.6014], ['포항', 36.019, 129.3435], ['울산', 35.5384, 129.3114],
+    ['부산', 35.1796, 129.0756], ['창원', 35.228, 128.6811], ['제주', 33.4996, 126.5312]];
+  function fillSheet() {
+    $('sInterval').value = String(S.interval);
+    $('sOrder').value = S.order; $('sFit').value = S.fit;
+    $('sKen').checked = S.kenburns; $('sPhotoDate').checked = S.showPhotoDate;
+    $('sWeather').checked = S.showWeather; $('sAir').checked = S.showAir;
+    $('s24').checked = S.clock24; $('sSec').checked = S.showSeconds; $('sLunar').checked = S.showLunar; $('sCal').checked = S.showCalendar;
+    $('sScale').value = String(S.hudScale);
+    $('sAwake').value = S.keepAwake; $('sNight').value = S.nightMode;
+    $('sNightStart').value = S.nightStart; $('sNightEnd').value = S.nightEnd; $('sNightLevel').value = String(S.nightLevel);
+    $('sLunar').disabled = !LF;
+    renderPlace(); renderEvents(); renderThumbs(); updateAwakeUI();
+  }
+  function openSheet() {
+    hideBar();
+    sheetOpen = true;
+    $('sheet').hidden = false;
+    updateEmptyHint();
+    fillSheet();
+  }
+  function closeSheet() {
+    sheetOpen = false;
+    $('sheet').hidden = true;
+    thumbToken++;
+    revokeThumbs();
+    $('thumbs').innerHTML = '';
+    $('placeResults').innerHTML = '';
+    updateEmptyHint();
+    applyLayout();
+  }
+  $('sheetDone').onclick = closeSheet;
+  $('sheet').addEventListener('click', e => { if (e.target === $('sheet')) closeSheet(); });
+
+  function bind(id, fn) { $(id).addEventListener('change', () => { fn($(id)); save(); }); }
+  bind('sInterval', el => { S.interval = +el.value || 60; schedule(); });
+  bind('sOrder', el => { S.order = el.value; rebuildQueue(); });
+  bind('sFit', el => { S.fit = el.value; stage.className = 'full fit-' + S.fit; paintBlur(slides[front]); });
+  bind('sKen', el => { S.kenburns = el.checked; });
+  bind('sPhotoDate', el => { S.showPhotoDate = el.checked; setCaption(); });
+  bind('sWeather', el => { S.showWeather = el.checked; if (S.showWeather) refreshWeather(); renderWeather(); });
+  bind('sAir', el => { S.showAir = el.checked; renderWeather(); });
+  bind('s24', el => { S.clock24 = el.checked; });
+  bind('sSec', el => { S.showSeconds = el.checked; });
+  bind('sLunar', el => { S.showLunar = el.checked; });
+  bind('sCal', el => { S.showCalendar = el.checked; });
+  bind('sScale', el => { S.hudScale = +el.value || 1; });
+  bind('sAwake', el => { S.keepAwake = el.value; applyAwake(); });
+  bind('sNight', el => { S.nightMode = el.value; });
+  bind('sNightStart', el => { if (el.value) S.nightStart = el.value; });
+  bind('sNightEnd', el => { if (el.value) S.nightEnd = el.value; });
+  bind('sNightLevel', el => { S.nightLevel = +el.value || 0.7; });
+
+  // 지역
+  function setPlace(name, lat, lon) {
+    S.place = { name: String(name).slice(0, 24), lat: +(+lat).toFixed(4), lon: +(+lon).toFixed(4) };
+    save();
+    $('placeResults').innerHTML = '';
+    renderPlace(); renderWeather(); refreshWeather(true);
+    toast('날씨 지역: ' + S.place.name);
+  }
+  function renderPlace() {
+    $('placeNow').textContent = S.place.name + ' (' + S.place.lat.toFixed(2) + ', ' + S.place.lon.toFixed(2) + ')';
+    $('placePresets').innerHTML = PRESETS.map((p, i) => '<button class="chip' + (S.place.name === p[0] && Math.abs(S.place.lat - p[1]) < 0.01 ? ' on' : '') + '" data-i="' + i + '">' + p[0] + '</button>').join('');
+  }
+  $('placePresets').addEventListener('click', e => { const b = e.target.closest && e.target.closest('.chip'); if (!b) return; const p = PRESETS[+b.dataset.i]; setPlace(p[0], p[1], p[2]); });
+  let placeHits = [];
+  async function searchPlace() {
+    const q = $('placeQ').value.trim();
+    const box = $('placeResults');
+    if (!q) return;
+    box.innerHTML = '<div class="hint pad">찾는 중…</div>';
+    try {
+      const j = await getJSON('https://geocoding-api.open-meteo.com/v1/search?count=8&language=ko&format=json&name=' + encodeURIComponent(q));
+      placeHits = (j && j.results) || [];
+      if (!placeHits.length) { box.innerHTML = '<div class="hint pad">찾지 못했어요. 시·군·구 이름으로 다시 검색해 보세요. (예: 성남, 해운대구)</div>'; return; }
+      box.innerHTML = placeHits.map((r, i) => '<button class="res" data-i="' + i + '"><b>' + esc(r.name) + '</b><span>' +
+        esc([r.admin2, r.admin1, r.country].filter(Boolean).join(', ')) + '</span></button>').join('');
+    } catch (e) { box.innerHTML = '<div class="hint pad">검색하지 못했어요. 인터넷 연결을 확인해 주세요.</div>'; }
+  }
+  $('placeGo').onclick = searchPlace;
+  $('placeQ').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchPlace(); } });
+  $('placeResults').addEventListener('click', e => { const b = e.target.closest && e.target.closest('.res'); if (!b) return; const r = placeHits[+b.dataset.i]; if (r) setPlace(r.name, r.latitude, r.longitude); });
+  $('placeHere').onclick = () => {
+    if (!navigator.geolocation) { toast('이 브라우저는 위치를 알 수 없어요. 지역 이름으로 찾아 주세요'); return; }
+    toast('현재 위치를 찾는 중…', true);
+    navigator.geolocation.getCurrentPosition(
+      p => setPlace('현재 위치', p.coords.latitude, p.coords.longitude),
+      () => toast('위치를 가져오지 못했어요. 지역 이름으로 찾아 주세요'),
+      { timeout: 20000, maximumAge: 3600e3, enableHighAccuracy: false });
+  };
+
+  // 기념일
+  (function fillEvSelects() {
+    let m = '', d = '';
+    for (let i = 1; i <= 12; i++) m += '<option value="' + i + '">' + i + '월</option>';
+    for (let i = 1; i <= 31; i++) d += '<option value="' + i + '">' + i + '일</option>';
+    $('evM').innerHTML = m; $('evD').innerHTML = d;
+    if (!LF) { $('evLunar').disabled = true; $('evLunar').parentNode.title = '이 브라우저는 음력 계산을 지원하지 않아요'; }
+  })();
+  function eventsChanged() { marksCache = {}; calKey = ''; save(); renderEvents(); renderUpcoming(new Date()); }
+  function renderEvents() {
+    const list = $('evList');
+    if (!S.events.length) { list.innerHTML = '<div class="row"><div class="grow hint">아직 등록한 기념일이 없어요</div></div>'; return; }
+    const now = noon(new Date());
+    const items = S.events.map(ev => ({ ev, next: nextOccurrence(ev, now) }))
+      .sort((a, b) => (a.next ? a.next - now : 1e15) - (b.next ? b.next - now : 1e15));
+    list.innerHTML = items.map(it => {
+      const dd = it.next ? Math.round((it.next - now) / 864e5) : null;
+      return '<div class="row"><div class="grow"><div class="lbl">' + esc(it.ev.name) + '</div><div class="hint">' + (it.ev.lunar ? '음력 ' : '') +
+        it.ev.m + '월 ' + it.ev.d + '일' + (dd != null ? ' · ' + (dd === 0 ? '오늘' : 'D-' + dd) : '') +
+        '</div></div><button class="btn danger" data-del="' + esc(it.ev.id) + '">삭제</button></div>';
+    }).join('');
+  }
+  $('evList').addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-del]');
+    if (!b) return;
+    S.events = S.events.filter(ev => ev.id !== b.dataset.del);
+    eventsChanged();
+  });
+  $('evAddBtn').onclick = () => {
+    const name = $('evName').value.trim();
+    const m = +$('evM').value, d = +$('evD').value, lunar = $('evLunar').checked;
+    if (!name) { toast('기념일 이름을 적어 주세요'); $('evName').focus(); return; }
+    if (lunar && d > 30) { toast('음력은 30일까지만 있어요'); return; }
+    if (!lunar && new Date(2024, m - 1, d).getMonth() !== m - 1) { toast(m + '월에는 ' + d + '일이 없어요'); return; }
+    S.events.push({ id: 'e' + Date.now().toString(36), name: name.slice(0, 20), m, d, lunar });
+    $('evName').value = ''; $('evLunar').checked = false;
+    eventsChanged();
+    toast('"' + name + '"을(를) 기념일에 넣었어요');
+  };
+
+  // 사진 목록
+  let thumbUrls = [], thumbToken = 0;
+  const selected = {};
+  function revokeThumbs() { thumbUrls.forEach(u => URL.revokeObjectURL(u)); thumbUrls = []; }
+  function selCount() { return Object.keys(selected).length; }
+  function updateSel() {
+    const n = selCount();
+    $('delSel').disabled = !n;
+    $('delSel').textContent = n ? n + '장 지우기' : '지우기';
+    $('selInfo').textContent = photos.length ? (n ? n + '장 골랐어요' : '사진을 누르면 골라서 지울 수 있어요') : '아직 담은 사진이 없어요';
+    $('selAll').hidden = !photos.length;
+    $('selAll').textContent = n && n === photos.length ? '선택 해제' : '전체 선택';
+  }
+  async function renderThumbs() {
+    const tok = ++thumbToken;
+    revokeThumbs();
+    Object.keys(selected).forEach(k => delete selected[k]);
+    $('photoCount').textContent = '사진 ' + photos.length + '장';
+    const box = $('thumbs');
+    const list = photos.slice().sort((a, b) => b.added - a.added);
+    box.innerHTML = list.map(p => '<button class="th" data-id="' + esc(p.id) + '" aria-label="사진"></button>').join('');
+    updateSel();
+    const els = Array.prototype.slice.call(box.children);
+    for (let i = 0; i < els.length; i++) {
+      const rec = await DB.get(els[i].dataset.id);
+      if (tok !== thumbToken) return;
+      if (rec && rec.thumb) { const u = URL.createObjectURL(rec.thumb); thumbUrls.push(u); const im = document.createElement('img'); im.alt = ''; im.src = u; els[i].appendChild(im); }
+    }
+  }
+  $('thumbs').addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('.th');
+    if (!b) return;
+    const id = b.dataset.id;
+    if (selected[id]) { delete selected[id]; b.classList.remove('sel'); } else { selected[id] = 1; b.classList.add('sel'); }
+    updateSel();
+  });
+  $('selAll').onclick = () => {
+    const all = selCount() !== photos.length;
+    Array.prototype.forEach.call($('thumbs').children, b => {
+      if (all) { selected[b.dataset.id] = 1; b.classList.add('sel'); } else { delete selected[b.dataset.id]; b.classList.remove('sel'); }
+    });
+    updateSel();
+  };
+  $('delSel').onclick = async () => {
+    const ids = Object.keys(selected);
+    if (!ids.length) return;
+    if (!confirm('사진 ' + ids.length + '장을 액자에서 뺄까요?\n(태블릿 갤러리에 있는 원본은 지워지지 않아요)')) return;
+    await DB.del(ids);
+    const wasShown = ids.indexOf(curId) >= 0;
+    forget(ids);
+    if (wasShown) curId = null;
+    renderThumbs();
+    toast(ids.length + '장을 뺐어요');
+    if (wasShown || !photos.length) goNext();
+    updateEmptyHint();
+  };
+
+  // 홈 화면에 추가
+  let installEvt = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installBtn').hidden = false; });
+  $('installBtn').onclick = () => { if (!installEvt) return; installEvt.prompt(); installEvt = null; $('installBtn').hidden = true; };
+
+  /* ================= 시작 ================= */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { applyAwake(); lastClock = ''; tick0(); refreshWeather(); }
+  });
+  window.addEventListener('online', () => refreshWeather(true));
+  window.addEventListener('resize', () => { const f = slides[front]; if (!f.el.classList.contains('grad')) paintBlur(f); });
+  function tick0() { const now = new Date(); renderClock(now); minuteTasks(now); }
+
+  setPaused(false);
+  applyLayout();
+  tick();
+  setupBattery();
+  renderWeather();
+  refreshWeather();
+  detectAutoOrient().then(v => { autoOrient = v; });
+  DB.open().then(async () => {
+    photos = await DB.list();
+    rebuildQueue();
+    updateEmptyHint();
+    goNext();
+  });
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
